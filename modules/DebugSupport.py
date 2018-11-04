@@ -12,8 +12,8 @@ Created on May 19, 2016
 """
 print('Loading modules: ', __file__, 'as', __name__)
 
-import modules.CommandLineParsing       # noqa 408
-import modules.Singleton                # noqa 408
+import modules.Config as config     # noqa e408
+import modules.Singleton            # noqa e408
 
 
 class Debug(modules.Singleton.Singleton):
@@ -21,10 +21,9 @@ class Debug(modules.Singleton.Singleton):
 
     # =========================================================================
     def __init__(self):
-        cmd = modules.CommandLineParsing.CommandLine()
-        self.debug = cmd.debug()
-        self.verbose = cmd.verbose()
-        self.quiet = cmd.quiet()
+        self.debug = config.TheConfig.debug
+        self.verbose = config.TheConfig.verbose
+        self.quiet = config.TheConfig.quiet
         self.seqid = 0
         self.dprint(('Debug ID:', id(self)))
 

@@ -60,7 +60,10 @@ class Signature(modules.Singleton.Singleton):
     def __init__(self):
         # instantiate local instances of global support
         self.signatures = {}            # a dictionary of all signatures
-        self.lines = [] * 3             # each signature has '3' lines
+        self.lines = []                 # each signature has '3' lines
+        self.lines.append(None)
+        self.lines.append(None)
+        self.lines.append(None)
 
         self.err = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()

@@ -39,14 +39,9 @@ class ConfigFile(modules.Singleton.Singleton):
         return self.CONFIG_DELIMITER in string
 
     # Set configuration option default values
-    configuration = {'debug': False,
-                     'quiet': False,
+    configuration = {'quiet': False,
                      'verbose': False,
                      'version': False}
-
-    def set_debug(self, value):
-        """ Set debug configuration flag to 'value' """
-        self.configuration['debug'] = value.capitalize()
 
     def set_quiet(self, value):
         """ Set quiet configuration flag to 'value' """
@@ -69,7 +64,6 @@ class ConfigFile(modules.Singleton.Singleton):
 
     # Configuration File Directives
     DIRECTIVES = {
-        'debug': set_debug,         # syntax: debug = True
         'quiet': set_quiet,         # syntax: quiet = True
         'verbose': set_verbose,     # syntax: verbose = True
         'version': get_version,     # syntax: TBS
@@ -77,10 +71,6 @@ class ConfigFile(modules.Singleton.Singleton):
         }
 
     # =========================================================================
-    def debug(self):
-        """ Return current value of debug option. """
-        return self.configuration['debug']
-
     def quiet(self):
         """ Return current value of quiet option. """
         return self.configuration['quiet']
@@ -122,7 +112,6 @@ class ConfigFile(modules.Singleton.Singleton):
             self.parse_config(self.config_file_content[i])
 
         # Display switches after parsing configuration file
-        self.dbg.dprint(('debug:', self.configuration['debug']))
         self.dbg.dprint(('quiet:', self.configuration['quiet']))
         self.dbg.dprint(('verbose:', self.configuration['verbose']))
         self.dbg.dprint(('version:', self.configuration['version']))
