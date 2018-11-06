@@ -78,10 +78,12 @@ Created on May 19, 2016
     @enduml
 
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+import re
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
-import re                       # noqa 408
-
+# Project imports
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
 import modules.Singleton        # noqa 408
@@ -415,7 +417,7 @@ class UML(modules.Singleton.Singleton):
 
         # sanity check for start > end
         if self.uml_start_index < self.uml_end_index:
-            self.debug.dprint(('UML start/end:', self.uml_start_index, self.uml_end_index))
+            logging.debug('UML start/end: %s/%s' % (self.uml_start_index, self.uml_end_index))
         else:
             self.error.invalid_start_end(self.uml_start_index, self.uml_end_index)
             exit()
@@ -435,7 +437,7 @@ class UML(modules.Singleton.Singleton):
             # process each line of text
             if self.is_uml(text):
                 # enter valid UML into our dictionary
-                self.debug.dprint(('UML:', text))
+                logging.debug('UML: %s' % text)
                 self.statemachine.append({
                        'isuml': True,
                        'lineno': line,
@@ -452,16 +454,16 @@ class UML(modules.Singleton.Singleton):
                        })
             else:
                 # ignore anything we don't grok
-                self.debug.dprint(('IGN:', text))
+                logging.debug('IGN: %s' % text)
 
         # display what we just parsed
-        self.debug.dprint(('Parse_PlantUML Length:', len(self.statemachine)))
+        logging.debug('Parse_PlantUML Length: %s' % len(self.statemachine))
 
         # process each line of the state machine
         for i in range(len(self.statemachine)):
-            self.debug.dprint(('statemachine: ', self.statemachine[i]))
+            logging.debug('statemachine: %s' % self.statemachine[i])
             if 'isuml' in self.statemachine[i]:
-                self.debug.dprint(('UML[', i, ']', self.statemachine[i]))
+                logging.debug('UML[%s] %s' % (i, self.statemachine[i]))
 
                 self.state1 = self.statemachine[i]['state1']
                 self.state2 = self.statemachine[i]['state2']
@@ -491,7 +493,7 @@ class UML(modules.Singleton.Singleton):
                     trans = trans + 1
                 if trans != 0 and trans != 3:
                     if self.state1 != self.INITIAL_STATE:
-                        self.debug.dprint(("Transition Check:", self.state1, self.state2, self.event))
+                        logging.debug('Transition Check: %s / %s / %s' % (self.state1, self.state2, self.event))
 
                 # substitute labels for initial and final states
                 if self.state1 == self.INITIAL_STATE:
@@ -525,9 +527,9 @@ class UML(modules.Singleton.Singleton):
                     if self.exit is not None:
                         self.UML_PARSE['exit'](self, self.state, self.exit)
             else:
-                self.debug.dprint(('Skipping ', i, self.statemachine[i]))
+                logging.debug('Skipping %s: %s' % (i, self.statemachine[i]))
 
-        self.debug.dprint(('Parse_PlantUML Done', ''))
+        logging.debug('Parse_PlantUML Done')
 
     # =========================================================================
     # Regular Expression search/match strings
@@ -572,29 +574,29 @@ class UML(modules.Singleton.Singleton):
     # =========================================================================
     def dump_uml(self):
         """ Dump current state of UML class variables. """
-        self.debug.dprint(('State1 : ', self.states1))
-        self.debug.dprint(('State2 : ', self.states2))
-        self.debug.dprint(('Events : ', self.events))
-        self.debug.dprint(('Guards : ', self.guards))
-        self.debug.dprint(('Trans  : ', self.trans))
+        logging.debug('State1 : %s' % self.states1)
+        logging.debug('State2 : %s' % self.states2)
+        logging.debug('Events : %s' % self.events)
+        logging.debug('Guards : %s' % self.guards)
+        logging.debug('Trans  : %s' % self.trans)
 
-        self.debug.dprint(('gFuncs : ', self.gfuncs))
-        self.debug.dprint(('tFuncs : ', self.tfuncs))
+        logging.debug('gFuncs : %s' % self.gfuncs)
+        logging.debug('tFuncs : %s' % self.tfuncs)
 
-        self.debug.dprint(('States : ', self.states))
-        self.debug.dprint(('Enters : ', self.enters))
-        self.debug.dprint(('Dos    : ', self.dos))
-        self.debug.dprint(('Exits  : ', self.exits))
+        logging.debug('States : %s' % self.states)
+        logging.debug('Enters : %s' % self.enters)
+        logging.debug('Dos    : %s' % self.dos)
+        logging.debug('Exits  : %s' % self.exits)
 
         for _transition in self.transitions:
-            self.debug.dprint(('Transition :', _transition))
+            logging.debug('Transition : %s' % _transition)
 
     # =========================================================================
     def is_uml(self, text):
         """ Verify text is valid UML. """
         # bump / display sequence id
         self.seqid += 1
-        self.debug.set_seq_id(self.seqid)
+        # self.debug.set_seq_id(self.seqid)
 
         # RE search/match result strings (state transitions)
         self.state1 = None
@@ -616,7 +618,7 @@ class UML(modules.Singleton.Singleton):
         # state1 --> state2 : Event [Guard] / Transition
         match = self.re_st1_st2_event_guard_func.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state1 = match.group('state1')
             self.state2 = match.group('state2')
             self.event = match.group('event')
@@ -627,7 +629,7 @@ class UML(modules.Singleton.Singleton):
         # state1 --> state2 : Event [Guard]
         match = self.re_st1_st2_event_guard.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state1 = match.group('state1')
             self.state2 = match.group('state2')
             self.event = match.group('event')
@@ -637,7 +639,7 @@ class UML(modules.Singleton.Singleton):
         # state1 --> state2 : Event / Transition
         match = self.re_st1_st2_event_func.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state1 = match.group('state1')
             self.state2 = match.group('state2')
             self.event = match.group('event')
@@ -647,7 +649,7 @@ class UML(modules.Singleton.Singleton):
         # state1 --> state2 : Event
         match = self.re_st1_st2_event.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state1 = match.group('state1')
             self.state2 = match.group('state2')
             self.event = match.group('event')
@@ -656,7 +658,7 @@ class UML(modules.Singleton.Singleton):
         # state1 --> state2
         match = self.re_st1_st2.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state1 = match.group('state1')
             self.state2 = match.group('state2')
             return True
@@ -664,7 +666,7 @@ class UML(modules.Singleton.Singleton):
         # state : enter : enter
         match = self.re_enter.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state = match.group('state')
             self.enter = match.group('func')
             return True
@@ -672,7 +674,7 @@ class UML(modules.Singleton.Singleton):
         # state : entry : enter
         match = self.re_entry.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state = match.group('state')
             self.enter = match.group('func')
             return True
@@ -680,7 +682,7 @@ class UML(modules.Singleton.Singleton):
         # state : do : do
         match = self.re_do.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state = match.group('state')
             self.do = match.group('func')
             return True
@@ -688,13 +690,13 @@ class UML(modules.Singleton.Singleton):
         # state : exit : exit
         match = self.re_exit.match(text)
         if match is not None:
-            self.debug.dprint(('SUCCESS:', text))
+            logging.debug('SUCCESS: %s' % text)
             self.state = match.group('state')
             self.exit = match.group('func')
             return True
 
         # failed to find a Match
         if len(text) > 0:
-            self.debug.dprint(('FAILURE:', text))
+            logging.debug('FAILURE: %s' % text)
             exit(1)
         return False

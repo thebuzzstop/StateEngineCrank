@@ -10,7 +10,9 @@ Created on May 31, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
@@ -223,23 +225,23 @@ class Signature(modules.Singleton.Singleton):
     # =========================================================================
     def find_signature(self, signature):
         """ Find requested signature. """
-        self.debug.dprint(("signature: ", signature))
+        logging.debug('signature: %s' % signature)
 
         sig = self.signatures[signature]
-        self.debug.dprint(("signature: ", sig))
+        logging.debug('signature: %s' % sig)
 
-        self.debug.dprint(("sigID: ", signature))
-        self.debug.dprint(("sigLines: ", sig[1]))
-        self.debug.dprint(("sigLocation: ", sig[0]))
+        logging.debug('sigID: %s' % signature)
+        logging.debug('sigLines: %s' % sig[1])
+        logging.debug('sigLocation: %s' % sig[0])
 
         # break out the signature lines
         sig_line1_text = sig[1][0]
         sig_line2_text = sig[1][1]
         sig_line3_text = sig[1][2]
 
-        self.debug.dprint(("sig_line1_text: ", sig_line1_text))
-        self.debug.dprint(("sig_line2_text: ", sig_line2_text))
-        self.debug.dprint(("sig_line3_text: ", sig_line3_text))
+        logging.debug('sig_line1_text: %s' % sig_line1_text)
+        logging.debug('sig_line2_text: %s' % sig_line2_text)
+        logging.debug('sig_line3_text: %s' % sig_line3_text)
 
         # total number of lines in the file
         num_lines = self.file.number_of_lines()

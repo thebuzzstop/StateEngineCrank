@@ -21,7 +21,9 @@ Created on Jun 28, 2016
 
 @copyright: none
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 
 class Singleton(object):

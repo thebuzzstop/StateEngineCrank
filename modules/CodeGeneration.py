@@ -10,10 +10,11 @@ Created on May 19, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
-import logging                  # noqa 408
-
+# Project specific imports
 import modules.CodeScan         # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
@@ -182,8 +183,7 @@ class CodeGen(object):
     # =========================================================================
     def __init__(self):
         """ CodeGeneration module initialization. """
-        self.log = logging()
-        self.log.print(("CodeGeneration ID:", id(self)))
+        logging.debug('CodeGeneration ID: %s' % id(self))
         self.code = modules.CodeScan.CodeScan()
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
@@ -342,7 +342,7 @@ class CodeGen(object):
     # =========================================================================
     def update_user_prototypes(self):
         """ Create/Update user prototypes. """
-        self.debug.dprint(("Missing User Prototypes:", self.MissingPrototypes))
+        logging.debug('Missing User Prototypes: %s' % self.MissingPrototypes)
         # early exit if no missing prototypes
         if len(self.MissingPrototypes) == 0:
             return
@@ -360,7 +360,7 @@ class CodeGen(object):
     # =============================================================================================
     def update_user_functions(self):
         """ Create/Update user functions. """
-        self.debug.dprint(("Missing User Functions:", self.MissingFunctions))
+        logging.debug('Missing User Functions: %s' % self.MissingFunctions)
         # early exit if no missing functions
         if len(self.MissingFunctions) == 0:
             return
@@ -382,24 +382,24 @@ class CodeGen(object):
     # =============================================================================================
     def find_user_functions(self, func_list):
         """ Scan current list of prototypes and functions for UML functions. """
-        self.debug.dprint(("FuncList: ", func_list))
+        logging.debug('FuncList: %s' % func_list)
         # scan code for missing functions/prototypes
         for func in func_list:
             # check for prototypes
             found = self.code.find_prototype(func)
             if not found:
                 self.MissingPrototypes.append(func)
-                self.debug.dprint(("Missing prototype:", func))
+                logging.debug('Missing prototype: %s ' % func)
             else:
-                self.debug.dprint(("Found prototype:", func))
+                logging.debug('Found prototype: %s ' % func)
 
             # check for functions
             found = self.code.find_function(func)
             if not found:
                 self.MissingFunctions.append(func)
-                self.debug.dprint(("Missing function:", func))
+                logging.debug('Missing function: %s' % func)
             else:
-                self.debug.dprint(("Found function:", func))
+                logging.debug('Found function: %s ' % func)
 
     # =============================================================================================
     def find_user_enter_functions(self):

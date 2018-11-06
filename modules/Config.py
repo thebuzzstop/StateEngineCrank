@@ -13,15 +13,17 @@ Created on Jun 29, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
-# system imports
-import argparse
-import configparser
-import re
+import argparse         # noqa 408
+import configparser     # noqa 408
+import re               # noqa 408
 
 # project specific imports
-import modules.Defines as Defines
-import modules.Singleton as Singleton
+import modules.Defines as Defines       # noqa 408
+import modules.Singleton as Singleton   # noqa 408
 
 
 class TheConfig(Singleton.Singleton):
@@ -49,10 +51,11 @@ class TheConfig(Singleton.Singleton):
         self.debug = self.cmd.debug or self.cfg.debug
         self.version = self.cmd.version or self.cfg.version
 
-        self.files.append(self.cfg.files)
-        self.files.append(self.cmd.files)
+        self.files.extend(self.cfg.files)
+        self.files.extend(self.cmd.files)
 
-        print('files: %s' % self.files)
+        logging.debug('files: %s' % self.files)
+
 
 class ArgParser(argparse.ArgumentParser):
     """ Implements the command line argument parser """

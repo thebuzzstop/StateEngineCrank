@@ -17,9 +17,13 @@ Created on May 20, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
-# Project specific imports
+# Project imports
 import modules.Config as Config             # noqa e408
 
 import modules.CodeGeneration as CodeGen    # noqa e408
@@ -44,13 +48,11 @@ import modules.UMLParse as Uml              # noqa e408
 # =========================================================
 # main entry point - start of execution
 # =========================================================
-print('Start execution as: ', __name__)
+logging.info('Start execution as: %s' % __name__)
 if __name__ == '__main__':
 
     # instantiate configuration first to parse command line and configuration file
     config = Config.TheConfig()
-    debug = Debug.Debug()
-
     codegen = CodeGen.CodeGen()
     codescan = CodeScan.CodeScan()
     files = File.File()
@@ -64,17 +66,17 @@ if __name__ == '__main__':
         input_files = config.files
         num_files = len(input_files)
         if num_files == 0:
-            print('Nothing to do: no input files')
+            logging.info('Nothing to do: no input files')
             exit()
 
         # display invocation information
-        debug.dprint(('Begin execution:', __name__))
-        debug.dprint(('Processing', num_files, 'input files.'))
+        logging.debug('Begin execution: %s' % __name__)
+        logging.debug('Processing %s input files' % num_files)
 
         # =====================================================================
         # process all input files
         for input_file in input_files:
-            debug.vprint(('Input file:', input_file))
+            logging.debug('Input file: %s' % input_file)
 
             # read source file into memory
             files.open(input_file)
@@ -85,10 +87,10 @@ if __name__ == '__main__':
             # initialize UML module before parsing
             uml.init()
             if uml.find_start_plant_uml() is False:
-                debug.dvprint(('UML Start NOT FOUND', 'Ignoring'))
+                logging.debug('UML Start NOT FOUND: Ignoring')
                 continue
             if uml.find_end_plant_uml() is False:
-                debug.dvprint(('UML End NOT FOUND', 'Ignoring'))
+                logging.debug('UML End NOT FOUND: Ignoring')
                 continue
             if uml.parse_plant_uml() is False:
                 exit()
@@ -116,29 +118,29 @@ if __name__ == '__main__':
 
     # =========================================================================
     except Error.UnimplementedCodeError as e:
-        print('Unimplemented code encountered -->', e)
+        logging.critical('Unimplemented code encountered --> %s' % e)
     except Error.SourceFileError as e:
-        print('Error processing source file -->', e)
+        logging.critical('Error processing source file --> %s' % e)
     except Error.UMLParseError as e:
-        print('Error parsing UML -->', e)
+        logging.critical('Error parsing UML --> %s' % e)
     except Error.SignatureError as e:
-        print('Error processing signatures -->', e)
+        logging.critical('Error processing signatures --> %s' % e)
     except Error.ScanCodeError as e:
-        print('Error scanning user state functions -->', e)
+        logging.critical('Error scanning user state functions --> %s' % e)
     except Error.UpdateCodeError as e:
-        print('Error updating code -->', e)
+        logging.critical('Error updating code --> %s' % e)
     except Error.FileBackupError as e:
-        print('Error processing file updates -->', e)
+        logging.critical('Error processing file updates --> %s' % e)
     except Error.FileWriteError as e:
-        print('Error writing file -->', e)
+        logging.critical('Error writing file --> %s' % e)
     except Error.ConfigFileError as e:
-        print('Error processing configuration file --->', e)
+        logging.critical('Error processing configuration file ---> %s' % e)
     except Exception as e:
-        print('Uncategorized error encountered')
+        logging.critical('Uncategorized error encountered')
         raise e     # re-raise to dump the specifics of this error
     finally:
-    # =========================================================
-    # exit processing and cleanup
-    # =========================================================
-        print('Execution complete ... exiting ...')
+        # =========================================================
+        # exit processing and cleanup
+        # =========================================================
+        logging.info('Execution complete ... exiting ...')
         exit(1)

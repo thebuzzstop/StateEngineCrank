@@ -12,7 +12,9 @@ Created on May 19, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 import re                       # noqa 408
 
@@ -47,7 +49,7 @@ class CodeScan(modules.Singleton.Singleton):
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
         self.sig = modules.Signature.Signature()
-        self.debug.dprint(("CodeScan ID:", id(self)))
+        logging.debug('CodeScan ID: %s' % id(self))
 
     # =========================================================================
     def scan_code(self):
@@ -80,16 +82,16 @@ class CodeScan(modules.Singleton.Singleton):
     # =========================================================================
     def dump_prototypes(self):
         """ Dump prototypes we Found. """
-        self.debug.dprint(('Prototypes:', ''))
+        logging.debug('Prototypes:')
         for proto in self.prototypes:
-            self.debug.dprint(("    ", proto))
+            logging.debug('    %s' % proto)
 
     # =========================================================================
     def dump_functions(self):
         """ Dump functions we Found. """
-        self.debug.dprint(('Functions:', ''))
+        logging.debug('Functions:')
         for func in self.functions:
-            self.debug.dprint(("    ", func))
+            logging.debug('    %s' % func)
 
     # =========================================================================
     def scan_user_prototypes(self):
@@ -97,11 +99,11 @@ class CodeScan(modules.Singleton.Singleton):
         start_line = self.sig.find_user_code_proto_start()
         end_line = self.sig.find_user_code_proto_end()
 
-        self.debug.dprint(("Start/End:", start_line, end_line))
+        logging.debug('Start/End: %s/%s' % (start_line, end_line))
 
         # start with empty prototype list
         del self.prototypes[:]
-        print('Prototypes: ', self.prototypes)
+        logging.info('Prototypes: %s' % self.prototypes)
 
         # scan all lines in the file
         for line in range(start_line, end_line):
@@ -110,14 +112,14 @@ class CodeScan(modules.Singleton.Singleton):
             # check for a function prototype
             match = self.re_func_proto.match(line_text)
             if match is not None:
-                self.debug.dprint(('SUCCESS:', line_text))
+                logging.debug('SUCCESS: %s' % line_text)
                 self.prototypes.append(match.group('funcName'))
                 continue
 
             # check for a guard prototype
             match = self.re_guard_proto.match(line_text)
             if match is not None:
-                self.debug.dprint(('SUCCESS:', line_text))
+                logging.debug('SUCCESS: %s' % line_text)
                 self.prototypes.append(match.group('guardName'))
                 continue
 
@@ -127,12 +129,12 @@ class CodeScan(modules.Singleton.Singleton):
         start_line = self.sig.find_user_code_start()
         end_line = self.sig.find_user_code_end()
 
-        self.debug.dprint(("Start/End:", start_line, end_line))
+        logging.debug('Start/End: %s / %s' % (start_line, end_line))
 
         # start with empty function list
         del self.functions[:]
-        print('Functions: ', self.functions)
-        print('Scanning from %s to %s ==> %s lines' % (start_line, end_line, end_line-start_line))
+        logging.info('Functions: %s' % self.functions)
+        logging.info('Scanning from %s to %s ==> %s lines' % (start_line, end_line, end_line-start_line))
 
         # scan all lines in the file
         for line in range(start_line, end_line):
@@ -141,13 +143,13 @@ class CodeScan(modules.Singleton.Singleton):
             # check for a function declaration
             match = self.re_func_declaration.match(line_text)
             if match is not None:
-                self.debug.dprint(('SUCCESS:', line_text))
+                logging.debug('SUCCESS: %s' % line_text)
                 self.functions.append(match.group('funcName'))
                 continue
 
             # check for a guard declaration
             match = self.re_guard_declaration.match(line_text)
             if match is not None:
-                self.debug.dprint(('SUCCESS:', line_text))
+                logging.debug('SUCCESS:', line_text)
                 self.functions.append(match.group('guardName'))
                 continue

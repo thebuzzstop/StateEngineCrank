@@ -10,7 +10,9 @@ Created on May 19, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
-print('Loading modules: ', __file__, 'as', __name__)
+# System imports
+import logging
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 import os       # noqa 408
 import re       # noqa 408
@@ -38,13 +40,13 @@ class File(modules.Singleton.Singleton):
         self.file_index = 0
         self.file_lines = 0
         self.file_temp = 0          # used for comparing before and after
-        self.debug.dprint(('FileSupport ID:', id(self)))
+        logging.debug('FileSupport ID: %s' % id(self))
 
     # =========================================================================
     def open(self, filename):
         """ Open requested file for reading. """
         self.file_name = filename
-        self.debug.dprint(('[File_Open]', self.file_name))
+        logging.debug('[File_Open] %s' % self.file_name)
         try:
             self.file_name = filename
             self.file_object = open(self.file_name, 'r')
@@ -54,7 +56,7 @@ class File(modules.Singleton.Singleton):
     # =========================================================================
     def read(self):
         """ Read file contents into array. """
-        self.debug.dprint(('[File_Read]', self.file_name))
+        logging.debug('[File_Read] %s' % self.file_name)
         try:
             # read input file
             self.file_original = self.file_object.read().splitlines()
@@ -62,7 +64,7 @@ class File(modules.Singleton.Singleton):
             self.file_content = []
             self.file_index = 0
             self.file_lines = len(self.file_original)
-            self.debug.dprint(('Lines read:', self.file_lines))
+            logging.debug('Lines read: %s' % self.file_lines)
             # create a working copy
             for i in range(len(self.file_original)):
                 self.file_content.append(self.file_original[i])
@@ -74,7 +76,7 @@ class File(modules.Singleton.Singleton):
         """ Get requested line from file array. """
         self.file_index = index
         if self.file_index >= self.file_lines:
-            print(self.file_index, self.file_lines, self.file_line)
+            logging.info(self.file_index, self.file_lines, self.file_line)
             return [self.EOF, self.file_line.strip()]
         self.file_line = self.file_content[self.file_index]
 
@@ -84,13 +86,13 @@ class File(modules.Singleton.Singleton):
         # replace multiple whitespace with single space
         self.file_line = re.sub(r'\s+', ' ', self.file_line)
 
-        self.debug.dprint(('Line: [', self.file_index, '] ', self.file_line))
+        logging.debug('Line: [%s] %s' % (self.file_index, self.file_line))
         return [self.file_index, self.file_line]
 
     # =========================================================================
     def append_line(self, text):
         """ Append text to end of file in memory. """
-        self.debug.dprint(('Append: ', text))
+        logging.debug('Append:  %s' % text)
         self.file_content.append(text)
         self.file_lines = self.file_lines + 1
 
@@ -104,7 +106,7 @@ class File(modules.Singleton.Singleton):
         index = index-1
 
         # delete line and adjust the number of lines
-        self.debug.dprint(('Delete Line #', index, self.get_line_text(index)))
+        logging.debug('Delete Line # %s : %s' % (index, self.get_line_text(index)))
         del self.file_content[index]
         self.file_lines = len(self.file_content)
 
@@ -127,13 +129,13 @@ class File(modules.Singleton.Singleton):
     # =========================================================================
     def close(self):
         """ Close file. """
-        self.debug.dprint(('[File_Close]', self.file_name))
+        logging.debug('[File_Close] %s' % self.file_name)
         self.file_object.close()
 
     # =========================================================================
     def compare_files(self):
         """ Compare original file to most recent file after all processing. """
-        self.debug.dprint(('[File_CompareFiles]', self.file_name))
+        logging.debug('[File_CompareFiles] %s' % self.file_name)
         # files must be of the same length
         if len(self.file_content) != len(self.file_original):
             return False
@@ -162,7 +164,7 @@ class File(modules.Singleton.Singleton):
         while looking:
             suffix_string = self.mk_suffix_string(suffix_number)
             backup_filename = filename+suffix_string
-            self.debug.dprint(('[Backup File]', backup_filename))
+            logging.debug('[Backup File] %s' % backup_filename)
             if os.path.isfile(backup_filename) is False:
                 looking = False
             else:
@@ -173,7 +175,7 @@ class File(modules.Singleton.Singleton):
     # =========================================================================
     def update(self, filename):
         """ Update the requested file with the latest contents. """
-        self.debug.dprint(('[Writing File', filename))
+        logging.debug('[Write File] %s' % filename)
         filehandle = open(self.file_name, 'w')
         for line in self.file_content:
             filehandle.write(line + '\n')
@@ -183,4 +185,4 @@ class File(modules.Singleton.Singleton):
     def dump_file(self):
         """ Dump the file currently in memory for debug purposes. """
         for line in range(0, self.file_lines):
-            self.debug.dprint(('Line [', line, '] ', self.file_content[line]))
+            logging.debug('Line [%s] %s' % (line, self.file_content[line]))
