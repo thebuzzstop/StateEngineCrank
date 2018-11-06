@@ -16,7 +16,6 @@ print('Loading modules: ', __file__, 'as', __name__)
 
 import re                       # noqa 408
 
-import modules.DebugSupport     # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
 import modules.Signature        # noqa 408
@@ -45,7 +44,6 @@ class CodeScan(modules.Singleton.Singleton):
 
     # =========================================================================
     def __init__(self):
-        self.debug = modules.DebugSupport.Debug()
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
         self.sig = modules.Signature.Signature()

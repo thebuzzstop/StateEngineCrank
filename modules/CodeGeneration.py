@@ -12,8 +12,9 @@ Created on May 19, 2016
 """
 print('Loading modules: ', __file__, 'as', __name__)
 
+import logging                  # noqa 408
+
 import modules.CodeScan         # noqa 408
-import modules.DebugSupport     # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
 import modules.Signature        # noqa 408
@@ -181,14 +182,14 @@ class CodeGen(object):
     # =========================================================================
     def __init__(self):
         """ CodeGeneration module initialization. """
+        self.log = logging()
+        self.log.print(("CodeGeneration ID:", id(self)))
         self.code = modules.CodeScan.CodeScan()
-        self.debug = modules.DebugSupport.Debug()
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
         self.sig = modules.Signature.Signature()
         self.uml = modules.UMLParse.UML()
         self.current_line = 0
-        self.debug.dprint(("CodeGeneration ID:", id(self)))
 
     # =========================================================================
     def update_code(self):

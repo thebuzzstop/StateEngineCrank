@@ -12,7 +12,6 @@ Created on May 31, 2016
 """
 print('Loading modules: ', __file__, 'as', __name__)
 
-import modules.DebugSupport     # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
 import modules.Singleton        # noqa 408
@@ -67,7 +66,6 @@ class Signature(modules.Singleton.Singleton):
 
         self.err = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
-        self.debug = modules.DebugSupport.Debug()
 
         self.lines[0] = self.SIGNATURE_LINE_DELIM + \
                         "".join(self.SIGNATURE_LINE_CHAR for _ in range(self.SIGNATURE_LINE_NUM_CHARS))     # noqa e127

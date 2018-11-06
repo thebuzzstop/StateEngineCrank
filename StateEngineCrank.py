@@ -19,10 +19,11 @@ Created on May 20, 2016
 """
 print('Loading modules: ', __file__, 'as', __name__)
 
+# Project specific imports
+import modules.Config as Config             # noqa e408
+
 import modules.CodeGeneration as CodeGen    # noqa e408
 import modules.CodeScan as CodeScan         # noqa e408
-import modules.Config as Config             # noqa e408
-import modules.DebugSupport as Debug        # noqa e408
 import modules.ErrorHandling as Error       # noqa e408
 import modules.FileSupport as File          # noqa e408
 import modules.Signature as Sig             # noqa e408
@@ -46,11 +47,13 @@ import modules.UMLParse as Uml              # noqa e408
 print('Start execution as: ', __name__)
 if __name__ == '__main__':
 
+    # instantiate configuration first to parse command line and configuration file
+    config = Config.TheConfig()
+    debug = Debug.Debug()
+
     codegen = CodeGen.CodeGen()
     codescan = CodeScan.CodeScan()
-    debug = Debug.Debug()
     files = File.File()
-    config = Config.TheConfig()
     sig = Sig.Signature()
     uml = Uml.UML()
 
@@ -133,9 +136,7 @@ if __name__ == '__main__':
     except Exception as e:
         print('Uncategorized error encountered')
         raise e     # re-raise to dump the specifics of this error
-    else:
-        print('Success')
-
+    finally:
     # =========================================================
     # exit processing and cleanup
     # =========================================================

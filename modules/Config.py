@@ -14,9 +14,12 @@ Created on Jun 29, 2016
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
 
+# system imports
 import argparse
 import configparser
+import re
 
+# project specific imports
 import modules.Defines as Defines
 import modules.Singleton as Singleton
 
@@ -26,6 +29,7 @@ class TheConfig(Singleton.Singleton):
         Pulls together options specified on the command line and
         and in the optional configuration file.
     """
+
     debug = False
     verbose = False
     quiet = False
@@ -36,11 +40,24 @@ class TheConfig(Singleton.Singleton):
     def __init__(self):
         """ Constructor """
         super().__init__()
+        self.cfg = CfgParser()      # parse first
+        self.cmd = ArgParser()      # parse last, may override config file
 
+        self.debug = self.cfg.debug or self.cmd.debug
+        self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
+        self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
+        self.debug = self.cmd.debug or self.cfg.debug
+        self.version = self.cmd.version or self.cfg.version
+
+        self.files.append(self.cfg.files)
+        self.files.append(self.cmd.files)
+
+        print('files: %s' % self.files)
 
 class ArgParser(argparse.ArgumentParser):
     """ Implements the command line argument parser """
 
+    # =========================================================================
     def __init__(self):
         super().__init__()
         parser = argparse.ArgumentParser(description=Defines.MY_DESCRIPTION)
@@ -60,65 +77,45 @@ class ArgParser(argparse.ArgumentParser):
         # gather up the rest of the command line as file to process
         parser.add_argument('files', nargs='*', help='list of files to process')
 
+        self.verbose = False
+        self.quiet = False
+        self.debug = False
+        self.config = None
+        self.version = None
+        self.files = []
+
         self.args = parser.parse_args()
-
-    # =========================================================================
-    def config(self):
-        """ Return True if configuration file specified. """
-        return self.args.config
-
-    # =========================================================================
-    def debug(self):
-        """ Return status of debug flag. """
-        return self.args.debug
-
-    # =========================================================================
-    def quiet(self):
-        """ Return status of quiet flag. """
-        return self.args.quiet
-
-    # =========================================================================
-    def verbose(self):
-        """ Return status of verbose flag. """
-        return self.args.verbose
-
-    # =========================================================================
-    def parse(self):
-        """ Parse/display status of our flags. """
-        if self.args.verbose:
-            print('Verbose mode enabled')
-
-        if self.args.debug:
-            print('Debug mode enabled')
-
-        if self.args.quiet and self.args.debug:
-            print('Quiet mode enabled')
-
-    # =========================================================================
-    def files(self):
-        """ Display list of files to be processed. """
-        if self.args.verbose or self.args.debug:
-            print('Files: %s' % self.args.files)
-        return self.args.files
+        if self.verbose:
+            self.verbose = True
+        if self.quiet:
+            self.quiet = True
+        if self.debug:
+            self.debug = True
 
 
 class CfgParser(configparser.ConfigParser):
     """ Implements the configuration file parser """
 
+    # =========================================================================
     def __init__(self):
         super().__init__()
         self.config = configparser.ConfigParser()
         self.config.read(Defines.DEFAULT_CONFIG_FILE)
 
+        self.verbose = False
+        self.quiet = False
+        self.debug = False
+        self.version = None
+        self.files = []
+
         # check configuration file for user configuration items
         if 'verbose' in self.config['mode']:
-            TheConfig.verbose = self.config['mode']['verbose']
+            self.verbose = self.config['mode']['verbose']
         if 'debug' in self.config['mode']:
-            TheConfig.debug = self.config['mode']['debug']
+            self.debug = self.config['mode']['debug']
         if 'quiet' in self.config['mode']:
-            TheConfig.quiet = self.config['mode']['quiet']
+            self.quiet = self.config['mode']['quiet']
         if 'version' in self.config['info']:
-            TheConfig.version = self.config['info']['version']
+            self.version = self.config['info']['version']
         if 'file' in self.config['files']:
-            for key, value in self.config.items('files'):
-                print("config: %s = %s" % (key, value))
+            self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')

@@ -15,7 +15,7 @@ print('Loading modules: ', __file__, 'as', __name__)
 
 import re                       # noqa 408
 
-import modules.DebugSupport     # noqa 408
+import _Removed.DebugSupport  # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.Singleton        # noqa 408
 
@@ -91,7 +91,7 @@ class ConfigFile(modules.Singleton.Singleton):
     # =========================================================================
     def __init__(self):
         """ Constructor """
-        self.dbg = modules.DebugSupport.Debug()
+        self.dbg = _Removed.DebugSupport.Debug()
         self.err = modules.ErrorHandling.Error()
         self.config_file_name = None
         self.config_file_object = None
