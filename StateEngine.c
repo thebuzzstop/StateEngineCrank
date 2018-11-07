@@ -11,7 +11,7 @@
 	State1 --> [*]    : EvDone  [Guard1Done] / Transition1Done
 	State1 --> State2 : EvNext
 	State1 --> State3 : EvNext  [GuardNext]
-	
+
 	State1 : enter : EnterFunc()
 	State1 : do    : DoFunc()
 	State1 : exit  : ExitFunc()
@@ -22,7 +22,7 @@
 	State2 --> State3 : Event23
 	State2 --> State3 : EvNext
 	State2 --> State1 : EvNext [GuardNext]
-			
+
 	State2 : enter : EnterFunc()
 	State2 : do    : DoFunc()
 	State2 : exit  : ExitFunc()
@@ -35,7 +35,7 @@
 	State3 --> [*]    : EvDone  [Guard3Done] / Transition3Done
 	State3 --> State1 : EvNext
 	State3 --> State2 : EvNext  [GuardNext]
-	
+
 	State3 : enter : EnterFunc()
 	State3 : do    : DoFunc()
 	State3 : exit  : ExitFunc()
@@ -44,38 +44,6 @@
  *
  */
 
-typedef unsigned char BOOL;
-
-#define TRUE (1==1)
-#define FALSE (!TRUE)
-
-static int counter = 0;
-
-/**
- * Main_Event_Loop
- */
-void Main_Event_Loop(void)
-{
-    int event = 0;
-
-    while (1==1) {
-        StateEngineCrank_MainDoLoop();
-        switch (event++) {
-            case 0: Event11(); break;
-            case 1: Event12(); break;
-            case 2: Event13(); break;
-            case 3: Event21(); break;
-            case 4: Event23(); break;
-            case 5: Event31(); break;
-            case 6: Event32(); break;
-            case 7: Event33(); break;
-            case 8: EventDone(); break;
-            default:
-                event = 0;
-                break;
-        }
-    }
-}
 
 // =============================================================================
 // ========== USER STATE CODE PROTOTYPES START =================================
@@ -123,7 +91,7 @@ static void Transition3Done(void);
  */
 static BOOL_TYPE Guard11(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -131,7 +99,7 @@ static BOOL_TYPE Guard11(void)
  */
 static BOOL_TYPE Guard13A(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -139,7 +107,7 @@ static BOOL_TYPE Guard13A(void)
  */
 static BOOL_TYPE Guard13B(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -147,7 +115,7 @@ static BOOL_TYPE Guard13B(void)
  */
 static BOOL_TYPE Guard1Done(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -155,7 +123,7 @@ static BOOL_TYPE Guard1Done(void)
  */
 static BOOL_TYPE Guard2DoneA(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -163,7 +131,7 @@ static BOOL_TYPE Guard2DoneA(void)
  */
 static BOOL_TYPE Guard2DoneB(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -171,7 +139,7 @@ static BOOL_TYPE Guard2DoneB(void)
  */
 static BOOL_TYPE Guard31(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -179,7 +147,7 @@ static BOOL_TYPE Guard31(void)
  */
 static BOOL_TYPE Guard33(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -187,7 +155,7 @@ static BOOL_TYPE Guard33(void)
  */
 static BOOL_TYPE Guard3Done(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -195,7 +163,7 @@ static BOOL_TYPE Guard3Done(void)
  */
 static BOOL_TYPE GuardNext(void)
 {
-    return True;
+    return TRUE;
 }
 
 /**
@@ -347,6 +315,62 @@ static void Transition3Done(void)
 // =============================================================================
 
 // =============================================================================
+// ========== MAIN STATE CODE STATE DEFINES START - DO NOT MODIFY ==============
+// =============================================================================
+
+typedef enum STATES {
+    InitialState = -1, //!< initial state is automatic
+    State1,
+    State2,
+    State3,
+    FinalState = -2 //!< final state is automatic
+} State;
+
+// =============================================================================
+// ========== MAIN STATE CODE STATE DEFINES END - DO NOT MODIFY ================
+// =============================================================================
+
+// =============================================================================
+// ========== MAIN STATE CODE DEFINES START - DO NOT MODIFY ====================
+// =============================================================================
+
+#ifndef GET_CURRENT_STATE
+#define GET_CURRENT_STATE (CurrentState)
+#endif
+
+#ifndef SET_CURRENT_STATE
+#define SET_CURRENT_STATE(state) (CurrentState=(state))
+#endif
+
+#ifndef STATE_ENGINE_INITIALIZE_HOOK
+#define STATE_ENGINE_INITIALIZE_HOOK 
+#endif
+
+#ifndef STATE_ENGINE_TERMINATE_HOOK
+#define STATE_ENGINE_TERMINATE_HOOK 
+#endif
+
+#ifndef EVT_HANDLER_DEFAULT_HOOK
+#define EVT_HANDLER_DEFAULT_HOOK 
+#endif
+
+#ifndef MAIN_LOOP_INITIAL_STATE_HOOK
+#define MAIN_LOOP_INITIAL_STATE_HOOK 
+#endif
+
+#ifndef MAIN_LOOP_FINAL_STATE_HOOK
+#define MAIN_LOOP_FINAL_STATE_HOOK 
+#endif
+
+#ifndef MAIN_LOOP_DEFAULT_HOOK
+#define MAIN_LOOP_DEFAULT_HOOK 
+#endif
+
+// =============================================================================
+// ========== MAIN STATE CODE DEFINES END - DO NOT MODIFY ======================
+// =============================================================================
+
+// =============================================================================
 // ========== MAIN STATE CODE PROTOTYPES START - DO NOT MODIFY =================
 // =============================================================================
 
@@ -365,28 +389,18 @@ static void Event31(void);
 static void Event32(void);
 static void Event33(void);
 
-#ifndef GET_CURRENT_STATE()
-#define GET_CURRENT_STATE() current_state
-#endif
-
-#ifndef SET_CURRENT_STATE(state)
-#define SET_CURRENT_STATE(state) (current_state=(state))
-#endif
-
-#ifndef MAIN_LOOP_INITIAL_STATE_HOOK
-#define MAIN_LOOP_INITIAL_STATE_HOOK 
-#endif
-
-#ifndef MAIN_LOOP_FINAL_STATE_HOOK
-#define MAIN_LOOP_FINAL_STATE_HOOK 
-#endif
-
-#ifndef MAIN_LOOP_DEFAULT_HOOK
-#define MAIN_LOOP_DEFAULT_HOOK 
-#endif
-
 // =============================================================================
 // ========== MAIN STATE CODE PROTOTYPES END - DO NOT MODIFY ===================
+// =============================================================================
+
+// =============================================================================
+// ========== MAIN STATE CODE VARIABLES START - DO NOT MODIFY ==================
+// =============================================================================
+
+static unsigned int CurrentState = -1; //!< holds state machine current state
+
+// =============================================================================
+// ========== MAIN STATE CODE VARIABLES END - DO NOT MODIFY ====================
 // =============================================================================
 
 // =============================================================================
@@ -404,7 +418,7 @@ static void Event33(void);
  */
 static void StateEngineCrank_MainDoLoop(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             State1_DoFunc();
@@ -416,13 +430,13 @@ static void StateEngineCrank_MainDoLoop(void)
             State3_DoFunc();
             break;
         case InitialState:
-            MAIN_LOOP_INITIAL_STATE_HOOK();
+            MAIN_LOOP_INITIAL_STATE_HOOK;
             break;
         case FinalState:
-            MAIN_LOOP_FINAL_STATE_HOOK();
+            MAIN_LOOP_FINAL_STATE_HOOK;
             break;
         default:
-            MAIN_LOOP_DEFAULT_HOOK();
+            MAIN_LOOP_DEFAULT_HOOK;
             break;
     }
 }
@@ -438,7 +452,7 @@ static void StateEngineCrank_MainDoLoop(void)
 static void StateEngineCrank_Initialize(void)
 {
     SET_CURRENT_STATE(InitialState);
-    USER_STATE_ENGINE_INITIALIZE();
+    STATE_ENGINE_INITIALIZE_HOOK;
 }
 
 /**
@@ -452,7 +466,7 @@ static void StateEngineCrank_Initialize(void)
 static void StateEngineCrank_Terminate(void)
 {
     SET_CURRENT_STATE(FinalState);
-    USER_STATE_ENGINE_TERMINATE();
+    STATE_ENGINE_TERMINATE_HOOK;
 }
 
 /**
@@ -466,7 +480,7 @@ static void StateEngineCrank_Terminate(void)
  */
 static void EvDone(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             if (Guard1Done()) {
@@ -495,7 +509,7 @@ static void EvDone(void)
             }
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -511,43 +525,43 @@ static void EvDone(void)
  */
 static void EvNext(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             if (GuardNext()) {
                 State1_ExitFunc();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             } else {
                 State1_ExitFunc();
-                State2_EnterFunc();
                 SET_CURRENT_STATE(State2);
+                State2_EnterFunc();
             }
             break;
         case State2:
             if (GuardNext()) {
                 State2_ExitFunc();
-                State1_EnterFunc();
                 SET_CURRENT_STATE(State1);
+                State1_EnterFunc();
             } else {
                 State2_ExitFunc();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             }
             break;
         case State3:
             if (GuardNext()) {
                 State3_ExitFunc();
-                State2_EnterFunc();
                 SET_CURRENT_STATE(State2);
+                State2_EnterFunc();
             } else {
                 State3_ExitFunc();
-                State1_EnterFunc();
                 SET_CURRENT_STATE(State1);
+                State1_EnterFunc();
             }
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -563,13 +577,13 @@ static void EvNext(void)
  */
 static void Event11(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             if (Guard11()) {
                 State1_ExitFunc();
-                State1_EnterFunc();
                 SET_CURRENT_STATE(State1);
+                State1_EnterFunc();
             }
             break;
         case State2:
@@ -577,7 +591,7 @@ static void Event11(void)
         case State3:
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -593,19 +607,19 @@ static void Event11(void)
  */
 static void Event12(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             State1_ExitFunc();
-            State2_EnterFunc();
             SET_CURRENT_STATE(State2);
+            State2_EnterFunc();
             break;
         case State2:
             break;
         case State3:
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -621,24 +635,24 @@ static void Event12(void)
  */
 static void Event13(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             if (Guard13A()) {
                 State1_ExitFunc();
                 Transition13A();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             } else
             if (Guard13B()) {
                 State1_ExitFunc();
                 Transition13B();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             } else {
                 State1_ExitFunc();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             }
             break;
         case State2:
@@ -646,7 +660,7 @@ static void Event13(void)
         case State3:
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -662,19 +676,19 @@ static void Event13(void)
  */
 static void Event21(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             break;
         case State2:
             State2_ExitFunc();
-            State1_EnterFunc();
             SET_CURRENT_STATE(State1);
+            State1_EnterFunc();
             break;
         case State3:
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -690,19 +704,19 @@ static void Event21(void)
  */
 static void Event23(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             break;
         case State2:
             State2_ExitFunc();
-            State3_EnterFunc();
             SET_CURRENT_STATE(State3);
+            State3_EnterFunc();
             break;
         case State3:
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -718,7 +732,7 @@ static void Event23(void)
  */
 static void Event31(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             break;
@@ -728,17 +742,17 @@ static void Event31(void)
             if (Guard31()) {
                 State3_ExitFunc();
                 Transition31();
-                State1_EnterFunc();
                 SET_CURRENT_STATE(State1);
+                State1_EnterFunc();
             } else {
                 State3_ExitFunc();
                 Transition31b();
-                State1_EnterFunc();
                 SET_CURRENT_STATE(State1);
+                State1_EnterFunc();
             }
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -754,7 +768,7 @@ static void Event31(void)
  */
 static void Event32(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             break;
@@ -762,11 +776,11 @@ static void Event32(void)
             break;
         case State3:
             State3_ExitFunc();
-            State2_EnterFunc();
             SET_CURRENT_STATE(State2);
+            State2_EnterFunc();
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }
@@ -782,7 +796,7 @@ static void Event32(void)
  */
 static void Event33(void)
 {
-    switch (GET_CURRENT_STATE()) // dispatch according to current state
+    switch (GET_CURRENT_STATE) // dispatch according to current state
     {
         case State1:
             break;
@@ -792,16 +806,16 @@ static void Event33(void)
             if (Guard33()) {
                 State3_ExitFunc();
                 Transition33();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             } else {
                 State3_ExitFunc();
-                State3_EnterFunc();
                 SET_CURRENT_STATE(State3);
+                State3_EnterFunc();
             }
             break;
         default:
-            EVT_HANDLER_DEFAULT_HOOK();
+            EVT_HANDLER_DEFAULT_HOOK;
             break;
     }
 }

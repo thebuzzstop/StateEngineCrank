@@ -276,14 +276,17 @@ class Signature(modules.Singleton.Singleton):
         for sig in enumerate(self.signatures):
             # try to find signature in current file
             # we only want the result, not the line number
-            result = self.find_signature(sig[1])[0]
-            if result:
+            logging.debug('FINDSIG: %s' % sig[1])
+            if self.find_signature(sig[1])[0]:
+                logging.debug('FINDSIG: FOUND %s' % sig[1])
                 sig_found = True
             else:
+                logging.debug('FINDSIG: NOT FOUND % s' % sig[1])
                 all_found = False
 
         # verify we either found ALL or NONE
         if all_found:
+            logging.debug('FINDSIG: All signatures found')
             return True
         if sig_found is False:
             return False
