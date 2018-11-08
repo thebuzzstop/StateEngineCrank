@@ -2,6 +2,9 @@
 # Project specific ignores
 # ========================
 
+# StateEngineCrank backup files
+**.c.0??
+
 # CAN DBC related secondary files
 CanBus/data/*.bak
 CanBus/data/*.dat
