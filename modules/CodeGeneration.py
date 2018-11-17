@@ -10,7 +10,9 @@ Created on May 19, 2016
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
+
 # System imports
+import re
 import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
@@ -30,10 +32,10 @@ class CodeGen(object):
     TAB_SPACES = '    '
 
     FUNCTION_CLOSE = '}'
-    FUNCTION_PARENS = '()'
+    FUNCTION_PARENS = '(id)'
 
     SWITCH_START = [
-        '    switch (GET_CURRENT_STATE) // dispatch according to current state',
+        '    switch (GET_CURRENT_STATE(id)) // dispatch according to current state',
         '    {']
 
     SWITCH_DELIMIT = ':'
@@ -49,9 +51,6 @@ class CodeGen(object):
     SWITCH_BREAK = '            break;'
     SWITCH_CLOSE = '    }'
 
-    CURRENT_STATE_VAR = \
-        'static unsigned int CurrentState = -1; //!< holds state machine current state'
-
     STATES_TYPEDEF_START = [
         'typedef enum STATES {',
         '    InitialState = -1, //!< initial state is automatic']
@@ -61,86 +60,65 @@ class CodeGen(object):
         '} State;']
 
     MAIN_PROTOTYPES = [
-        'static void StateEngineCrank_Initialize(void);',
-        'static void StateEngineCrank_MainDoLoop(void);',
-        'static void StateEngineCrank_Terminate(void);']
+        'static void StateEngineCrank_MainDoLoop(int id);']
 
     MAIN_LOOP_HEADER = [
         '/**',
         ' * ===========================================================================',
         ' * @brief StateEngineCrank - Main Loop',
         ' *',
-        ' * @details This is the main state machine processing loop. It needs to be',
-        ' *          called periodically at a rate sufficient to process incoming',
-        ' *          events and service any state "Do" functions.',
+        ' * @details This is the main state machine processing loop.',
         ' * ===========================================================================',
         ' */']
 
-    MAIN_LOOP_DECLARATION = ['static void StateEngineCrank_MainDoLoop(void)', '{']
-    MAIN_LOOP_CLOSE = '}'
+    MAIN_LOOP_DECLARATION = [
+        'static void StateEngineCrank_MainDoLoop(int id)',
+        '{',
+        '    STATE_ENGINE_INITIALIZE_HOOK(id);',
+        'loop:']
+
+    MAIN_LOOP_CLOSE = [
+        'goto loop;',
+        '    STATE_ENGINE_TERMINATE_HOOK(id);',
+        '}']
+
     MAIN_LOOP_SWITCH_USER_DO = '            '
     MAIN_LOOP_SWITCH_INITIAL = [
         '        case InitialState:',
-        '            MAIN_LOOP_INITIAL_STATE_HOOK;',
+        '            MAIN_LOOP_INITIAL_STATE_HOOK(id);',
         '            break;']
 
     MAIN_LOOP_SWITCH_FINAL = [
         '        case FinalState:',
-        '            MAIN_LOOP_FINAL_STATE_HOOK;',
+        '            MAIN_LOOP_FINAL_STATE_HOOK(id);',
         '            break;']
 
     MAIN_LOOP_SWITCH_DEFAULT = [
         '        default:',
-        '            MAIN_LOOP_DEFAULT_HOOK;',
+        '            MAIN_LOOP_DEFAULT_HOOK(id);',
         '            break;']
 
-    MAIN_LOOP_INITIALIZATION = [
-        '/**',
-        ' * ===========================================================================',
-        ' * @brief StateEngineCrank - Initialize',
-        ' *',
-        ' * @details This is the main state machine initialization.',
-        ' *          There is a HOOK provided for user custom code.',
-        ' * ===========================================================================',
-        ' */',
-        'static void StateEngineCrank_Initialize(void)',
-        '{',
-        '    SET_CURRENT_STATE(InitialState);',
-        '    STATE_ENGINE_INITIALIZE_HOOK;',
-        '}']
+    MAIN_LOOP_INITIAL_STATE_HOOK = 'MAIN_LOOP_INITIAL_STATE_HOOK(id)'
+    MAIN_LOOP_FINAL_STATE_HOOK = 'MAIN_LOOP_FINAL_STATE_HOOK(id)'
+    MAIN_LOOP_DEFAULT_HOOK = 'MAIN_LOOP_DEFAULT_HOOK(id)'
 
-    MAIN_LOOP_TERMINATION = [
-        '/**',
-        ' * ===========================================================================',
-        ' * @brief StateEngineCrank - Terminate',
-        ' *',
-        ' * @details This is the main state machine termination.',
-        ' *          There is a HOOK provided for user custom code.',
-        ' * ===========================================================================',
-        ' */',
-        'static void StateEngineCrank_Terminate(void)',
-        '{',
-        '    SET_CURRENT_STATE(FinalState);',
-        '    STATE_ENGINE_TERMINATE_HOOK;',
-        '}']
+    NUM_THREADS_HOOK = 'NUM_THREADS'
 
-    MAIN_LOOP_INITIAL_STATE_HOOK = 'MAIN_LOOP_INITIAL_STATE_HOOK'
-    MAIN_LOOP_FINAL_STATE_HOOK = 'MAIN_LOOP_FINAL_STATE_HOOK'
-    MAIN_LOOP_DEFAULT_HOOK = 'MAIN_LOOP_DEFAULT_HOOK'
+    GET_CURRENT_STATE = 'GET_CURRENT_STATE(id)'
+    SET_CURRENT_STATE = 'SET_CURRENT_STATE(id, state)'
 
-    GET_CURRENT_STATE = 'GET_CURRENT_STATE'
-    SET_CURRENT_STATE = 'SET_CURRENT_STATE'
+    STATE_ENGINE_RUNNING = 'STATE_ENGINE_RUNNING(id)'
 
-    STATE_ENGINE_INITIALIZE_HOOK = 'STATE_ENGINE_INITIALIZE_HOOK'
-    STATE_ENGINE_TERMINATE_HOOK = 'STATE_ENGINE_TERMINATE_HOOK'
-    EVT_HANDLER_DEFAULT_HOOK = 'EVT_HANDLER_DEFAULT_HOOK'
+    STATE_ENGINE_INITIALIZE_HOOK = 'STATE_ENGINE_INITIALIZE_HOOK(id)'
+    STATE_ENGINE_TERMINATE_HOOK = 'STATE_ENGINE_TERMINATE_HOOK(id)'
+    EVT_HANDLER_DEFAULT_HOOK = 'EVT_HANDLER_DEFAULT_HOOK(id)'
 
     HOOK_IFNDEF = '#ifndef '
     HOOK_DEFINE = '#define '
     HOOK_ENDIF = '#endif'
 
     EVT_TAG = '{EVT_TAG}'
-    EVT_PROTO = 'static void {EVT_TAG}(void);'
+    EVT_PROTO = 'static void {EVT_TAG}(int id);'
 
     EVT_HANDLER_HEADER_TEMPLATE = [
         '/**',
@@ -154,31 +132,33 @@ class CodeGen(object):
         ' */']
 
     EVT_DECLARATION_TEMPLATE = [
-        'static void {EVT_TAG}(void)',
+        'static void {EVT_TAG}(int id)',
         '{']
 
     EVT_HANDLER_SWITCHDEF_TEMPLATE = [
         '        default:',
-        '            EVT_HANDLER_DEFAULT_HOOK;',
+        '            EVT_HANDLER_DEFAULT_HOOK(id);',
         '            break;']
 
     STATE_TAG = '{STATE_TAG}'
-    EVT_HANDLER_CURSTATE_TEMPLATE = 'SET_CURRENT_STATE({STATE_TAG});'
+    EVT_HANDLER_CURSTATE_TEMPLATE = 'SET_CURRENT_STATE(id, {STATE_TAG});'
 
     MissingPrototypes = []  # list of prototypes missing in source file
     MissingFunctions = []   # list of functions missing in source file
 
     VOID_FUNC_TAG = '{VOID_FUNC_TAG}'
-    VOID_FUNC_PROTO_TEMPLATE = 'static void {VOID_FUNC_TAG}(void);'
+    VOID_FUNC_PROTO_TEMPLATE = 'static void {VOID_FUNC_TAG}(int id);'
     VOID_FUNC_HEADER_TEMPLATE = ['/**', ' * @todo FIXME', ' */']
-    VOID_FUNC_DECL_TEMPLATE = ['static void {VOID_FUNC_TAG}(void)', '{']
+    VOID_FUNC_DECL_TEMPLATE = ['static void {VOID_FUNC_TAG}(int id)', '{']
     VOID_FUNC_CLOSE = ['    return;', '}']
 
     GUARD_FUNC_TAG = '{GUARD_FUNC_TAG}'
-    GUARD_FUNC_PROTO_TEMPLATE = 'static BOOL_TYPE {GUARD_FUNC_TAG}(void);'
+    GUARD_FUNC_PROTO_TEMPLATE = 'static BOOL_TYPE {GUARD_FUNC_TAG}(int id);'
     GUARD_FUNC_HEADER_TEMPLATE = ['/**', ' * @todo FIXME', ' */']
-    GUARD_FUNC_DECL_TEMPLATE = ['static BOOL_TYPE {GUARD_FUNC_TAG}(void)', '{']
+    GUARD_FUNC_DECL_TEMPLATE = ['static BOOL_TYPE {GUARD_FUNC_TAG}(int id)', '{']
     GUARD_FUNC_CLOSE = ['    return TRUE;', '}']
+
+    re_hook = re.compile(r'(?P<hook>[a-zA-Z_]+[a-zA-Z0-9_]*)')
 
     # =========================================================================
     def __init__(self):
@@ -206,8 +186,6 @@ class CodeGen(object):
         self.create_main_defines()
         self.create_main_loop()
 
-        self.create_initialize_function()
-        self.create_terminate_function()
         self.create_event_functions()
 
         # delete any missing functions/prototypes from previous scans
@@ -255,8 +233,11 @@ class CodeGen(object):
         self.add_line(self.BLANK_LINE)
 
         # add conditionals here (#ifdef's)
-        self.add_conditional_hook(self.GET_CURRENT_STATE, '(CurrentState)')
-        self.add_conditional_hook_param(self.SET_CURRENT_STATE, '(state)', '(CurrentState=(state))')
+        self.add_conditional_hook(self.NUM_THREADS_HOOK, '1')
+        self.add_conditional_hook(self.GET_CURRENT_STATE, '')
+        self.add_conditional_hook(self.SET_CURRENT_STATE, '')
+
+        self.add_conditional_hook(self.STATE_ENGINE_RUNNING, '')
 
         self.add_conditional_hook(self.STATE_ENGINE_INITIALIZE_HOOK, '')
         self.add_conditional_hook(self.STATE_ENGINE_TERMINATE_HOOK, '')
@@ -291,10 +272,6 @@ class CodeGen(object):
         self.current_line = self.current_line + 2
         self.add_line(self.BLANK_LINE)
 
-        # current state variable used by state dispatcher
-        self.add_line(self.CURRENT_STATE_VAR)
-        self.add_line(self.BLANK_LINE)
-
     # =========================================================================
     def create_main_loop(self):
         """ Create main state engine monitoring loop. """
@@ -319,18 +296,6 @@ class CodeGen(object):
         self.add_lines(self.MAIN_LOOP_SWITCH_DEFAULT)
         self.add_line(self.SWITCH_CLOSE)
         self.add_lines(self.MAIN_LOOP_CLOSE)
-        self.add_line(self.BLANK_LINE)
-
-    # =========================================================================
-    def create_initialize_function(self):
-        """ Create state engine initialization function. """
-        self.add_lines(self.MAIN_LOOP_INITIALIZATION)
-        self.add_line(self.BLANK_LINE)
-
-    # =========================================================================
-    def create_terminate_function(self):
-        """ Create state engine termination function. """
-        self.add_lines(self.MAIN_LOOP_TERMINATION)
         self.add_line(self.BLANK_LINE)
 
     # =========================================================================
@@ -517,7 +482,12 @@ class CodeGen(object):
     # =========================================================================
     def add_conditional_hook(self, hook, value):
         """ Add #ifndef conditional hook to source file in memory. """
-        self.add_line(self.HOOK_IFNDEF + hook)
+        match = self.re_hook.match(hook)
+        if match is not None:
+            hook_ifdef = match.group('hook')
+        else:
+            hook_ifdef = hook
+        self.add_line(self.HOOK_IFNDEF + hook_ifdef)
         self.add_line(self.HOOK_DEFINE + hook + ' ' + value)
         self.add_line(self.HOOK_ENDIF)
         self.add_line(self.BLANK_LINE)
@@ -525,7 +495,12 @@ class CodeGen(object):
     # =========================================================================
     def add_conditional_hook_param(self, hook, param, value):
         """ Add #ifndef conditional hook to source file in memory. """
-        self.add_line(self.HOOK_IFNDEF + hook)
+        match = self.re_hook.match(hook)
+        if match is not None:
+            hook_ifdef = match.group('hook')
+        else:
+            hook_ifdef = hook
+        self.add_line(self.HOOK_IFNDEF + hook_ifdef)
         self.add_line(self.HOOK_DEFINE + hook + param + ' ' + value)
         self.add_line(self.HOOK_ENDIF)
         self.add_line(self.BLANK_LINE)

@@ -49,34 +49,121 @@
 // ========== USER STATE CODE PROTOTYPES START =================================
 // =============================================================================
 
-static BOOL_TYPE Guard11(void);
-static BOOL_TYPE Guard13A(void);
-static BOOL_TYPE Guard13B(void);
-static BOOL_TYPE Guard1Done(void);
-static BOOL_TYPE Guard2DoneA(void);
-static BOOL_TYPE Guard2DoneB(void);
-static BOOL_TYPE Guard31(void);
-static BOOL_TYPE Guard33(void);
-static BOOL_TYPE Guard3Done(void);
-static BOOL_TYPE GuardNext(void);
-static void State1_DoFunc(void);
-static void State1_EnterFunc(void);
-static void State1_ExitFunc(void);
-static void State2_DoFunc(void);
-static void State2_EnterFunc(void);
-static void State2_ExitFunc(void);
-static void State3_DoFunc(void);
-static void State3_EnterFunc(void);
-static void State3_ExitFunc(void);
-static void Transition13A(void);
-static void Transition13B(void);
-static void Transition1Done(void);
-static void Transition2DoneA(void);
-static void Transition2DoneB(void);
-static void Transition31(void);
-static void Transition31b(void);
-static void Transition33(void);
-static void Transition3Done(void);
+static BOOL_TYPE Guard11(int id);
+static BOOL_TYPE Guard13A(int id);
+static BOOL_TYPE Guard13B(int id);
+static BOOL_TYPE Guard1Done(int id);
+static BOOL_TYPE Guard2DoneA(int id);
+static BOOL_TYPE Guard2DoneB(int id);
+static BOOL_TYPE Guard31(int id);
+static BOOL_TYPE Guard33(int id);
+static BOOL_TYPE Guard3Done(int id);
+static BOOL_TYPE GuardNext(int id);
+static void State1_DoFunc(int id);
+static void State1_EnterFunc(int id);
+static void State1_ExitFunc(int id);
+static void State2_DoFunc(int id);
+static void State2_EnterFunc(int id);
+static void State2_ExitFunc(int id);
+static void State3_DoFunc(int id);
+static void State3_EnterFunc(int id);
+static void State3_ExitFunc(int id);
+static void Transition13A(int id);
+static void Transition13B(int id);
+static void Transition1Done(int id);
+static void Transition2DoneA(int id);
+static void Transition2DoneB(int id);
+static void Transition31(int id);
+static void Transition31b(int id);
+static void Transition33(int id);
+static void Transition3Done(int id);
+
+static BOOL_TYPE Guard11(int id);
+static BOOL_TYPE Guard13A(int id);
+static BOOL_TYPE Guard13B(int id);
+static BOOL_TYPE Guard1Done(int id);
+static BOOL_TYPE Guard2DoneA(int id);
+static BOOL_TYPE Guard2DoneB(int id);
+static BOOL_TYPE Guard31(int id);
+static BOOL_TYPE Guard33(int id);
+static BOOL_TYPE Guard3Done(int id);
+static BOOL_TYPE GuardNext(int id);
+static void State1_DoFunc(int id);
+static void State1_EnterFunc(int id);
+static void State1_ExitFunc(int id);
+static void State2_DoFunc(int id);
+static void State2_EnterFunc(int id);
+static void State2_ExitFunc(int id);
+static void State3_DoFunc(int id);
+static void State3_EnterFunc(int id);
+static void State3_ExitFunc(int id);
+static void Transition13A(int id);
+static void Transition13B(int id);
+static void Transition1Done(int id);
+static void Transition2DoneA(int id);
+static void Transition2DoneB(int id);
+static void Transition31(int id);
+static void Transition31b(int id);
+static void Transition33(int id);
+static void Transition3Done(int id);
+
+static BOOL_TYPE Guard11(int id);
+static BOOL_TYPE Guard13A(int id);
+static BOOL_TYPE Guard13B(int id);
+static BOOL_TYPE Guard1Done(int id);
+static BOOL_TYPE Guard2DoneA(int id);
+static BOOL_TYPE Guard2DoneB(int id);
+static BOOL_TYPE Guard31(int id);
+static BOOL_TYPE Guard33(int id);
+static BOOL_TYPE Guard3Done(int id);
+static BOOL_TYPE GuardNext(int id);
+static void State1_DoFunc(int id);
+static void State1_EnterFunc(int id);
+static void State1_ExitFunc(int id);
+static void State2_DoFunc(int id);
+static void State2_EnterFunc(int id);
+static void State2_ExitFunc(int id);
+static void State3_DoFunc(int id);
+static void State3_EnterFunc(int id);
+static void State3_ExitFunc(int id);
+static void Transition13A(int id);
+static void Transition13B(int id);
+static void Transition1Done(int id);
+static void Transition2DoneA(int id);
+static void Transition2DoneB(int id);
+static void Transition31(int id);
+static void Transition31b(int id);
+static void Transition33(int id);
+static void Transition3Done(int id);
+
+static BOOL_TYPE Guard11(int id);
+static BOOL_TYPE Guard13A(int id);
+static BOOL_TYPE Guard13B(int id);
+static BOOL_TYPE Guard1Done(int id);
+static BOOL_TYPE Guard2DoneA(int id);
+static BOOL_TYPE Guard2DoneB(int id);
+static BOOL_TYPE Guard31(int id);
+static BOOL_TYPE Guard33(int id);
+static BOOL_TYPE Guard3Done(int id);
+static BOOL_TYPE GuardNext(int id);
+static void State1_DoFunc(int id);
+static void State1_EnterFunc(int id);
+static void State1_ExitFunc(int id);
+static void State2_DoFunc(int id);
+static void State2_EnterFunc(int id);
+static void State2_ExitFunc(int id);
+static void State3_DoFunc(int id);
+static void State3_EnterFunc(int id);
+static void State3_ExitFunc(int id);
+static void Transition13A(int id);
+static void Transition13B(int id);
+static void Transition1Done(int id);
+static void Transition2DoneA(int id);
+static void Transition2DoneB(int id);
+static void Transition31(int id);
+static void Transition31b(int id);
+static void Transition33(int id);
+static void Transition3Done(int id);
 
 // =============================================================================
 // ========== USER STATE CODE PROTOTYPES END ===================================
@@ -89,7 +176,7 @@ static void Transition3Done(void);
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard11(void)
+static BOOL_TYPE Guard11(int id)
 {
     return TRUE;
 }
@@ -97,7 +184,7 @@ static BOOL_TYPE Guard11(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard13A(void)
+static BOOL_TYPE Guard13A(int id)
 {
     return TRUE;
 }
@@ -105,7 +192,7 @@ static BOOL_TYPE Guard13A(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard13B(void)
+static BOOL_TYPE Guard13B(int id)
 {
     return TRUE;
 }
@@ -113,7 +200,7 @@ static BOOL_TYPE Guard13B(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard1Done(void)
+static BOOL_TYPE Guard1Done(int id)
 {
     return TRUE;
 }
@@ -121,7 +208,7 @@ static BOOL_TYPE Guard1Done(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard2DoneA(void)
+static BOOL_TYPE Guard2DoneA(int id)
 {
     return TRUE;
 }
@@ -129,7 +216,7 @@ static BOOL_TYPE Guard2DoneA(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard2DoneB(void)
+static BOOL_TYPE Guard2DoneB(int id)
 {
     return TRUE;
 }
@@ -137,7 +224,7 @@ static BOOL_TYPE Guard2DoneB(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard31(void)
+static BOOL_TYPE Guard31(int id)
 {
     return TRUE;
 }
@@ -145,7 +232,7 @@ static BOOL_TYPE Guard31(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard33(void)
+static BOOL_TYPE Guard33(int id)
 {
     return TRUE;
 }
@@ -153,7 +240,7 @@ static BOOL_TYPE Guard33(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE Guard3Done(void)
+static BOOL_TYPE Guard3Done(int id)
 {
     return TRUE;
 }
@@ -161,7 +248,7 @@ static BOOL_TYPE Guard3Done(void)
 /**
  * @todo FIXME
  */
-static BOOL_TYPE GuardNext(void)
+static BOOL_TYPE GuardNext(int id)
 {
     return TRUE;
 }
@@ -169,7 +256,7 @@ static BOOL_TYPE GuardNext(void)
 /**
  * @todo FIXME
  */
-static void State1_DoFunc(void)
+static void State1_DoFunc(int id)
 {
     return;
 }
@@ -177,7 +264,7 @@ static void State1_DoFunc(void)
 /**
  * @todo FIXME
  */
-static void State1_EnterFunc(void)
+static void State1_EnterFunc(int id)
 {
     return;
 }
@@ -185,7 +272,7 @@ static void State1_EnterFunc(void)
 /**
  * @todo FIXME
  */
-static void State1_ExitFunc(void)
+static void State1_ExitFunc(int id)
 {
     return;
 }
@@ -193,7 +280,7 @@ static void State1_ExitFunc(void)
 /**
  * @todo FIXME
  */
-static void State2_DoFunc(void)
+static void State2_DoFunc(int id)
 {
     return;
 }
@@ -201,7 +288,7 @@ static void State2_DoFunc(void)
 /**
  * @todo FIXME
  */
-static void State2_EnterFunc(void)
+static void State2_EnterFunc(int id)
 {
     return;
 }
@@ -209,7 +296,7 @@ static void State2_EnterFunc(void)
 /**
  * @todo FIXME
  */
-static void State2_ExitFunc(void)
+static void State2_ExitFunc(int id)
 {
     return;
 }
@@ -217,7 +304,7 @@ static void State2_ExitFunc(void)
 /**
  * @todo FIXME
  */
-static void State3_DoFunc(void)
+static void State3_DoFunc(int id)
 {
     return;
 }
@@ -225,7 +312,7 @@ static void State3_DoFunc(void)
 /**
  * @todo FIXME
  */
-static void State3_EnterFunc(void)
+static void State3_EnterFunc(int id)
 {
     return;
 }
@@ -233,7 +320,7 @@ static void State3_EnterFunc(void)
 /**
  * @todo FIXME
  */
-static void State3_ExitFunc(void)
+static void State3_ExitFunc(int id)
 {
     return;
 }
@@ -241,7 +328,7 @@ static void State3_ExitFunc(void)
 /**
  * @todo FIXME
  */
-static void Transition13A(void)
+static void Transition13A(int id)
 {
     return;
 }
@@ -249,7 +336,7 @@ static void Transition13A(void)
 /**
  * @todo FIXME
  */
-static void Transition13B(void)
+static void Transition13B(int id)
 {
     return;
 }
@@ -257,7 +344,7 @@ static void Transition13B(void)
 /**
  * @todo FIXME
  */
-static void Transition1Done(void)
+static void Transition1Done(int id)
 {
     return;
 }
@@ -265,7 +352,7 @@ static void Transition1Done(void)
 /**
  * @todo FIXME
  */
-static void Transition2DoneA(void)
+static void Transition2DoneA(int id)
 {
     return;
 }
@@ -273,7 +360,7 @@ static void Transition2DoneA(void)
 /**
  * @todo FIXME
  */
-static void Transition2DoneB(void)
+static void Transition2DoneB(int id)
 {
     return;
 }
@@ -281,7 +368,7 @@ static void Transition2DoneB(void)
 /**
  * @todo FIXME
  */
-static void Transition31(void)
+static void Transition31(int id)
 {
     return;
 }
@@ -289,7 +376,7 @@ static void Transition31(void)
 /**
  * @todo FIXME
  */
-static void Transition31b(void)
+static void Transition31b(int id)
 {
     return;
 }
@@ -297,7 +384,7 @@ static void Transition31b(void)
 /**
  * @todo FIXME
  */
-static void Transition33(void)
+static void Transition33(int id)
 {
     return;
 }
@@ -305,7 +392,679 @@ static void Transition33(void)
 /**
  * @todo FIXME
  */
-static void Transition3Done(void)
+static void Transition3Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard11(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13A(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13B(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard1Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneA(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneB(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard31(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard33(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard3Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE GuardNext(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13A(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13B(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition1Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneA(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneB(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31b(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition33(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition3Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard11(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13A(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13B(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard1Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneA(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneB(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard31(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard33(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard3Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE GuardNext(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13A(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13B(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition1Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneA(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneB(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31b(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition33(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition3Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard11(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13A(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard13B(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard1Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneA(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard2DoneB(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard31(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard33(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE Guard3Done(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static BOOL_TYPE GuardNext(int id)
+{
+    return TRUE;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State1_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State2_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_DoFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_EnterFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void State3_ExitFunc(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13A(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition13B(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition1Done(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneA(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition2DoneB(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition31b(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition33(int id)
+{
+    return;
+}
+
+/**
+ * @todo FIXME
+ */
+static void Transition3Done(int id)
 {
     return;
 }
@@ -334,36 +1093,40 @@ typedef enum STATES {
 // ========== MAIN STATE CODE DEFINES START - DO NOT MODIFY ====================
 // =============================================================================
 
-#ifndef GET_CURRENT_STATE
-#define GET_CURRENT_STATE (CurrentState)
+#ifndef NUM_THREADS
+#define NUM_THREADS 1
 #endif
 
-#ifndef SET_CURRENT_STATE
-#define SET_CURRENT_STATE(state) (CurrentState=(state))
+#ifndef GET_CURRENT_STATE(id)
+#define GET_CURRENT_STATE(id) GetCurrentState(id)
 #endif
 
-#ifndef STATE_ENGINE_INITIALIZE_HOOK
-#define STATE_ENGINE_INITIALIZE_HOOK 
+#ifndef SET_CURRENT_STATE(id, state)
+#define SET_CURRENT_STATE(id, state) SetCurrentState(id, state)
 #endif
 
-#ifndef STATE_ENGINE_TERMINATE_HOOK
-#define STATE_ENGINE_TERMINATE_HOOK 
+#ifndef STATE_ENGINE_INITIALIZE_HOOK(id)
+#define STATE_ENGINE_INITIALIZE_HOOK(id) 
 #endif
 
-#ifndef EVT_HANDLER_DEFAULT_HOOK
-#define EVT_HANDLER_DEFAULT_HOOK 
+#ifndef STATE_ENGINE_TERMINATE_HOOK(id)
+#define STATE_ENGINE_TERMINATE_HOOK(id) 
 #endif
 
-#ifndef MAIN_LOOP_INITIAL_STATE_HOOK
-#define MAIN_LOOP_INITIAL_STATE_HOOK 
+#ifndef EVT_HANDLER_DEFAULT_HOOK(id)
+#define EVT_HANDLER_DEFAULT_HOOK(id) 
 #endif
 
-#ifndef MAIN_LOOP_FINAL_STATE_HOOK
-#define MAIN_LOOP_FINAL_STATE_HOOK 
+#ifndef MAIN_LOOP_INITIAL_STATE_HOOK(id)
+#define MAIN_LOOP_INITIAL_STATE_HOOK(id) 
 #endif
 
-#ifndef MAIN_LOOP_DEFAULT_HOOK
-#define MAIN_LOOP_DEFAULT_HOOK 
+#ifndef MAIN_LOOP_FINAL_STATE_HOOK(id)
+#define MAIN_LOOP_FINAL_STATE_HOOK(id) 
+#endif
+
+#ifndef MAIN_LOOP_DEFAULT_HOOK(id)
+#define MAIN_LOOP_DEFAULT_HOOK(id) 
 #endif
 
 // =============================================================================
@@ -374,20 +1137,10 @@ typedef enum STATES {
 // ========== MAIN STATE CODE PROTOTYPES START - DO NOT MODIFY =================
 // =============================================================================
 
-static void StateEngineCrank_Initialize(void);
-static void StateEngineCrank_MainDoLoop(void);
-static void StateEngineCrank_Terminate(void);
+static void StateEngineCrank_Initialize(int id);
+static void StateEngineCrank_MainDoLoop(int id);
+static void StateEngineCrank_Terminate(int id);
 
-static void EvDone(void);
-static void EvNext(void);
-static void Event11(void);
-static void Event12(void);
-static void Event13(void);
-static void Event21(void);
-static void Event23(void);
-static void Event31(void);
-static void Event32(void);
-static void Event33(void);
 
 // =============================================================================
 // ========== MAIN STATE CODE PROTOTYPES END - DO NOT MODIFY ===================
@@ -397,7 +1150,7 @@ static void Event33(void);
 // ========== MAIN STATE CODE VARIABLES START - DO NOT MODIFY ==================
 // =============================================================================
 
-static unsigned int CurrentState = -1; //!< holds state machine current state
+static unsigned int CurrentState[NUM_THREADS]; //!< holds state machine current state
 
 // =============================================================================
 // ========== MAIN STATE CODE VARIABLES END - DO NOT MODIFY ====================
@@ -416,27 +1169,27 @@ static unsigned int CurrentState = -1; //!< holds state machine current state
  *          events and service any state "Do" functions.
  * ===========================================================================
  */
-static void StateEngineCrank_MainDoLoop(void)
+static void StateEngineCrank_MainDoLoop(int id)
 {
-    switch (GET_CURRENT_STATE) // dispatch according to current state
+    switch (GET_CURRENT_STATE(id)) // dispatch according to current state
     {
         case State1:
-            State1_DoFunc();
+            State1_DoFunc(id);
             break;
         case State2:
-            State2_DoFunc();
+            State2_DoFunc(id);
             break;
         case State3:
-            State3_DoFunc();
+            State3_DoFunc(id);
             break;
         case InitialState:
-            MAIN_LOOP_INITIAL_STATE_HOOK;
+            MAIN_LOOP_INITIAL_STATE_HOOK(id);
             break;
         case FinalState:
-            MAIN_LOOP_FINAL_STATE_HOOK;
+            MAIN_LOOP_FINAL_STATE_HOOK(id);
             break;
         default:
-            MAIN_LOOP_DEFAULT_HOOK;
+            MAIN_LOOP_DEFAULT_HOOK(id);
             break;
     }
 }
@@ -449,10 +1202,10 @@ static void StateEngineCrank_MainDoLoop(void)
  *          There is a HOOK provided for user custom code.
  * ===========================================================================
  */
-static void StateEngineCrank_Initialize(void)
+static void StateEngineCrank_Initialize(int id)
 {
-    SET_CURRENT_STATE(InitialState);
-    STATE_ENGINE_INITIALIZE_HOOK;
+    SET_CURRENT_STATE(id, InitialState);
+    STATE_ENGINE_INITIALIZE_HOOK(id);
 }
 
 /**
@@ -463,361 +1216,10 @@ static void StateEngineCrank_Initialize(void)
  *          There is a HOOK provided for user custom code.
  * ===========================================================================
  */
-static void StateEngineCrank_Terminate(void)
+static void StateEngineCrank_Terminate(int id)
 {
-    SET_CURRENT_STATE(FinalState);
-    STATE_ENGINE_TERMINATE_HOOK;
-}
-
-/**
- * ===========================================================================
- * @brief Event processing EvDone
- *
- * @details State machine event processing for EvDone.
- *          This function needs to be called whenever the event
- *          EvDone is detected.
- * ===========================================================================
- */
-static void EvDone(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            if (Guard1Done()) {
-                State1_ExitFunc();
-                Transition1Done();
-                SET_CURRENT_STATE(FinalState);
-            }
-            break;
-        case State2:
-            if (Guard2DoneA()) {
-                State2_ExitFunc();
-                Transition2DoneA();
-                SET_CURRENT_STATE(FinalState);
-            } else
-            if (Guard2DoneB()) {
-                State2_ExitFunc();
-                Transition2DoneB();
-                SET_CURRENT_STATE(FinalState);
-            }
-            break;
-        case State3:
-            if (Guard3Done()) {
-                State3_ExitFunc();
-                Transition3Done();
-                SET_CURRENT_STATE(FinalState);
-            }
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing EvNext
- *
- * @details State machine event processing for EvNext.
- *          This function needs to be called whenever the event
- *          EvNext is detected.
- * ===========================================================================
- */
-static void EvNext(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            if (GuardNext()) {
-                State1_ExitFunc();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            } else {
-                State1_ExitFunc();
-                SET_CURRENT_STATE(State2);
-                State2_EnterFunc();
-            }
-            break;
-        case State2:
-            if (GuardNext()) {
-                State2_ExitFunc();
-                SET_CURRENT_STATE(State1);
-                State1_EnterFunc();
-            } else {
-                State2_ExitFunc();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            }
-            break;
-        case State3:
-            if (GuardNext()) {
-                State3_ExitFunc();
-                SET_CURRENT_STATE(State2);
-                State2_EnterFunc();
-            } else {
-                State3_ExitFunc();
-                SET_CURRENT_STATE(State1);
-                State1_EnterFunc();
-            }
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event11
- *
- * @details State machine event processing for Event11.
- *          This function needs to be called whenever the event
- *          Event11 is detected.
- * ===========================================================================
- */
-static void Event11(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            if (Guard11()) {
-                State1_ExitFunc();
-                SET_CURRENT_STATE(State1);
-                State1_EnterFunc();
-            }
-            break;
-        case State2:
-            break;
-        case State3:
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event12
- *
- * @details State machine event processing for Event12.
- *          This function needs to be called whenever the event
- *          Event12 is detected.
- * ===========================================================================
- */
-static void Event12(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            State1_ExitFunc();
-            SET_CURRENT_STATE(State2);
-            State2_EnterFunc();
-            break;
-        case State2:
-            break;
-        case State3:
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event13
- *
- * @details State machine event processing for Event13.
- *          This function needs to be called whenever the event
- *          Event13 is detected.
- * ===========================================================================
- */
-static void Event13(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            if (Guard13A()) {
-                State1_ExitFunc();
-                Transition13A();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            } else
-            if (Guard13B()) {
-                State1_ExitFunc();
-                Transition13B();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            } else {
-                State1_ExitFunc();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            }
-            break;
-        case State2:
-            break;
-        case State3:
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event21
- *
- * @details State machine event processing for Event21.
- *          This function needs to be called whenever the event
- *          Event21 is detected.
- * ===========================================================================
- */
-static void Event21(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            break;
-        case State2:
-            State2_ExitFunc();
-            SET_CURRENT_STATE(State1);
-            State1_EnterFunc();
-            break;
-        case State3:
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event23
- *
- * @details State machine event processing for Event23.
- *          This function needs to be called whenever the event
- *          Event23 is detected.
- * ===========================================================================
- */
-static void Event23(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            break;
-        case State2:
-            State2_ExitFunc();
-            SET_CURRENT_STATE(State3);
-            State3_EnterFunc();
-            break;
-        case State3:
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event31
- *
- * @details State machine event processing for Event31.
- *          This function needs to be called whenever the event
- *          Event31 is detected.
- * ===========================================================================
- */
-static void Event31(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            break;
-        case State2:
-            break;
-        case State3:
-            if (Guard31()) {
-                State3_ExitFunc();
-                Transition31();
-                SET_CURRENT_STATE(State1);
-                State1_EnterFunc();
-            } else {
-                State3_ExitFunc();
-                Transition31b();
-                SET_CURRENT_STATE(State1);
-                State1_EnterFunc();
-            }
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event32
- *
- * @details State machine event processing for Event32.
- *          This function needs to be called whenever the event
- *          Event32 is detected.
- * ===========================================================================
- */
-static void Event32(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            break;
-        case State2:
-            break;
-        case State3:
-            State3_ExitFunc();
-            SET_CURRENT_STATE(State2);
-            State2_EnterFunc();
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
-}
-
-/**
- * ===========================================================================
- * @brief Event processing Event33
- *
- * @details State machine event processing for Event33.
- *          This function needs to be called whenever the event
- *          Event33 is detected.
- * ===========================================================================
- */
-static void Event33(void)
-{
-    switch (GET_CURRENT_STATE) // dispatch according to current state
-    {
-        case State1:
-            break;
-        case State2:
-            break;
-        case State3:
-            if (Guard33()) {
-                State3_ExitFunc();
-                Transition33();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            } else {
-                State3_ExitFunc();
-                SET_CURRENT_STATE(State3);
-                State3_EnterFunc();
-            }
-            break;
-        default:
-            EVT_HANDLER_DEFAULT_HOOK;
-            break;
-    }
+    SET_CURRENT_STATE(id, FinalState);
+    STATE_ENGINE_TERMINATE_HOOK(id);
 }
 
 // =============================================================================

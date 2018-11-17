@@ -31,17 +31,17 @@ class CodeScan(modules.Singleton.Singleton):
     """
 
     # Regular Expression - function prototype
-    # static void funcName (void);
-    # static BOOL guardName (void);
-    re_func_proto = re.compile(r'static void (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(void\);')
-    re_guard_proto = re.compile(r'static BOOL_TYPE (?P<guardName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(void\);')
+    # static void funcName (int id);
+    # static BOOL guardName (int id);
+    re_func_proto = re.compile(r'static void (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(int id\);')
+    re_guard_proto = re.compile(r'static BOOL_TYPE (?P<guardName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(int id\);')
     prototypes = []     # array of function prototypes found
 
     # Regular Expression - function declaration
-    # static void funcName (void)
-    # static BOOL guardName (void)
-    re_func_declaration = re.compile(r'static void (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(void\)')
-    re_guard_declaration = re.compile(r'static BOOL_TYPE (?P<guardName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(void\)')
+    # static void funcName (int id)
+    # static BOOL guardName (int id)
+    re_func_declaration = re.compile(r'static void (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(int id\)')
+    re_guard_declaration = re.compile(r'static BOOL_TYPE (?P<guardName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(int id\)')
     functions = []      # array of functions found
 
     # =========================================================================

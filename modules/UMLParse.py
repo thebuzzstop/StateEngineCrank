@@ -537,22 +537,23 @@ class UML(modules.Singleton.Singleton):
     RE_STATE1 = r'(?P<state1>([a-zA-Z_]+[a-zA-Z0-9_]*)|(\[\*\]))'
     RE_STATE2 = r'(?P<state2>([a-zA-Z_]+[a-zA-Z0-9_]*)|(\[\*\]))'
     RE_TRANS = r' \-\-\> '
-    RE_EVENT = r' \: (?P<event>[a-zA-Z_]+[a-zA-Z0-9_]*)'
+    RE_COLON = r' \:'
+    RE_EVENT = r' (?P<event>[a-zA-Z_]+[a-zA-Z0-9_]*)'
     RE_GUARD = r' \[(?P<guard>[a-zA-Z_]+[a-zA-Z0-9_]*)\]'
     RE_FUNC = r' (?P<func>[a-zA-Z_]+[a-zA-Z0-9_]*)'
     RE_SLASH = r' \/'
 
     # state1 --> state2 : Event [Guard] / Transition
-    re_st1_st2_event_guard_func = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_EVENT+RE_GUARD+RE_SLASH+RE_FUNC)
+    re_st1_st2_event_guard_func = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_COLON+RE_EVENT+RE_GUARD+RE_SLASH+RE_FUNC)
 
     # state1 --> state2 : Event / Transition
-    re_st1_st2_event_func = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_EVENT+RE_SLASH+RE_FUNC)
+    re_st1_st2_event_func = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_COLON+RE_EVENT+RE_SLASH+RE_FUNC)
 
     # state1 --> state2 : Event [Guard]
-    re_st1_st2_event_guard = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_EVENT+RE_GUARD)
+    re_st1_st2_event_guard = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_COLON+RE_EVENT+RE_GUARD)
 
     # state1 --> state2 : Event
-    re_st1_st2_event = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_EVENT)
+    re_st1_st2_event = re.compile(RE_STATE1+RE_TRANS+RE_STATE2+RE_COLON+RE_EVENT)
 
     # state1 --> state2
     re_st1_st2 = re.compile(RE_STATE1+RE_TRANS+RE_STATE2)
