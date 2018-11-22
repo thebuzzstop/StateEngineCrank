@@ -6,101 +6,56 @@ Created on November 12, 2018
 
 @package:   StateEngineCrank
 @brief:     StateEngineCrank Python class definitions
-@details:   Class definitions to define StateEngineCrank implementation components
+@details:   State machine class definitions to define StateEngineCrank implementation components.
+            Main state machine processing loop.
 
 @copyright: Mark B Sawyer, All Rights Reserved 2018
 """
 
-from enum import Enum
-
-
-# state record definition
-class State(object):
-    def __init__(self):
-        self._state = None
-        self._enter = None
-        self._do = None
-        self._exit = None
-
-    def state(self, state=None, enter_func=None, do_func=None, exit_func=None):
-        self._state = state
-        self._enter = enter_func
-        self._do = do_func
-        self._exit = exit_func
-
-
-class Event(object):
-    def __init__(self):
-        self._event = None
-
-    def event(self, event=None):
-        self._event = event
-
-
-class Guard(object):
-    def __init__(self):
-        self._guard = None
-
-    def guard(self, guard=None):
-        self._guard = guard
-
-
-class Transition(object):
-    def __init__(self):
-        self._transition = None
-
-    def transition(self, transition_func=None):
-        self._transition = transition_func
-
-
-class Enter(object):
-    def __init__(self):
-        self._enter = None
-
-    def enter(self, enter_func=None):
-        self._enter = enter_func
-
-
-class Exit(object):
-    def __init__(self):
-        self._exit = None
-
-    def exit(self, exit_func=None):
-        self._exit = exit_func
-
-
-class Do(object):
-    def __init__(self):
-        self._do = None
-
-    def do(self, do_func=None):
-        self._do = do_func
-
-
-class StateRecord(object):
-
-    def __init__(self):
-        self.record = {
-            'state1': None, 'state2': None, 'event': None,
-            'enter': None, 'do': None, 'exit': None, 'transition': None
-        }
-
-    def state_record(self, state1=None, state2=None, event=None,
-                     enter_func=None, do_func=None, exit_func=None, transition_func=None):
-
-        self.record['state1'] = state1
-        self.record['state2'] = state2
-        self.record['event'] = event
-        self.record['enter'] = enter_func
-        self.record['do'] = do_func
-        self.record['exit'] = exit_func
-        self.record['transition'] = transition_func
-
 
 class StateMachine(object):
+    """ The StateMachine class is the main execution engine """
 
-    def __init__(self):
-        pass
+    def __init__(self, startup_state=None, function_table=None, transition_table=None):
+        self.active = False
+        self.startup_state = startup_state
+        self.current_state = None
+        self.state_function_table = function_table
+        self.state_transition_table = transition_table
+        self.enter_func = None
+        self.do_func = None
+        self.exit_func = None
+        self.guard_func = None
+        self.trans_func = None
 
-    def state_machine(self):
-        pass
+    def do(self):
+        # lookup current state in function table
+        # execute current state 'do' function if it exists
+        if self.do_func is not None:
+            self.do_func()
+
+    def event(self, event):
+        # lookup current state in transitions table and check for any transitions
+        # associated with the newly received event
+        trans = self.state_transition_table[self.current_state]
+        if event not in trans:
+            return
+        print("Found event %s" % event)
+
+        # State exit function
+        exit_func = self.state_function_table[self.current_state]['exit']
+        if exit_func is not None:
+            exit_func()
+
+        # State transition function
+        trans_func = trans[event]['transition']
+        if trans_func is not None:
+            trans_func()
+
+        # Enter next state
+        self.current_state = trans[event]['state2']
+
+        # State enter function
+        enter_func = self.state_function_table[self.current_state]['enter']
+        if enter_func is not None:
+            enter_func()
