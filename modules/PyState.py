@@ -12,21 +12,60 @@ Created on November 12, 2018
 @copyright: Mark B Sawyer, All Rights Reserved 2018
 """
 
+from threading import (Lock, Thread)
+import time
 
-class StateMachine(object):
+
+class StateFunction(object):
+    """ StateMachine function definitions """
+
+    def __init__(self, state=None, enter=None, do=None, exit=None):
+        self.state = state
+        self.enter = enter
+        self.do = do
+        self.exit = exit
+        return {self.state: {'enter': self.enter, 'do': self.do, 'exit': self.exit}}
+
+
+class StateTransition(object):
+    """ StateMachine state transition definitions """
+
+    def __init__(self, event=None, state2=None, guard=None, transition=None):
+        self.event = event
+        self.state2 = state2
+        self.guard = guard
+        self.transition = transition
+        return {self.event: {'state2': self.state2, 'guard': self.guard, 'transition': self.transition}}
+
+
+class StateMachine(Thread):
     """ The StateMachine class is the main execution engine """
 
-    def __init__(self, startup_state=None, function_table=None, transition_table=None):
-        self.active = False
+    def __init__(self, id=None, running=None, startup_state=None, function_table=None, transition_table=None):
+        self.id = id
         self.startup_state = startup_state
-        self.current_state = None
         self.state_function_table = function_table
         self.state_transition_table = transition_table
+        self.running = False
+
+        self.current_state = None
         self.enter_func = None
         self.do_func = None
         self.exit_func = None
         self.guard_func = None
         self.trans_func = None
+
+    def run(self):
+        print('StateMachine %s starting' % self.id)
+
+
+        # wait until our state machine has been activated
+        while not self.running:
+            time.sleep(0.1)
+
+        print('StateMachine %s running' % self.id)
+        while self.running:
+            self.do()
 
     def do(self):
         # lookup current state in function table
