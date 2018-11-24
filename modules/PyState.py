@@ -15,6 +15,10 @@ Created on November 12, 2018
 from threading import (Lock, Thread)
 import time
 
+import logging
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+logging.debug('Loading modules: %s as %s' % (__file__, __name__))
+
 
 class StateFunction(object):
     """ StateMachine function definitions """
@@ -48,30 +52,34 @@ class StateMachine(Thread):
         self.state_transition_table = transition_table
         self.running = False
 
-        self.current_state = None
-        self.enter_func = None
-        self.do_func = None
-        self.exit_func = None
-        self.guard_func = None
-        self.trans_func = None
+        self.current_state = startup_state
+        self.enter_func = function_table[startup_state]['enter']
+        self.do_func = function_table[startup_state]['do']
+        self.thread = Thread(target=self.run)
+        self.thread.start()
 
     def run(self):
-        print('StateMachine %s starting' % self.id)
-
+        logging.debug('SM[%s] StateMachine starting' % self.id)
 
         # wait until our state machine has been activated
         while not self.running:
             time.sleep(0.1)
 
-        print('StateMachine %s running' % self.id)
+        # check for an enter function
+        if self.enter_func is not None:
+            logging.debug('SM[%s] StateMachine Enter Function %s' % (self.id, self.enter_func))
+            self.enter_func(self)
+
+        logging.debug('SM[%s] StateMachine running' % self.id)
         while self.running:
             self.do()
 
     def do(self):
-        # lookup current state in function table
         # execute current state 'do' function if it exists
         if self.do_func is not None:
-            self.do_func()
+            self.do_func(self)
+        else:
+            logging.debug('SM[%s] Empty do function in %s' % (self.id, self.current_state))
 
     def event(self, event):
         # lookup current state in transitions table and check for any transitions
@@ -79,17 +87,17 @@ class StateMachine(Thread):
         trans = self.state_transition_table[self.current_state]
         if event not in trans:
             return
-        print("Found event %s" % event)
+        logging.debug("SM[%s] Event %s" % (self.id, event))
 
         # State exit function
         exit_func = self.state_function_table[self.current_state]['exit']
         if exit_func is not None:
-            exit_func()
+            exit_func(self)
 
         # State transition function
         trans_func = trans[event]['transition']
         if trans_func is not None:
-            trans_func()
+            trans_func(self)
 
         # Enter next state
         self.current_state = trans[event]['state2']
@@ -97,4 +105,7 @@ class StateMachine(Thread):
         # State enter function
         enter_func = self.state_function_table[self.current_state]['enter']
         if enter_func is not None:
-            enter_func()
+            enter_func(self)
+
+        # Setup do function
+        self.do_func = self.state_function_table[self.current_state]['do']

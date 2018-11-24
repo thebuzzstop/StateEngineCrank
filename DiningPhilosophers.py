@@ -112,21 +112,6 @@ forks = [ForkStatus.Free for _ in range(Config.Philosophers)]
 philosophers = [None for _ in range(Config.Philosophers)]
 
 
-class Logger(object):
-    __instance = None
-
-    def __new__(cls):
-        if Logger.__instance is None:
-            Logger.__instance = object.__new__(cls)
-            Logger.lock = Lock
-        return Logger.__instance
-
-    def logger(self, *args):
-        Logger.lock.acquire()
-        logging.debug(*args)
-        Logger.lock.release()
-
-
 class Waiter(object):
     __instance = None
 
@@ -136,56 +121,34 @@ class Waiter(object):
             Waiter.lock = Lock
         return Waiter.__instance
 
-    def waiter(self, id, left_fork, right_fork):
-        Logger.logger('waiter[in]: %s' % id)
+    @staticmethod
+    def request(id, left_fork, right_fork):
+        logging.debug('SM[%s] waiter[in]' % id)
         Waiter.lock.acquire()
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        forks[left_fork] = ForkStatus.InUse
-        forks[right_fork] = ForkStatus.InUse
+        logging.debug('SM[%s] waiter[out]' % id)
+
+    @staticmethod
+    def thankyou():
+        logging.debug('SM[%s] waiter release' % id)
         Waiter.lock.release()
-        Logger.logger('waiter[out]: %s' % id)
-
-
-# =============================================================================
-# ========== MAIN STATE CODE EVENTS = START = DO NOT MODIFY ===================
-# =============================================================================
-
-
-class EventsCode(object):
-
-    def __init__(self, id=None):
-        self.id = id
-
-    def EvStart(self):
-        pass
-
-    def EvHungry(self):
-        pass
-
-    def EvHaveForks(self):
-        pass
-
-    def EvFull(self):
-        pass
-
-    def EvStop(self):
-        pass
-
-# =============================================================================
-# ========== MAIN STATE CODE EVENTS = END = DO NOT MODIFY =====================
-# =============================================================================
 
 # =============================================================================
 # ========== USER STATE CODE = BEGIN ==========================================
 # =============================================================================
 
 
-class UserCode(object):
+class UserCode(StateMachine):
 
     def __init__(self, id=None):
+        StateMachine.__init__(self,
+                              id=id,
+                              startup_state=States.StartUp,
+                              function_table=StateTables.state_function_table,
+                              transition_table=StateTables.state_transition_table)
         self.id = id                # id used to identify forks and threads
         self.events_counter = 0     # counter for tracking events
         self.eating_seconds = 0     # number of seconds spent eating
@@ -195,19 +158,13 @@ class UserCode(object):
 
         self.left_fork = id
         self.right_fork = (id + 1) % Config.Philosophers
-        self.events = EventsCode()
-
-        self.statemachine = StateMachine(id=id, startup_state=States.StartUp)
-        self.statemachine.state_function_table = StateTables.state_function_table
-        self.statemachine.state_transition_table = StateTables.state_transition_table
-        self.statemachine.thread = Thread(target=self.statemachine.run)
 
     @staticmethod
     def seconds(minimum, maximum):
         return random.randint(minimum, maximum)
 
     def StartUp(self):
-        pass
+        self.event(Events.EvStart)
 
     def StartThinkingTimer(self):
         self.event_timer = UserCode.seconds(Config.Think_Min, Config.Think_Max)
@@ -217,20 +174,25 @@ class UserCode(object):
         self.thinking_seconds += 1
         self.event_timer -= 1
         if self.event_timer == 0:
-            pass
+            self.event(Events.EvHungry)
 
     def AskPermission(self):
-        pass
+        self.waiter.request(self.id, self.left_fork, self.right_fork)
 
     def PickUpForks(self):
         self.left_fork[id] = ForkStatus.InUse
         self.right_fork[id] = ForkStatus.InUse
+        self.waiter.thankyou()
 
     def StartEatingTimer(self):
-        pass
+        self.event_timer = UserCode.seconds(Config.Eat_Min, Config.Eat_max)
 
     def Eat(self):
         time.sleep(1)
+        self.eating_seconds += 1
+        self.event_timer -= 1
+        if self.event_timer == 0:
+            self.event(Events.EvFull)
 
     def PutDownForks(self):
         self.left_fork[id] = ForkStatus.Free
@@ -292,16 +254,11 @@ class Philosopher(UserCode):
         self.exit_code = 0          # exit code returned by this philosopher
         self.waiter_busy = 0        # number of times the waiter was busy
         self.waiter = Waiter        # get an instance of the waiter
-        self.stdio = Logger         # get an instance of the logger
         self.running = False        # True, simulation is running
         self.has_forks = False      # True, philosopher has possession of both forks
 
 
 if __name__ == '__main__':
-
-    # Create locks required for thread synchronization
-    waiter = Waiter
-    stdio = Logger
 
     # Initialize all philosophers
     for id in range(Config.Philosophers):
@@ -311,10 +268,11 @@ if __name__ == '__main__':
     # Start the simulation, i.e. start all philosophers eating
     for id in range(Config.Philosophers):
         philosophers[id].running = True
+        philosophers[id].event(Events.EvStart)
 
     # Wait for the simulation to complete
     for loop in range(Config.Dining_Loops):
         time.sleep(1)
         loop += 1
         if loop % 10 is 0:
-            print('Iterations: %s' % loop)
+            logging.debug('Iterations: %s' % loop)
