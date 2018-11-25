@@ -51,7 +51,7 @@ class StateMachine(Thread):
         self.state_function_table = function_table
         self.state_transition_table = transition_table
         self.running = False
-
+        self.event_code = None
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
@@ -72,7 +72,11 @@ class StateMachine(Thread):
 
         logging.debug('SM[%s] StateMachine running' % self.id)
         while self.running:
-            self.do()
+            if self.event_code is not None:
+                self.event(self.event_code)
+                self.event_code = None
+            else:
+                self.do()
 
     def do(self):
         # execute current state 'do' function if it exists
