@@ -74,7 +74,7 @@ class Error(modules.Singleton.Singleton):
     @staticmethod
     def config_file_open_error(filename):
         """ Config File Open Error - display message and raise source file error."""
-        logging.FATAL('ERROR: Configuration File Open Error: %s' % filename)
+        logging.fatal('ERROR: Configuration File Open Error: %s' % filename)
         raise ConfigFileError(filename)
 
     # =========================================================================
