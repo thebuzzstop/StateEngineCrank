@@ -17,10 +17,10 @@ import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project specific imports
-import modules.CodeScan         # noqa 408
+import modules.ansi_c.CodeScan  # noqa 408
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
-import modules.Signature        # noqa 408
+import modules.ansi_c.Signature  # noqa 408
 import modules.UMLParse         # noqa 408
 
 
@@ -164,10 +164,10 @@ class CodeGen(object):
     def __init__(self):
         """ CodeGeneration module initialization. """
         logging.debug('CodeGeneration ID: %s' % id(self))
-        self.code = modules.CodeScan.CodeScan()
+        self.code = modules.ansi_c.CodeScan.CodeScan()
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
-        self.sig = modules.Signature.Signature()
+        self.sig = modules.ansi_c.Signature.Signature()
         self.uml = modules.UMLParse.UML()
         self.current_line = 0
 

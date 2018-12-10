@@ -91,6 +91,14 @@ class StateMachine(Thread):
         trans = self.state_transition_table[self.current_state]
         if event not in trans:
             return
+
+        # State guard function
+        guard_func = trans[event]['guard']
+        if guard_func is not None:
+            if not guard_func(self):
+                return
+
+        # either no guard function or guard function is true
         logging.debug("SM[%s] Event %s" % (self.id, event))
 
         # State exit function

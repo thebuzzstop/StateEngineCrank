@@ -26,11 +26,11 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 # Project imports
 import modules.Config as Config             # noqa e408
 
-import modules.CodeGeneration as CodeGen    # noqa e408
-import modules.CodeScan as CodeScan         # noqa e408
+import modules.ansi_c.CodeGeneration as CodeGen    # noqa e408
+import modules.ansi_c.CodeScan as CodeScan         # noqa e408
 import modules.ErrorHandling as Error       # noqa e408
 import modules.FileSupport as File          # noqa e408
-import modules.Signature as Sig             # noqa e408
+import modules.ansi_c.Signature as Sig             # noqa e408
 import modules.UMLParse as Uml              # noqa e408
 
 # =========================================================

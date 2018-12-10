@@ -20,7 +20,7 @@ import re                       # noqa 408
 
 import modules.ErrorHandling    # noqa 408
 import modules.FileSupport      # noqa 408
-import modules.Signature        # noqa 408
+import modules.ansi_c.Signature  # noqa 408
 import modules.Singleton        # noqa 408
 
 
@@ -48,7 +48,7 @@ class CodeScan(modules.Singleton.Singleton):
     def __init__(self):
         self.error = modules.ErrorHandling.Error()
         self.file = modules.FileSupport.File()
-        self.sig = modules.Signature.Signature()
+        self.sig = modules.ansi_c.Signature.Signature()
         logging.debug('CodeScan ID: %s' % id(self))
 
     # =========================================================================
