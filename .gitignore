@@ -4,6 +4,7 @@
 
 # StateEngineCrank backup files
 **.c.0??
+**.py.0??
 
 # CAN DBC related secondary files
 CanBus/data/*.bak

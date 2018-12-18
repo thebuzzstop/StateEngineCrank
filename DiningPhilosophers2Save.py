@@ -26,6 +26,7 @@ logging.basicConfig(level=logging.INFO,
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
+
 logging.debug("Importing modules.PyState")
 from modules.PyState import StateMachine
 logging.debug("Back from modules.PyState")
@@ -85,7 +86,7 @@ class StateTables(object):
     state_function_table = {}
 
 # =============================================================================
-# ===== MAIN STATE CODE = STATE DEFINES & TABLES = END = DO NOT MODIFY ========
+# ====== MAIN STATE CODE = STATE DEFINES & TABLES = END = DO NOT MODIFY =======
 # =============================================================================
 
 
@@ -131,7 +132,7 @@ philosophers = [None for _ in range(Config.Philosophers)]
 waiter = Waiter()
 
 # =============================================================================
-# ===== USER STATE CODE = BEGIN ===============================================
+# ========== USER STATE CODE = BEGIN ==========================================
 # =============================================================================
 
 
@@ -208,29 +209,33 @@ class UserCode(StateMachine):
         self.running = False
 
 # =============================================================================
-# ===== USER STATE CODE = END =================================================
+# ========== USER STATE CODE = END ============================================
 # =============================================================================
 
 # =============================================================================
-# ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY ========================
+# ========== MAIN STATE CODE TABLES = START = DO NOT MODIFY ===================
 # =============================================================================
 
 
 StateTables.state_transition_table[States.StartUp] = { \
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+}
 
 StateTables.state_transition_table[States.Thinking] = { \
     Events.EvHungry: {'state2': States.Hungry, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+}
 
 StateTables.state_transition_table[States.Hungry] = { \
     Events.EvHavePermission: {'state2': States.Eating, 'guard': None, 'transition': UserCode.PickUpForks},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': UserCode.ThankWaiter}}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': UserCode.ThankWaiter}
+}
 
 StateTables.state_transition_table[States.Eating] = { \
     Events.EvFull: {'state2': States.Thinking, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+}
 
 StateTables.state_function_table[States.StartUp] = \
     {'enter': UserCode.StartUp, 'do': None, 'exit': None}
@@ -248,7 +253,7 @@ StateTables.state_function_table[States.Finish] = \
     {'enter': UserCode.Finish, 'do': None, 'exit': None}
 
 # =============================================================================
-# ===== MAIN STATE CODE TABLES = END = DO NOT MODIFY ==========================
+# ========== MAIN STATE CODE TABLES = END = DO NOT MODIFY =====================
 # =============================================================================
 
 

@@ -5,7 +5,7 @@ Created on May 31, 2016
 @date:      27-Jun-2016
 
 @package:   StateEngineCrank
-@brief:     Signature Processing
+@brief:     Signature Processing (Ansi-C State Engine)
 @details:   Signature Processing - creation and identification
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016

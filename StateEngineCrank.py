@@ -24,14 +24,19 @@ logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
-import modules.Config as Config             # noqa e408
+import modules.Config as Config                 # noqa e408
 
-import modules.ansi_c.CodeGeneration as CodeGen    # noqa e408
-import modules.ansi_c.CodeScan as CodeScan         # noqa e408
-import modules.ErrorHandling as Error       # noqa e408
-import modules.FileSupport as File          # noqa e408
-import modules.ansi_c.Signature as Sig             # noqa e408
-import modules.UMLParse as Uml              # noqa e408
+import modules.ansi_c.Signature as c_Sig           # noqa e408
+import modules.ansi_c.CodeGeneration as c_CodeGen  # noqa e408
+import modules.ansi_c.CodeScan as c_CodeScan       # noqa e408
+
+import modules.python.Signature as py_Sig           # noqa e408
+import modules.python.CodeGeneration as py_CodeGen  # noqa e408
+import modules.python.CodeScan as py_CodeScan       # noqa e408
+
+import modules.ErrorHandling as Error           # noqa e408
+import modules.FileSupport as File              # noqa e408
+import modules.UMLParse as Uml                  # noqa e408
 
 # =========================================================
 #  DEBUG *** DEBUG *** DEBUG *** DEBUG *** DEBUG *** DEBUG
@@ -53,11 +58,9 @@ if __name__ == '__main__':
 
     # instantiate configuration first to parse command line and configuration file
     config = Config.TheConfig()
-    codegen = CodeGen.CodeGen()
-    codescan = CodeScan.CodeScan()
     files = File.File()
-    sig = Sig.Signature()
     uml = Uml.UML()
+    err = Error.Error()
 
     # =========================================================================
     # the big try for all of our processing
@@ -77,6 +80,17 @@ if __name__ == '__main__':
         # process all input files
         for input_file in input_files:
             logging.debug('Input file: %s' % input_file)
+
+            if files.file_type(input_file) is files.FileType.c:
+                sig = c_Sig.Signature()
+                scan = c_CodeScan.CodeScan()
+                gen = c_CodeGen.CodeGen()
+            elif files.file_type(input_file) is files.FileType.py:
+                sig = py_Sig.Signature()
+                scan = py_CodeScan.CodeScan()
+                gen = py_CodeGen.CodeGen()
+            else:
+                err.file_type_error(input_file)
 
             # read source file into memory
             files.open(input_file)
@@ -104,10 +118,10 @@ if __name__ == '__main__':
                 sig.create_signatures()
 
             # Scan and create list of current user state functions
-            codescan.scan_code()
+            scan.scan_code()
 
             # Signatures (now) exist so update code based on current UML
-            codegen.update_code()
+            gen.update_code()
 
             # Process files if any state machine changes were detected
             #    If the file changed then backup (rename) the original/
@@ -143,4 +157,4 @@ if __name__ == '__main__':
         # exit processing and cleanup
         # =========================================================
         logging.info('Execution complete ... exiting ...')
-        exit(1)
+        exit(0)

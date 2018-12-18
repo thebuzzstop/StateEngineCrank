@@ -5,7 +5,7 @@ Created on May 19, 2016
 @date:      20-May-2016
 
 @package:   StateEngineCrank
-@brief:     Code Generation
+@brief:     Code Generation (Ansi-C State Engine)
 @details:   Code Generation for StateEngineCrank
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016

@@ -5,7 +5,7 @@ Created on May 31, 2016
 @date:      27-Jun-2016
 
 @package:   StateEngineCrank
-@brief:     Signature Processing
+@brief:     Signature Processing (Python State Engine)
 @details:   Signature Processing - creation and identification
 
 @copyright: Mark B Sawyer, All Rights Reserved 2016
@@ -28,34 +28,27 @@ class Signature(modules.Singleton.Singleton):
     ####
     # 00000000011111111112222222222333333333344444444445555555555666666666677777777778
     # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-    # // =============================================================================
-    # // ========== SIGNATURE_DELIMITER_STRING =======================================
-    # // =============================================================================
+    # # ==============================================================================
+    # # ===== SIGNATURE_DELIMITER_STRING =============================================
+    # # ==============================================================================
     ####
     SIGNATURE_LINE_LENGTH = 80          # length of a signature in characters
-    SIGNATURE_LINE_PRELIM = 10          # length of the start of the signature
+    SIGNATURE_LINE_PRELIM = 5           # length of the start of the signature
     SIGNATURE_LINE_CHAR = '='           # primary signature character
-    SIGNATURE_LINE_DELIM = '// '        # signature line delimiter (it's a comment)
-    SIGNATURE_LINE_START = 3            # index of line start (past line delimiter)
+    SIGNATURE_LINE_DELIM = '# '         # signature line delimiter (it's a comment)
+    SIGNATURE_LINE_START = 2            # index of line start (past line delimiter)
 
     SIGNATURE_LINE_LENGTH_0 = SIGNATURE_LINE_LENGTH - SIGNATURE_LINE_PRELIM - len(SIGNATURE_LINE_DELIM)
     SIGNATURE_LINE_NUM_CHARS = SIGNATURE_LINE_LENGTH - SIGNATURE_LINE_START
 
-    MAIN_CODE_START = ' MAIN STATE CODE START - DO NOT MODIFY '
-    MAIN_CODE_END = ' MAIN STATE CODE END - DO NOT MODIFY '
-    MAIN_CODE_DEFINES_START = ' MAIN STATE CODE DEFINES START - DO NOT MODIFY '
-    MAIN_CODE_DEFINES_END = ' MAIN STATE CODE DEFINES END - DO NOT MODIFY '
-    MAIN_CODE_ENUMS_START = ' MAIN STATE CODE STATE DEFINES START - DO NOT MODIFY '
-    MAIN_CODE_ENUMS_END = ' MAIN STATE CODE STATE DEFINES END - DO NOT MODIFY '
-    MAIN_CODE_PROTOTYPES_START = ' MAIN STATE CODE PROTOTYPES START - DO NOT MODIFY '
-    MAIN_CODE_PROTOTYPES_END = ' MAIN STATE CODE PROTOTYPES END - DO NOT MODIFY '
-    MAIN_CODE_VARIABLES_START = ' MAIN STATE CODE VARIABLES START - DO NOT MODIFY '
-    MAIN_CODE_VARIABLES_END = ' MAIN STATE CODE VARIABLES END - DO NOT MODIFY '
+    MAIN_DEFINES_START = ' MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY '
+    MAIN_DEFINES_END = ' MAIN STATE CODE = STATE DEFINES & TABLES = END = DO NOT MODIFY '
 
-    USER_CODE_START = ' USER STATE CODE START '
-    USER_CODE_END = ' USER STATE CODE END '
-    USER_CODE_PROTOTYPES_START = ' USER STATE CODE PROTOTYPES START '
-    USER_CODE_PROTOTYPES_END = ' USER STATE CODE PROTOTYPES END '
+    MAIN_TABLES_START = ' MAIN STATE CODE TABLES = START = DO NOT MODIFY '
+    MAIN_TABLES_END = ' MAIN STATE CODE TABLES = END = DO NOT MODIFY '
+
+    USER_CODE_START = ' USER STATE CODE = BEGIN '
+    USER_CODE_END = ' USER STATE CODE = END '
 
     # =========================================================================
     def __init__(self):
@@ -76,35 +69,12 @@ class Signature(modules.Singleton.Singleton):
         self.signature_line1 = self.SIGNATURE_LINE_DELIM + \
                                "".join(self.SIGNATURE_LINE_CHAR for _ in range(self.SIGNATURE_LINE_PRELIM))  # noqa e127
 
-        self.create_signature(self.MAIN_CODE_DEFINES_START)
-        self.create_signature(self.MAIN_CODE_DEFINES_END)
-        self.create_signature(self.MAIN_CODE_ENUMS_START)
-        self.create_signature(self.MAIN_CODE_ENUMS_END)
-        self.create_signature(self.MAIN_CODE_PROTOTYPES_START)
-        self.create_signature(self.MAIN_CODE_PROTOTYPES_END)
-        self.create_signature(self.MAIN_CODE_VARIABLES_START)
-        self.create_signature(self.MAIN_CODE_VARIABLES_END)
-        self.create_signature(self.MAIN_CODE_START)
-        self.create_signature(self.MAIN_CODE_END)
-
-        self.create_signature(self.USER_CODE_PROTOTYPES_START)
-        self.create_signature(self.USER_CODE_PROTOTYPES_END)
+        self.create_signature(self.MAIN_TABLES_START)
+        self.create_signature(self.MAIN_TABLES_END)
+        self.create_signature(self.MAIN_DEFINES_START)
+        self.create_signature(self.MAIN_DEFINES_END)
         self.create_signature(self.USER_CODE_START)
         self.create_signature(self.USER_CODE_END)
-
-    # =========================================================================
-    def create_signature_user_proto_start(self):
-        """ Create user prototype signature start. """
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_START][1][0])
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_START][1][1])
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_START][1][2])
-
-    # =========================================================================
-    def create_signature_user_proto_end(self):
-        """ Create user prototype signature end. """
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_END][1][0])
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_END][1][1])
-        self.file.append_line(self.signatures[self.USER_CODE_PROTOTYPES_END][1][2])
 
     # =========================================================================
     def create_signature_user_code_start(self):
@@ -121,106 +91,50 @@ class Signature(modules.Singleton.Singleton):
         self.file.append_line(self.signatures[self.USER_CODE_END][1][2])
 
     # =========================================================================
-    def create_signature_main_code_defines_start(self):
-        """ Create state engine declarations signature start. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_START][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_START][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_START][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_defines_end(self):
-        """ Create state engine declarations signature end. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_END][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_END][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_DEFINES_END][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_enums_start(self):
-        """ Create state engine enumerations signature start. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_START][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_START][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_START][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_enums_end(self):
-        """ Create state engine enumerations signature end. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_END][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_END][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_ENUMS_END][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_start(self):
+    def create_signature_main_defines_start(self):
         """ Create state engine code signature start. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_START][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_START][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_START][1][2])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_START][1][0])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_START][1][1])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_START][1][2])
 
     # =========================================================================
-    def create_signature_main_code_end(self):
+    def create_signature_main_defines_end(self):
         """ Create state engine code signature end. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_END][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_END][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_END][1][2])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_END][1][0])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_END][1][1])
+        self.file.append_line(self.signatures[self.MAIN_DEFINES_END][1][2])
 
     # =========================================================================
-    def create_signature_main_code_proto_start(self):
-        """ Create state engine prototype signature start. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_START][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_START][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_START][1][2])
+    def create_signature_main_tables_start(self):
+        """ Create state engine code signature start. """
+        self.file.append_line(self.signatures[self.MAIN_TABLES_START][1][0])
+        self.file.append_line(self.signatures[self.MAIN_TABLES_START][1][1])
+        self.file.append_line(self.signatures[self.MAIN_TABLES_START][1][2])
 
     # =========================================================================
-    def create_signature_main_code_proto_end(self):
-        """ Create state engine prototype signature end. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_END][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_END][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_PROTOTYPES_END][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_vars_start(self):
-        """ Create state engine variables signature start. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_START][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_START][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_START][1][2])
-
-    # =========================================================================
-    def create_signature_main_code_vars_end(self):
-        """ Create state engine variables signature end. """
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_END][1][0])
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_END][1][1])
-        self.file.append_line(self.signatures[self.MAIN_CODE_VARIABLES_END][1][2])
+    def create_signature_main_tables_end(self):
+        """ Create state engine code signature end. """
+        self.file.append_line(self.signatures[self.MAIN_TABLES_END][1][0])
+        self.file.append_line(self.signatures[self.MAIN_TABLES_END][1][1])
+        self.file.append_line(self.signatures[self.MAIN_TABLES_END][1][2])
 
     # =========================================================================
     def create_signatures(self):
         """ Create all signatures (user and main). """
         self.file.append_line('')    # add a blank line
-        self.create_signature_user_proto_start()
+        self.create_signature_main_defines_start()
         self.file.append_line('')    # add a blank line
-        self.create_signature_user_proto_end()
+        self.create_signature_main_defines_end()
+
         self.file.append_line('')    # add a blank line
         self.create_signature_user_code_start()
         self.file.append_line('')    # add a blank line
         self.create_signature_user_code_end()
+
         self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_enums_start()
+        self.create_signature_main_tables_start()
         self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_enums_end()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_defines_start()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_defines_end()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_proto_start()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_proto_end()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_vars_start()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_vars_end()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_start()
-        self.file.append_line('')    # add a blank line
-        self.create_signature_main_code_end()
+        self.create_signature_main_tables_end()
 
     # =========================================================================
     def find_signature(self, signature):
@@ -296,54 +210,24 @@ class Signature(modules.Singleton.Singleton):
         return False
 
     # =========================================================================
-    def find_state_engine_code_start(self):
-        """ Find state engine code start. """
-        return self.findsignature(self.MAIN_CODE_START)
-
-    # =========================================================================
-    def find_state_engine_code_end(self):
-        """ Find state engine code end. """
-        return self.findsignature(self.MAIN_CODE_END)
-
-    # =========================================================================
-    def find_state_engine_code_defines_start(self):
+    def find_main_state_engine_definitions_start(self):
         """ Find state engine code defines start. """
-        return self.findsignature(self.MAIN_CODE_DEFINES_START)
+        return self.findsignature(self.MAIN_DEFINES_START)
 
     # =========================================================================
-    def find_state_engine_code_defines_end(self):
+    def find_main_state_engine_definitions_end(self):
         """ Find state engine code defines end. """
-        return self.findsignature(self.MAIN_CODE_DEFINES_END)
+        return self.findsignature(self.MAIN_DEFINES_END)
 
     # =========================================================================
-    def find_state_engine_code_enums_start(self):
-        """ Find state engine code enumerations start. """
-        return self.findsignature(self.MAIN_CODE_ENUMS_START)
+    def find_main_state_engine_tables_start(self):
+        """ Find state engine code tables start. """
+        return self.findsignature(self.MAIN_TABLES_START)
 
     # =========================================================================
-    def find_state_engine_code_enums_end(self):
-        """ Find state engine code enumerations end. """
-        return self.findsignature(self.MAIN_CODE_ENUMS_END)
-
-    # =========================================================================
-    def find_state_engine_code_proto_start(self):
-        """ Find state engine code prototypes start. """
-        return self.findsignature(self.MAIN_CODE_PROTOTYPES_START)
-
-    # =========================================================================
-    def find_state_engine_code_proto_end(self):
-        """ Find state engine code prototypes end. """
-        return self.findsignature(self.MAIN_CODE_PROTOTYPES_END)
-
-    # =========================================================================
-    def find_state_engine_code_variables_start(self):
-        """ Find state engine code variables start. """
-        return self.findsignature(self.MAIN_CODE_VARIABLES_START)
-
-    # =========================================================================
-    def find_state_engine_code_variables_end(self):
-        """ Find state engine code variables end. """
-        return self.findsignature(self.MAIN_CODE_VARIABLES_END)
+    def find_main_state_engine_tables_end(self):
+        """ Find state engine code tables end. """
+        return self.findsignature(self.MAIN_TABLES_END)
 
     # =========================================================================
     def find_user_code_start(self):
@@ -354,16 +238,6 @@ class Signature(modules.Singleton.Singleton):
     def find_user_code_end(self):
         """ Find user code end. """
         return self.findsignature(self.USER_CODE_END)
-
-    # =========================================================================
-    def find_user_code_proto_start(self):
-        """ Find user prototypes start. """
-        return self.findsignature(self.USER_CODE_PROTOTYPES_START)
-
-    # =========================================================================
-    def find_user_code_proto_end(self):
-        """ Find user prototypes end. """
-        return self.findsignature(self.USER_CODE_PROTOTYPES_END)
 
     # =========================================================================
     def create_signature(self, signature_string):

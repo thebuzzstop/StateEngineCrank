@@ -14,6 +14,7 @@ Created on Jun 29, 2016
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
 # System imports
+import os
 import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
@@ -24,6 +25,7 @@ import re               # noqa 408
 # project specific imports
 import modules.Defines as Defines       # noqa 408
 import modules.Singleton as Singleton   # noqa 408
+import modules.ErrorHandling as Error   # noqa 408
 
 
 class TheConfig(Singleton.Singleton):
@@ -32,6 +34,7 @@ class TheConfig(Singleton.Singleton):
         and in the optional configuration file.
     """
 
+    config_file = Defines.DEFAULT_CONFIG_FILE
     debug = False
     verbose = False
     quiet = False
@@ -42,18 +45,14 @@ class TheConfig(Singleton.Singleton):
     def __init__(self):
         """ Constructor """
         super().__init__()
-        self.cfg = CfgParser()      # parse first
-        self.cmd = ArgParser()      # parse last, may override config file
-
+        self.cmd = ArgParser()      # parse first, may override config file
+        self.cfg = CfgParser()      # parse last
         self.debug = self.cfg.debug or self.cmd.debug
         self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
         self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
-        self.debug = self.cmd.debug or self.cfg.debug
         self.version = self.cmd.version or self.cfg.version
-
         self.files.extend(self.cfg.files)
         self.files.extend(self.cmd.files)
-
         logging.debug('files: %s' % self.files)
 
 
@@ -83,17 +82,21 @@ class ArgParser(argparse.ArgumentParser):
         self.verbose = False
         self.quiet = False
         self.debug = False
-        self.config = None
-        self.version = None
+        self.version = False
         self.files = []
 
         self.args = parser.parse_args()
-        if self.verbose:
-            self.verbose = True
-        if self.quiet:
-            self.quiet = True
-        if self.debug:
-            self.debug = True
+        if hasattr(self.args, 'verbose'):
+            self.verbose = self.args.verbose
+        if hasattr(self.args, 'quiet'):
+            self.quiet = self.args.quiet
+        if hasattr(self.args, 'debug'):
+            self.debug = self.args.debug
+
+        # if user specifies a configuration file then update
+        # TheConfig.config_file for config file parsing
+        if hasattr(self.args, 'config'):
+            TheConfig.config_file = self.args.config
 
 
 class CfgParser(configparser.ConfigParser):
@@ -102,23 +105,38 @@ class CfgParser(configparser.ConfigParser):
     # =========================================================================
     def __init__(self):
         super().__init__()
+        self.error = Error.Error()
+        self.config_file = TheConfig.config_file
         self.config = configparser.ConfigParser()
-        self.config.read(Defines.DEFAULT_CONFIG_FILE)
+        if os.path.isfile(self.config_file):
+            self.config.read(self.config_file)
+        else:
+            raise self.error.config_file_missing_error(self.config_file)
 
         self.verbose = False
         self.quiet = False
         self.debug = False
-        self.version = None
+        self.version = False
         self.files = []
 
         # check configuration file for user configuration items
-        if 'verbose' in self.config['mode']:
-            self.verbose = self.config['mode']['verbose']
-        if 'debug' in self.config['mode']:
-            self.debug = self.config['mode']['debug']
-        if 'quiet' in self.config['mode']:
-            self.quiet = self.config['mode']['quiet']
-        if 'version' in self.config['info']:
-            self.version = self.config['info']['version']
-        if 'file' in self.config['files']:
-            self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')
+        if 'mode' in self.config:
+            if 'verbose' in self.config['mode']:
+                self.verbose = self.make_boolean(self.config['mode']['verbose'])
+            if 'debug' in self.config['mode']:
+                self.debug = self.make_boolean(self.config['mode']['debug'])
+            if 'quiet' in self.config['mode']:
+                self.quiet = self.make_boolean(self.config['mode']['quiet'])
+        if 'info' in self.config:
+            if 'version' in self.config['info']:
+                self.version = self.make_boolean(self.config['info']['version'])
+        if 'files' in self.config:
+            if 'file' in self.config['files']:
+                self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')
+
+    def make_boolean(self, value):
+        if str(value).lower() == 'true':
+            return True
+        if str(value).lower() == 'false':
+            return False
+        raise self.error.config_file_parse_error(self.config_file)

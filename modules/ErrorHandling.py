@@ -11,6 +11,7 @@ Created on May 19, 2016
 @copyright: Mark B Sawyer, All Rights Reserved 2016
 """
 # System imports
+import inspect
 import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
@@ -30,6 +31,11 @@ class FileBackupError(Exception):
 
 class FileWriteError(Exception):
     """ Error encountered during file write. """
+    pass
+
+
+class FileTypeError(Exception):
+    """ Unknown file type error encountered """
     pass
 
 
@@ -72,6 +78,11 @@ class Error(modules.Singleton.Singleton):
 
     # =========================================================================
     @staticmethod
+    def lineno():
+        return inspect.currentframe().f_back.f_lineno
+
+    # =========================================================================
+    @staticmethod
     def config_file_open_error(filename):
         """ Config File Open Error - display message and raise source file error."""
         logging.fatal('ERROR: Configuration File Open Error: %s' % filename)
@@ -82,6 +93,13 @@ class Error(modules.Singleton.Singleton):
     def config_file_parse_error(filename):
         """ Config File Parse Error - display message and raise source file error."""
         logging.fatal('ERROR: Configuration File Parse Error: %s' % filename)
+        raise ConfigFileError(filename)
+
+    # =========================================================================
+    @staticmethod
+    def config_file_missing_error(filename):
+        """ Config File Parse Error - display message and raise source file error."""
+        logging.fatal('ERROR: Configuration File Missing Error: %s' % filename)
         raise ConfigFileError(filename)
 
     # =========================================================================
@@ -174,6 +192,21 @@ class Error(modules.Singleton.Singleton):
         """ Bad file index encountered - display message and punt. """
         logging.fatal('ERROR: Bad File Index: %s' % index)
         raise Exception
+
+    # =========================================================================
+    @staticmethod
+    def file_type_error(file_type):
+        """ Unknown file type encountered - display message and punt. """
+        logging.fatal('ERROR: Unknown file type: %s' % file_type)
+        raise Exception
+
+
+    # =========================================================================
+    @staticmethod
+    def unimplemented(msg, line):
+        """ Unimplemented code - display message and punt. """
+        logging.fatal('ERROR: Unimplemented code: %s @ line #%s' % (msg, line))
+        raise UnimplementedCodeError
 
 
 class Warn(modules.Singleton.Singleton):

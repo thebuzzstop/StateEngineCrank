@@ -14,9 +14,10 @@ Created on May 19, 2016
 import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
-import os       # noqa 408
-import re       # noqa 408
-import shutil   # noqa 408
+from enum import Enum   # noqa 408
+import os               # noqa 408
+import re               # noqa 408
+import shutil           # noqa 408
 
 import modules.ErrorHandling    # noqa 408
 import modules.Singleton        # noqa 408
@@ -28,6 +29,11 @@ class File(modules.Singleton.Singleton):
     """
 
     EOF = -1    # end of file reached
+
+    class FileType(Enum):
+        c = 1
+        py = 2
+        unknown = 3
 
     # =========================================================================
     def __init__(self):
@@ -41,6 +47,17 @@ class File(modules.Singleton.Singleton):
         self.file_lines = 0
         self.file_temp = 0          # used for comparing before and after
         logging.debug('FileSupport ID: %s' % id(self))
+
+    # =========================================================================
+    @staticmethod
+    def file_type(filename):
+        """ Return enum for filetype (based on extension) """
+        if filename.endswith('.c'):
+            return File.FileType.c
+        elif filename.endswith('.py'):
+            return File.FileType.py
+        else:
+            return File.FileType.unknown
 
     # =========================================================================
     def open(self, filename):

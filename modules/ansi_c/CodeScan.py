@@ -5,7 +5,7 @@ Created on May 19, 2016
 @date:      17-June-2016
 
 @package:   StateEngineCrank
-@brief:     Code Scanning
+@brief:     Code Scanning (Ansi-C State Engine)
 @details:   Code Scanning for StateEngineCrank
             The purpose of this module is to scan code source files and
             generate a list of function prototypes and function instantiations.
