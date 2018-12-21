@@ -20,6 +20,8 @@ from threading import (Lock, Thread)
 import time
 
 import logging
+from typing import List
+
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
@@ -60,43 +62,43 @@ logging.debug("Back from modules.PyState")
     @enduml
 """
 
-# =============================================================================
-# ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY ======
-# =============================================================================
+# ==============================================================================
+# ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
+# ==============================================================================
 
 
 class States(Enum):
     StartUp = 1
     Thinking = 2
-    Hungry = 3
-    Eating = 4
-    Finish = 5
+    Finish = 3
+    Hungry = 4
+    Eating = 5
 
 
 class Events(Enum):
     EvStart = 1
-    EvHungry = 2
-    EvHavePermission = 3
-    EvFull = 4
-    EvStop = 5
+    EvStop = 2
+    EvHungry = 3
+    EvHavePermission = 4
+    EvFull = 5
 
 
 class StateTables(object):
     state_transition_table = {}
     state_function_table = {}
 
-# =============================================================================
-# ====== MAIN STATE CODE = STATE DEFINES & TABLES = END = DO NOT MODIFY =======
-# =============================================================================
+# ==============================================================================
+# ===== MAIN STATE CODE = STATE DEFINES & TABLES = END = DO NOT MODIFY =========
+# ==============================================================================
 
 
 class Config(object):
-    Eat_Min = 10            # minimum number of seconds to eat
-    Eat_Max = 30            # maximum number of seconds to eat
-    Think_Min = 10          # minimum number of seconds to think
-    Think_Max = 30          # maximum number of seconds to think
-    Philosophers = 11       # number of philosophers dining
-    Dining_Loops = 1200     # number of main loops for dining
+    Eat_Min = 15            # minimum number of seconds to eat
+    Eat_Max = 45            # maximum number of seconds to eat
+    Think_Min = 15          # minimum number of seconds to think
+    Think_Max = 45          # maximum number of seconds to think
+    Philosophers = 9        # number of philosophers dining
+    Dining_Loops = 1000     # number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -118,28 +120,35 @@ class Waiter(object):
             time.sleep(0.1)
         logging.debug('SM[%s] waiter[out]' % id)
 
-    def thankyou(self):
+    def thank_you(self):
         logging.debug('SM[%s] waiter release' % id)
         self.lock.release()
 
+
 # Initialize all forks to 'free' (1 for each philosopher)
-forks = [ForkStatus.Free for _ in range(Config.Philosophers)]
+forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
 
 # Array of philosophers, populated in __main__
-philosophers = [None for _ in range(Config.Philosophers)]
+philosophers = [None for _ in range(Config.Philosophers)]  # type: List[None]
 
 # Waiter who grants requests for access to forks
 waiter = Waiter()
 
-# =============================================================================
-# ========== USER STATE CODE = BEGIN ==========================================
-# =============================================================================
+
+def seconds(minimum, maximum):
+    """ Function to return a random integer between 'minimum' and 'maximum'.
+        Used as the number of seconds to either 'eat' or 'think'.
+    """
+    return random.randint(minimum, maximum)
+
+# ==============================================================================
+# ===== USER STATE CODE = BEGIN ================================================
+# ==============================================================================
 
 
 class UserCode(StateMachine):
 
     def __init__(self, id=None):
-
         StateMachine.__init__(self, id=id, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
@@ -154,25 +163,78 @@ class UserCode(StateMachine):
         self.left_fork = id
         self.right_fork = (id + 1) % Config.Philosophers
 
-    @staticmethod
-    def seconds(minimum, maximum):
-        return random.randint(minimum, maximum)
+    # ===========================================================================
+    def StartUp_StartUp(self):
+        """
+        @brief Enter function processing for <i>StartUp</i> state.
 
-    def StartUp(self):
+        @details State machine enter function processing for the <i>StartUp</i> state.
+        This function is called when the <i>StartUp</i> state is entered.
+        """
         self.event(Events.EvStart)
+        return
 
-    def StartThinkingTimer(self):
-        self.event_timer = UserCode.seconds(Config.Think_Min, Config.Think_Max)
-        logging.info('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
+    # ===========================================================================
+    def Eating_Eat(self):
+        """
+        @brief <i>Do</i> function processing for the <i>Eating</i> state
 
-    def Think(self):
+        @details State machine <i>do</i> function processing for the <i>Eating</i> state.
+        This function is called once every state machine iteration to perform processing
+        for the <i>Eating</i> state.
+        """
         time.sleep(1)
-        self.thinking_seconds += 1
+        self.eating_seconds += 1
         self.event_timer -= 1
         if self.event_timer == 0:
-            self.event(Events.EvHungry)
+            self.event(Events.EvFull)
+        return
 
-    def AskPermission(self):
+    # ===========================================================================
+    def Eating_PutDownForks(self):
+        """
+        @brief <i>Exit</i> function processing for the <i>Eating</i> state.
+
+        @details State machine <i>exit</i> function processing for the <i>Eating</i> state.
+        This function is called when the <i>Eating</i> state is exited.
+        """
+        forks[self.left_fork] = ForkStatus.Free
+        forks[self.right_fork] = ForkStatus.Free
+        return
+
+    # ===========================================================================
+    def Eating_StartEatingTimer(self):
+        """
+        @brief Enter function processing for <i>Eating</i> state.
+
+        @details State machine enter function processing for the <i>Eating</i> state.
+        This function is called when the <i>Eating</i> state is entered.
+        """
+        self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
+        logging.info('SM[%s] Eating (%s)' % (self.id, self.event_timer))
+        return
+
+    # ===========================================================================
+    def Finish_Finish(self):
+        """
+        @brief <i>Do</i> function processing for the <i>Finish</i> state
+
+        @details State machine <i>do</i> function processing for the <i>Finish</i> state.
+        This function is called once every state machine iteration to perform processing
+        for the <i>Finish</i> state.
+        """
+        logging.info('SM[%s] Finished' % self.id)
+        self.running = False
+        return
+
+    # ===========================================================================
+    def Hungry_AskPermission(self):
+        """
+        @brief Enter function processing for <i>Hungry</i> state.
+
+        @details State machine enter function processing for the <i>Hungry</i> state.
+        This function is called when the <i>Hungry</i> state is entered.
+        """
         tstart = time.time()
         waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
@@ -180,81 +242,110 @@ class UserCode(StateMachine):
         self.hungry_seconds += thungry
         logging.info('SM[%s] Hungry (%s)' % (self.id, round(thungry)))
         self.event(Events.EvHavePermission)
+        return
 
+    # =========================================================
     def PickUpForks(self):
+        """
+        @brief State transition processing for <i>PickUpForks</i>
+
+        @details State machine state transition processing for <i>PickUpForks</i>.
+        This function is called whenever the state transition <i>PickUpForks</i> is taken.
+        """
         forks[self.left_fork] = ForkStatus.InUse
         forks[self.right_fork] = ForkStatus.InUse
-        waiter.thankyou()
+        waiter.thank_you()
+        return
 
+    # =========================================================
     def ThankWaiter(self):
-        waiter.thankyou()
+        """
+        @brief State transition processing for <i>ThankWaiter</i>
 
-    def StartEatingTimer(self):
-        self.event_timer = UserCode.seconds(Config.Eat_Min, Config.Eat_Max)
-        logging.info('SM[%s] Eating (%s)' % (self.id, self.event_timer))
+        @details State machine state transition processing for <i>ThankWaiter</i>.
+        This function is called whenever the state transition <i>ThankWaiter</i> is taken.
+        """
+        waiter.thank_you()
+        return
 
-    def Eat(self):
+    # ===========================================================================
+    def Thinking_StartThinkingTimer(self):
+        """
+        @brief Enter function processing for <i>Thinking</i> state.
+
+        @details State machine enter function processing for the <i>Thinking</i> state.
+        This function is called when the <i>Thinking</i> state is entered.
+        """
+        self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
+        logging.info('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
+        return
+
+    # ===========================================================================
+    def Thinking_Think(self):
+        """
+        @brief <i>Do</i> function processing for the <i>Thinking</i> state
+
+        @details State machine <i>do</i> function processing for the <i>Thinking</i> state.
+        This function is called once every state machine iteration to perform processing
+        for the <i>Thinking</i> state.
+        """
         time.sleep(1)
-        self.eating_seconds += 1
+        self.thinking_seconds += 1
         self.event_timer -= 1
         if self.event_timer == 0:
-            self.event(Events.EvFull)
+            self.event(Events.EvHungry)
+        return
 
-    def PutDownForks(self):
-        forks[self.left_fork] = ForkStatus.Free
-        forks[self.right_fork] = ForkStatus.Free
+# ==============================================================================
+# ===== USER STATE CODE = END ==================================================
+# ==============================================================================
 
-    def Finish(self):
-        logging.info('SM[%s] Finished' % self.id)
-        self.running = False
-
-# =============================================================================
-# ========== USER STATE CODE = END ============================================
-# =============================================================================
-
-# =============================================================================
-# ========== MAIN STATE CODE TABLES = START = DO NOT MODIFY ===================
-# =============================================================================
+# ==============================================================================
+# ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
+# ==============================================================================
 
 
-StateTables.state_transition_table[States.StartUp] = { \
+StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }
 
-StateTables.state_transition_table[States.Thinking] = { \
+StateTables.state_transition_table[States.Thinking] = {
     Events.EvHungry: {'state2': States.Hungry, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }
 
-StateTables.state_transition_table[States.Hungry] = { \
+StateTables.state_transition_table[States.Finish] = {
+}
+
+StateTables.state_transition_table[States.Hungry] = {
     Events.EvHavePermission: {'state2': States.Eating, 'guard': None, 'transition': UserCode.PickUpForks},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': UserCode.ThankWaiter}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': UserCode.ThankWaiter},
 }
 
-StateTables.state_transition_table[States.Eating] = { \
+StateTables.state_transition_table[States.Eating] = {
     Events.EvFull: {'state2': States.Thinking, 'guard': None, 'transition': None},
-    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None}
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }
 
 StateTables.state_function_table[States.StartUp] = \
-    {'enter': UserCode.StartUp, 'do': None, 'exit': None}
+    {'enter': UserCode.StartUp_StartUp, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.Thinking] = \
-    {'enter': UserCode.StartThinkingTimer, 'do': UserCode.Think, 'exit': None}
-
-StateTables.state_function_table[States.Hungry] = \
-    {'enter': UserCode.AskPermission, 'do': None, 'exit': None}
-
-StateTables.state_function_table[States.Eating] = \
-    {'enter': UserCode.StartEatingTimer, 'do': UserCode.Eat, 'exit': UserCode.PutDownForks}
+    {'enter': UserCode.Thinking_StartThinkingTimer, 'do': UserCode.Thinking_Think, 'exit': None}
 
 StateTables.state_function_table[States.Finish] = \
-    {'enter': UserCode.Finish, 'do': None, 'exit': None}
+    {'enter': None, 'do': UserCode.Finish_Finish, 'exit': None}
 
-# =============================================================================
-# ========== MAIN STATE CODE TABLES = END = DO NOT MODIFY =====================
-# =============================================================================
+StateTables.state_function_table[States.Hungry] = \
+    {'enter': UserCode.Hungry_AskPermission, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.Eating] = \
+    {'enter': UserCode.Eating_StartEatingTimer, 'do': UserCode.Eating_Eat, 'exit': UserCode.Eating_PutDownForks}
+
+# ==============================================================================
+# ===== MAIN STATE CODE TABLES = END = DO NOT MODIFY ===========================
+# ==============================================================================
 
 
 class Philosopher(UserCode):

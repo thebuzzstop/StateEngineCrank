@@ -12,7 +12,6 @@ Created on May 19, 2016
 """
 
 # System imports
-import re
 import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
@@ -26,9 +25,7 @@ import modules.UMLParse          # noqa 408
 
 class CodeGen(object):
     """ Code Generation for StateEngineCrank """
-    CODE_LINE_TERMINATOR = ';'
     BLANK_LINE = ''
-    TAB_SPACES = '    '
 
     CLASS_STATES = 'class States(Enum):'
     CLASS_EVENTS = 'class Events(Enum):'
@@ -46,6 +43,8 @@ class CodeGen(object):
     STATE_FUNCTION_TABLE_FUNCTIONS_TEMPLATE = "    {'enter': %s, 'do': %s, 'exit': %s}"
     STATE_FUNCTION_USERCODE_TEMPLATE = 'UserCode.%s'
 
+    ENUM_FORMAT = '    %s = %s'
+
     USER_CODE_CLASS = 'class UserCode(StateMachine):'
     USER_CODE_DEF_INIT = 'def __init__(self, id=None):'
     USER_CODE_INIT_CODE = [
@@ -55,40 +54,91 @@ class CodeGen(object):
         '                              transition_table=StateTables.state_transition_table)',
     ]
 
-    GUARD_FUNC_HEADER_TEMPLATE = [
+    TRANS_FUNC_TAG = '{TRANS_FUNC_TAG}'
+    TRANS_FUNC_DECL_TEMPLATE = ['    def {TRANS_FUNC_TAG}(self, id):']
+    TRANS_FUNC_TEMPLATE = [
         '    # =========================================================',
-        '    """ {GUARD_FUNC_TAG} ',
-        '        @Todo FIXME',
-        '    """'
-    ]
-    GUARD_FUNC_TAG = '{GUARD_FUNC_TAG}'
-    GUARD_FUNC_DECL_TEMPLATE = ['    def {GUARD_FUNC_TAG}(id):']
-    GUARD_FUNC_CLOSE = ['        return True']
-
-    FUNC_HEADER_TEMPLATE = [
-        '    # =========================================================',
-        '    """ {FUNC_TAG} ',
-        '        @Todo FIXME',
-        '    """',
-    ]
-    FUNC_TAG = '{FUNC_TAG}'
-    FUNC_DECL_TEMPLATE = ['    def {FUNC_TAG}(id):']
-    FUNC_CLOSE = ['        return']
-
-    ENUM_FORMAT = '    %s = %s'
-
-    FUNCTION_PARENS = '(id)'
-    EVT_TAG = '{EVT_TAG}'
-    EVT_HANDLER_HEADER_TEMPLATE = [
-        '"""',
-        '===========================================================================',
-        '@brief Event processing {EVT_TAG}',
+        '    def {TRANS_FUNC_TAG}(self, id):',
+        '        """',
+        '        @brief State transition processing for <i>{TRANS_FUNC_TAG}</i>',
         '',
-        '@details State machine event processing for {EVT_TAG}.',
-        '         This function needs to be called whenever the event',
-        '         {EVT_TAG} is detected.',
-        '===========================================================================',
-        '"""']
+        '        @details State machine state transition processing for <i>{TRANS_FUNC_TAG}</i>.',
+        '        This function is called whenever the state transition <i>{TRANS_FUNC_TAG}</i> is taken.',
+        '',
+        '        @todo FIXME',
+        '        """',
+        '        return',
+    ]
+
+    GUARD_FUNC_TAG = '{GUARD_FUNC_TAG}'
+    GUARD_FUNC_DECL_TEMPLATE = ['    def {GUARD_FUNC_TAG}(self, id):']
+    GUARD_FUNC_TEMPLATE = [
+        '    # =========================================================',
+        '    def {GUARD_FUNC_TAG}(self, id):',
+        '        """',
+        '        @brief Guard processing for <i>{GUARD_FUNC_TAG}</i>',
+        '',
+        '        @details State machine guard processing for <i>{GUARD_FUNC_TAG}</i>.',
+        '        This function is called whenever the guard <i>{GUARD_FUNC_TAG}</i> is tested.',
+        '',
+        '        @retval True Guard is active/valid',
+        '        @retval False Guard is inactive/invalid',
+        '',
+        '        @todo FIXME',
+        '        """'
+        '        return False',
+    ]
+
+    STATE_TAG = '{STATE_TAG}'
+
+    ENTER_FUNC_TAG = '{ENTER_FUNC_TAG}'
+    ENTER_FUNC_DECL_TEMPLATE = ['    def {ENTER_FUNC_TAG}(self, id):']
+    ENTER_FUNC_TEMPLATE = [
+        '    # ===========================================================================',
+        '    def {ENTER_FUNC_TAG}(self, id):',
+        '        """',
+        '        @brief Enter function processing for <i>{STATE_TAG}</i> state.',
+        '',
+        '        @details State machine enter function processing for the <i>{STATE_TAG}</i> state.',
+        '        This function is called when the <i>{STATE_TAG}</i> state is entered.',
+        '',
+        '        @todo FIXME',
+        '        """',
+        '        return',
+    ]
+
+    DO_FUNC_TAG = '{DO_FUNC_TAG}'
+    DO_FUNC_DECL_TEMPLATE = ['    def {DO_FUNC_TAG}(self, id):']
+    DO_FUNC_TEMPLATE = [
+        '    # ===========================================================================',
+        '    def {DO_FUNC_TAG}(self, id):',
+        '        """',
+        '        @brief <i>Do</i> function processing for the <i>{STATE_TAG}</i> state',
+        '',
+        '        @details State machine <i>do</i> function processing for the <i>{STATE_TAG}</i> state.',
+        '        This function is called once every state machine iteration to perform processing',
+        '        for the <i>{STATE_TAG}</i> state.',
+        '',
+        '        @todo FIXME',
+        '        """',
+        '        return',
+    ]
+
+    EXIT_FUNC_TAG = '{EXIT_FUNC_TAG}'
+    EXIT_FUNC_DECL_TEMPLATE = ['    def {EXIT_FUNC_TAG}(self, id):']
+    EXIT_FUNC_TEMPLATE = [
+        '    # ===========================================================================',
+        '    def {EXIT_FUNC_TAG}(self, id):',
+        '        """',
+        '        @brief <i>Exit</i> function processing for the <i>{STATE_TAG}</i> state.',
+        '',
+        '        @details State machine <i>exit</i> function processing for the <i>{STATE_TAG}</i> state.',
+        '        This function is called when the <i>{STATE_TAG}</i> state is exited.',
+        '',
+        '        @todo FIXME',
+        '        """',
+        '        return',
+    ]
 
     MissingFunctions = []   # list of functions missing in source file
 
@@ -124,11 +174,7 @@ class CodeGen(object):
         # delete any missing functions from previous scans
         del self.MissingFunctions[:]
 
-        self.find_user_enter_functions()
-        self.find_user_do_functions()
-        self.find_user_exit_functions()
-        self.find_user_guard_functions()
-        self.find_user_transition_functions()
+        self.find_user_functions()
         self.update_user_functions()
 
         self.file.dump_file()
@@ -213,7 +259,7 @@ class CodeGen(object):
                         trans_ = 'None'
                     else:
                         trans_ = self.STATE_FUNCTION_USERCODE_TEMPLATE % trans['trans']
-                    line = self.STATE_TRANSITION_TABLE_EVENT_TEMPLATE % (event, state2, guard, trans_ )
+                    line = self.STATE_TRANSITION_TABLE_EVENT_TEMPLATE % (event, state2, guard, trans_)
                     self.add_line(line)
                     logging.debug(line)
 
@@ -293,8 +339,8 @@ class CodeGen(object):
 
         # if not found, create it
         self.current_line = self.user_code_start + 2
-        self.add_line(self.USER_CODE_CLASS)
         self.add_line(self.BLANK_LINE)
+        self.add_line(self.USER_CODE_CLASS)
 
         # remember location of class declaration
         self.class_declaration = self.current_line
@@ -309,40 +355,18 @@ class CodeGen(object):
 
         # if not found, create it
         self.current_line = self.class_declaration + 1
-        self.add_line(self.BLANK_LINE)
         self.add_lines(self.USER_CODE_INIT_CODE)
         self.add_line(self.BLANK_LINE)
 
     # =========================================================================
-    def create_event_functions(self):
-        """ Create event function handlers. """
-        for event in sorted(self.uml.events):
-            # self.add_event_handler(event)
-            self.error.unimplemented('create_event_functions()', self.error.lineno())
+    def find_user_functions(self):
+        """ Find all currently existing user functions. """
 
-    # =============================================================================================
-    def update_user_state_code(self):
-        """ Create/Update user functions. """
-        logging.debug('Missing User Functions: %s' % self.MissingFunctions)
-        # early exit if no missing functions
-        if len(self.MissingFunctions) == 0:
-            return
-        # find current user code end comment and backup to insert missing
-        # user functions
-        self.current_line = self.sig.find_user_code_end()
-        self.current_line = self.current_line - 2
-        for func in sorted(self.MissingFunctions):
-            self.add_line(self.BLANK_LINE)
-            if self.uml.is_guard(func):
-                self.error.unimplemented('if: is_guard()', self.error.lineno())
-                # self.add_lines_template(self.GUARD_FUNC_HEADER_TEMPLATE, self.GUARD_FUNC_TAG, func)
-                # self.add_lines_template(self.GUARD_FUNC_DECL_TEMPLATE, self.GUARD_FUNC_TAG, func)
-                # self.add_lines_template(self.GUARD_FUNC_CLOSE, self.GUARD_FUNC_TAG, func)
-            else:
-                self.error.unimplemented('else: is_guard()', self.error.lineno())
-                # self.add_lines_template(self.VOID_FUNC_HEADER_TEMPLATE, self.VOID_FUNC_TAG, func)
-                # self.add_lines_template(self.VOID_FUNC_DECL_TEMPLATE, self.VOID_FUNC_TAG, func)
-                # self.add_lines_template(self.VOID_FUNC_CLOSE, self.VOID_FUNC_TAG, func)
+        self.find_user_enter_functions()
+        self.find_user_do_functions()
+        self.find_user_exit_functions()
+        self.find_user_guard_functions()
+        self.find_user_transition_functions()
 
     # =============================================================================================
     def update_user_functions(self):
@@ -357,17 +381,34 @@ class CodeGen(object):
         self.current_line = self.current_line - 2
         for func in sorted(self.MissingFunctions):
             self.add_line(self.BLANK_LINE)
-            if self.uml.is_guard(func):
-                self.add_lines_template(self.GUARD_FUNC_HEADER_TEMPLATE, self.GUARD_FUNC_TAG, func)
-                self.add_lines_template(self.GUARD_FUNC_DECL_TEMPLATE, self.GUARD_FUNC_TAG, func)
-                self.add_lines_template(self.GUARD_FUNC_CLOSE, self.GUARD_FUNC_TAG, func)
+            if self.uml.is_guard_func(func):
+                self.add_lines_template(self.GUARD_FUNC_TEMPLATE,
+                                        ftag=self.GUARD_FUNC_TAG, func=func)
+
+            elif self.uml.is_enter_func(func):
+                state = self.uml.enter_func_states[func]
+                self.add_lines_template(self.ENTER_FUNC_TEMPLATE,
+                                        ftag=self.ENTER_FUNC_TAG, func=func,
+                                        stag=self.STATE_TAG, state=state)
+            elif self.uml.is_do_func(func):
+                state = self.uml.do_func_states[func]
+                self.add_lines_template(self.DO_FUNC_TEMPLATE,
+                                        ftag=self.DO_FUNC_TAG, func=func,
+                                        stag=self.STATE_TAG, state=state)
+            elif self.uml.is_exit_func(func):
+                state = self.uml.exit_func_states[func]
+                self.add_lines_template(self.EXIT_FUNC_TEMPLATE,
+                                        ftag=self.EXIT_FUNC_TAG, func=func,
+                                        stag=self.STATE_TAG, state=state)
+
+            elif self.uml.is_trans_func(func):
+                self.add_lines_template(self.TRANS_FUNC_TEMPLATE,
+                                        ftag=self.TRANS_FUNC_TAG, func=func)
             else:
-                self.add_lines_template(self.FUNC_HEADER_TEMPLATE, self.FUNC_TAG, func)
-                self.add_lines_template(self.FUNC_DECL_TEMPLATE, self.FUNC_TAG, func)
-                self.add_lines_template(self.FUNC_CLOSE, self.FUNC_TAG, func)
+                self.error.function_type_not_found(func)
 
     # =============================================================================================
-    def find_user_functions(self, func_list):
+    def find_user_function_list(self, func_list):
         """ Scan current list functions for UML functions. """
         logging.debug('FuncList: %s' % func_list)
         # scan code for missing functions
@@ -381,40 +422,35 @@ class CodeGen(object):
                 logging.debug('Found function: %s ' % func)
 
     # =============================================================================================
-    def find_user_event_functions(self):
-        """ Scan current list of functions for UML event functions. """
-        self.find_user_functions(self.uml.events.values())
-
-    # =============================================================================================
     def find_user_enter_functions(self):
         """ Scan current list of functions for UML enter functions. """
-        self.find_user_functions(self.uml.enters.values())
+        self.find_user_function_list(self.uml.enters.values())
 
     # =========================================================================
     def find_user_do_functions(self):
         """ Scan current list of functions for UML enter functions. """
-        self.find_user_functions(self.uml.dos.values())
+        self.find_user_function_list(self.uml.dos.values())
 
     # =========================================================================
     def find_user_exit_functions(self):
         """ Scan current list of functions for UML exit functions. """
-        self.find_user_functions(self.uml.exits.values())
+        self.find_user_function_list(self.uml.exits.values())
 
     # =========================================================================
     def find_user_guard_functions(self):
         """ Scan current list of functions for UML guard functions. """
-        self.find_user_functions(self.uml.gfuncs)
+        self.find_user_function_list(self.uml.guard_funcs)
 
     # =========================================================================
     def find_user_transition_functions(self):
         """ Scan current list of functions for UML transition functions. """
-        self.find_user_functions(self.uml.tfuncs)
+        self.find_user_function_list(self.uml.trans_funcs)
 
     # =========================================================================
-    def add_lines_template(self, lines_text, token, arg):
+    def add_lines_template(self, lines_text, **kwargs):
         """ Add lines of text to file in memory using template. """
         for line_text in lines_text:
-            self.add_line_template(line_text, token, arg)
+            self.add_line_template(line_text, **kwargs)
 
     # =========================================================================
     def add_lines(self, lines_text):
@@ -423,10 +459,13 @@ class CodeGen(object):
             self.add_line(line_text)
 
     # =========================================================================
-    def add_line_template(self, line_text, token, arg):
+    def add_line_template(self, text, **kwargs):
         """ Add line of text to file in memory using template. """
         # make text substitutions for caller
-        text = line_text.replace(token, arg)
+        if 'ftag' in kwargs and 'func' in kwargs:
+            text = text.replace(kwargs['ftag'], kwargs['func'])
+        if 'stag' in kwargs and 'state' in kwargs:
+            text = text.replace(kwargs['stag'], kwargs['state'])
         # currentLine needs to be 0-relative
         self.file.insert_line_text(self.current_line-1, text)
         self.current_line = self.current_line + 1

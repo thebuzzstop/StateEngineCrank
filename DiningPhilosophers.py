@@ -94,8 +94,8 @@ class Config(object):
     Eat_Max = 30            # maximum number of seconds to eat
     Think_Min = 10          # minimum number of seconds to think
     Think_Max = 30          # maximum number of seconds to think
-    Philosophers = 11       # number of philosophers dining
-    Dining_Loops = 1200     # number of main loops for dining
+    Philosophers = 4        # number of philosophers dining
+    Dining_Loops = 100      # number of main loops for dining
 
 
 class ForkStatus(Enum):

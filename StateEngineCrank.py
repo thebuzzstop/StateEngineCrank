@@ -130,6 +130,8 @@ if __name__ == '__main__':
                 files.backup(input_file)
                 files.update(input_file)
 
+            uml.dump_uml()
+
     # =========================================================================
     except Error.UnimplementedCodeError as e:
         logging.critical('Unimplemented code encountered --> %s' % e)

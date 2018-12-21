@@ -64,6 +64,11 @@ class UnimplementedCodeError(Exception):
     pass
 
 
+class FunctionTypeError(Exception):
+    """ Error encountered --- Function type not found. """
+    pass
+
+
 class UpdateCodeError(Exception):
     """ Error encountered wile updating code. """
     pass
@@ -188,6 +193,13 @@ class Error(modules.Singleton.Singleton):
 
     # =========================================================================
     @staticmethod
+    def function_type_not_found(func):
+        """ Function type not found - display message and punt. """
+        logging.fatal('ERROR: Function %s not found error.' % func)
+        raise FunctionTypeError(func)
+
+    # =========================================================================
+    @staticmethod
     def bad_file_index(index):
         """ Bad file index encountered - display message and punt. """
         logging.fatal('ERROR: Bad File Index: %s' % index)
@@ -199,7 +211,6 @@ class Error(modules.Singleton.Singleton):
         """ Unknown file type encountered - display message and punt. """
         logging.fatal('ERROR: Unknown file type: %s' % file_type)
         raise Exception
-
 
     # =========================================================================
     @staticmethod

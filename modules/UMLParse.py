@@ -174,8 +174,8 @@ class UML(modules.Singleton.Singleton):
         self.guards = []            # list of guards, transition guard functions
         self.trans = []             # list of transitions, transition functions
 
-        self.gfuncs = []            # list of function names, guards
-        self.tfuncs = []            # list of function names, transitions
+        self.guard_funcs = []       # list of function names, guards
+        self.trans_funcs = []       # list of function names, transitions
 
         self.states = []            # list of states, associated with enter/do/exit
         self.enters = {}            # list of functions, enter
@@ -207,17 +207,23 @@ class UML(modules.Singleton.Singleton):
 
         self.states1 = []           # list of states, transition origin
         self.states2 = []           # list of states, transition destination
-        self.events = []            # list of events, transition event functions
         self.guards = []            # list of guards, transition guard functions
         self.trans = []             # list of transitions, transition functions
 
-        self.gfuncs = []            # list of function names, guards
-        self.tfuncs = []            # list of function names, transitions
+        self.guard_funcs = []       # list of function names, guards
+        self.trans_funcs = []       # list of function names, transitions
+        self.do_funcs = []          # list of function names, dos
+        self.enter_funcs = []       # list of function names, enters
+        self.exit_funcs = []        # list of function names, exits
+
+        self.enter_func_states = {} # dictionary of enter function states
+        self.do_func_states = {}    # dictionary of do function states
+        self.exit_func_states = {}  # dictionary of exit function states
 
         self.states = []            # list of states, associated with enter/do/exit
-        self.enters = {}            # list of functions, enter
-        self.dos = {}               # list of functions, do
-        self.exits = {}             # list of functions, exit
+        self.enters = {}            # dictionary of functions, enter
+        self.dos = {}               # dictionary of functions, do
+        self.exits = {}             # dictionary of functions, exit
 
         # RE search/match result strings (state transitions)
         self.state1 = None
@@ -233,9 +239,29 @@ class UML(modules.Singleton.Singleton):
         self.exit = None
 
     # =========================================================================
-    def is_guard(self, func):
+    def is_guard_func(self, func):
         """ Return True if 'func' is a Guard function. """
-        return func in self.gfuncs
+        return func in self.guard_funcs
+
+    # =========================================================================
+    def is_enter_func(self, func):
+        """ Return True if 'func' is an Enter function. """
+        return func in self.enter_funcs
+
+    # =========================================================================
+    def is_do_func(self, func):
+        """ Return True if 'func' is a Do function. """
+        return func in self.do_funcs
+
+    # =========================================================================
+    def is_exit_func(self, func):
+        """ Return True if 'func' is an Exit function. """
+        return func in self.exit_funcs
+
+    # =========================================================================
+    def is_trans_func(self, func):
+        """ Return True if 'func' is a Transition function. """
+        return func in self.trans_funcs
 
     # =========================================================================
     def add_isuml(self):
@@ -282,19 +308,19 @@ class UML(modules.Singleton.Singleton):
     def add_guard(self, state1, state2, event, guard_func):
         """ Add 'guard_func' to list of known guards. """
         self.guards.append({"state1": state1, "state2": state2, "event": event, "guard": guard_func})
-        for _guard in self.gfuncs:
+        for _guard in self.guard_funcs:
             if _guard == guard_func:
                 return
-        self.gfuncs.append(guard_func)
+        self.guard_funcs.append(guard_func)
 
     # =========================================================================
     def add_trans(self, state1, state2, event, trans_func):
         """ Add 'trans_func' to list of known transitions. """
         self.trans.append({"state1": state1, "state2": state2, "event": event, "tfunc": trans_func})
-        for _tfunc in self.tfuncs:
+        for _tfunc in self.trans_funcs:
             if _tfunc == trans_func:
                 return
-        self.tfuncs.append(trans_func)
+        self.trans_funcs.append(trans_func)
 
     # =========================================================================
     def add_state(self, state):
@@ -341,6 +367,8 @@ class UML(modules.Singleton.Singleton):
             if _mangle == _enter:
                 return
         self.enters.update({state: _mangle})
+        self.enter_funcs.append(_mangle)
+        self.enter_func_states[_mangle] = state
 
     # =========================================================================
     def add_do(self, state, do_func):
@@ -350,6 +378,8 @@ class UML(modules.Singleton.Singleton):
             if _mangle == _do:
                 return
         self.dos.update({state: _mangle})
+        self.do_funcs.append(_mangle)
+        self.do_func_states[_mangle] = state
 
     # =========================================================================
     def add_exit(self, state, exit_func):
@@ -359,6 +389,8 @@ class UML(modules.Singleton.Singleton):
             if _mangle == _exit:
                 return
         self.exits.update({state: _mangle})
+        self.exit_funcs.append(_mangle)
+        self.exit_func_states[_mangle] = state
 
     # =========================================================================
     # Dictionary of strings used to invoke UML handlers while parsing
@@ -581,8 +613,8 @@ class UML(modules.Singleton.Singleton):
         logging.debug('Guards : %s' % self.guards)
         logging.debug('Trans  : %s' % self.trans)
 
-        logging.debug('gFuncs : %s' % self.gfuncs)
-        logging.debug('tFuncs : %s' % self.tfuncs)
+        logging.debug('gFuncs : %s' % self.guard_funcs)
+        logging.debug('tFuncs : %s' % self.trans_funcs)
 
         logging.debug('States : %s' % self.states)
         logging.debug('Enters : %s' % self.enters)
