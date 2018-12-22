@@ -55,10 +55,10 @@ class CodeGen(object):
     ]
 
     TRANS_FUNC_TAG = '{TRANS_FUNC_TAG}'
-    TRANS_FUNC_DECL_TEMPLATE = ['    def {TRANS_FUNC_TAG}(self, id):']
+    TRANS_FUNC_DECL_TEMPLATE = ['    def {TRANS_FUNC_TAG}(self):']
     TRANS_FUNC_TEMPLATE = [
         '    # =========================================================',
-        '    def {TRANS_FUNC_TAG}(self, id):',
+        '    def {TRANS_FUNC_TAG}(self):',
         '        """',
         '        @brief State transition processing for <i>{TRANS_FUNC_TAG}</i>',
         '',
@@ -71,10 +71,10 @@ class CodeGen(object):
     ]
 
     GUARD_FUNC_TAG = '{GUARD_FUNC_TAG}'
-    GUARD_FUNC_DECL_TEMPLATE = ['    def {GUARD_FUNC_TAG}(self, id):']
+    GUARD_FUNC_DECL_TEMPLATE = ['    def {GUARD_FUNC_TAG}(self):']
     GUARD_FUNC_TEMPLATE = [
         '    # =========================================================',
-        '    def {GUARD_FUNC_TAG}(self, id):',
+        '    def {GUARD_FUNC_TAG}(self):',
         '        """',
         '        @brief Guard processing for <i>{GUARD_FUNC_TAG}</i>',
         '',
@@ -85,17 +85,17 @@ class CodeGen(object):
         '        @retval False Guard is inactive/invalid',
         '',
         '        @todo FIXME',
-        '        """'
+        '        """',
         '        return False',
     ]
 
     STATE_TAG = '{STATE_TAG}'
 
     ENTER_FUNC_TAG = '{ENTER_FUNC_TAG}'
-    ENTER_FUNC_DECL_TEMPLATE = ['    def {ENTER_FUNC_TAG}(self, id):']
+    ENTER_FUNC_DECL_TEMPLATE = ['    def {ENTER_FUNC_TAG}(self):']
     ENTER_FUNC_TEMPLATE = [
         '    # ===========================================================================',
-        '    def {ENTER_FUNC_TAG}(self, id):',
+        '    def {ENTER_FUNC_TAG}(self):',
         '        """',
         '        @brief Enter function processing for <i>{STATE_TAG}</i> state.',
         '',
@@ -108,10 +108,10 @@ class CodeGen(object):
     ]
 
     DO_FUNC_TAG = '{DO_FUNC_TAG}'
-    DO_FUNC_DECL_TEMPLATE = ['    def {DO_FUNC_TAG}(self, id):']
+    DO_FUNC_DECL_TEMPLATE = ['    def {DO_FUNC_TAG}(self):']
     DO_FUNC_TEMPLATE = [
         '    # ===========================================================================',
-        '    def {DO_FUNC_TAG}(self, id):',
+        '    def {DO_FUNC_TAG}(self):',
         '        """',
         '        @brief <i>Do</i> function processing for the <i>{STATE_TAG}</i> state',
         '',
@@ -125,10 +125,10 @@ class CodeGen(object):
     ]
 
     EXIT_FUNC_TAG = '{EXIT_FUNC_TAG}'
-    EXIT_FUNC_DECL_TEMPLATE = ['    def {EXIT_FUNC_TAG}(self, id):']
+    EXIT_FUNC_DECL_TEMPLATE = ['    def {EXIT_FUNC_TAG}(self):']
     EXIT_FUNC_TEMPLATE = [
         '    # ===========================================================================',
-        '    def {EXIT_FUNC_TAG}(self, id):',
+        '    def {EXIT_FUNC_TAG}(self):',
         '        """',
         '        @brief <i>Exit</i> function processing for the <i>{STATE_TAG}</i> state.',
         '',

@@ -304,7 +304,6 @@ class UserCode(StateMachine):
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
 
-
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},

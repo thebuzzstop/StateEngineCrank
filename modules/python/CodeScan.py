@@ -33,8 +33,8 @@ class CodeScan(modules.Singleton.Singleton):
     # Regular Expression - function declaration
     #   def func_funcName(id)
     #   def guard_guardName(id)
-    re_func_declaration = re.compile(r'def (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(id\)')
-    re_guard_declaration = re.compile(r'def (?P<guardName>guard_[a-zA-Z_]+[a-zA-Z0-9_]*)\(id\)')
+    re_func_declaration = re.compile(r'def (?P<funcName>[a-zA-Z_]+[a-zA-Z0-9_]*)\(self\)')
+    re_guard_declaration = re.compile(r'def (?P<guardName>guard_[a-zA-Z_]+[a-zA-Z0-9_]*)\(self\)')
     functions = []      # array of functions found
 
     # =========================================================================
