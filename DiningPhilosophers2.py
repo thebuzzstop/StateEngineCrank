@@ -38,7 +38,9 @@ logging.debug("Back from modules.PyState")
 
          [*] --> StartUp
 
-    StartUp --> Thinking : EvStart
+    StartUp --> Thinking : EvStart [Think]
+    StartUp --> Hungry : EvStart [Eat]
+    
     StartUp --> Finish : EvStop
     StartUp : enter : StartUp
 
@@ -98,7 +100,7 @@ class Config(object):
     Think_Min = 15          # minimum number of seconds to think
     Think_Max = 45          # maximum number of seconds to think
     Philosophers = 9        # number of philosophers dining
-    Dining_Loops = 1000     # number of main loops for dining
+    Dining_Loops = 10000    # number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -159,6 +161,11 @@ class UserCode(StateMachine):
         self.thinking_seconds = 0   # number of seconds spent thinking
         self.hungry_seconds = 0     # number of seconds spent hungry
         self.event_timer = 0        # timer used to time eating & thinking
+
+        if random.randint(0,1) == 0:
+            self.initial_state = States.Thinking
+        else:
+            self.initial_state = States.Hungry
 
         self.left_fork = id
         self.right_fork = (id + 1) % Config.Philosophers
@@ -235,6 +242,7 @@ class UserCode(StateMachine):
         @details State machine enter function processing for the <i>Hungry</i> state.
         This function is called when the <i>Hungry</i> state is entered.
         """
+        logging.info('SM[%s] Hungry!' % self.id)
         tstart = time.time()
         waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
@@ -296,6 +304,12 @@ class UserCode(StateMachine):
             self.event(Events.EvHungry)
         return
 
+    def Think(self):
+        return self.initial_state is States.Thinking
+
+    def Eat(self):
+        return self.initial_state is States.Hungry
+
 # ==============================================================================
 # ===== USER STATE CODE = END ==================================================
 # ==============================================================================
@@ -305,7 +319,10 @@ class UserCode(StateMachine):
 # ==============================================================================
 
 StateTables.state_transition_table[States.StartUp] = {
-    Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
+    Events.EvStart: [
+        {'state2': States.Thinking, 'guard': UserCode.Think, 'transition': None},
+        {'state2': States.Hungry, 'guard': UserCode.Eat, 'transition': None},
+    ],
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }
 

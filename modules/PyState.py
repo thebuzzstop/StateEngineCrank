@@ -88,33 +88,55 @@ class StateMachine(Thread):
     def event(self, event):
         # lookup current state in transitions table and check for any transitions
         # associated with the newly received event
-        trans = self.state_transition_table[self.current_state]
-        if event not in trans:
+        transition_table = self.state_transition_table[self.current_state]
+        if event not in transition_table:
+            return
+        transition = None
+
+        # Event entries in the transition table can be either a single transition with a
+        # guard function or a list of transitions, each with a guard function. The first
+        # transition with a guard function that is 'None' or returns 'True' will be taken.
+
+        # Test if event entry is a single transition
+        if isinstance(transition_table[event], dict):
+            # State guard function
+            guard_func = transition_table[event]['guard']
+            if guard_func is not None:
+                if not guard_func(self):
+                    return
+            transition = transition_table[event]
+        # Test if event entry is a list of transitions
+        elif isinstance(transition_table[event], list):
+            for trans in transition_table[event]:
+                guard_func = trans['guard']
+                if guard_func is not None:
+                    if guard_func(self):
+                        transition = trans
+                        break
+        # No entry in table for this event
+        else:
             return
 
-        # State guard function
-        guard_func = trans[event]['guard']
-        if guard_func is not None:
-            if not guard_func(self):
-                return
+        # Just exit if we did not find a valid transition
+        if transition is None:
+            return
 
         # either no guard function or guard function is true
         logging.debug("SM[%s] Event %s" % (self.id, event))
 
-        # State exit function
+        # Execute state exit function if it is not None
         exit_func = self.state_function_table[self.current_state]['exit']
         if exit_func is not None:
             exit_func(self)
 
-        # State transition function
-        trans_func = trans[event]['transition']
-        if trans_func is not None:
-            trans_func(self)
+        # Execute state transition function if it is not None
+        if transition['transition'] is not None:
+            transition['transition'](self)
 
         # Enter next state
-        self.current_state = trans[event]['state2']
+        self.current_state = transition['state2']
 
-        # State enter function
+        # Execute state enter function if it is not None
         enter_func = self.state_function_table[self.current_state]['enter']
         if enter_func is not None:
             enter_func(self)
