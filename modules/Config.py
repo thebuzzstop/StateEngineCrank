@@ -131,8 +131,10 @@ class CfgParser(configparser.ConfigParser):
             if 'version' in self.config['info']:
                 self.version = self.make_boolean(self.config['info']['version'])
         if 'files' in self.config:
-            if 'file' in self.config['files']:
-                self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')
+            for fkey in self.config['files'].keys():
+                if fkey.startswith('file'):
+                    # self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')
+                    self.files.append(self.config['files'][fkey])
 
     def make_boolean(self, value):
         if str(value).lower() == 'true':
