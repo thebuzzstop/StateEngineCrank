@@ -16,12 +16,8 @@ Created on January 25, 2019
 # System imports
 import sys
 from enum import Enum
-import random
-from threading import (Lock, Thread)
-import time
 
 import logging
-from typing import List
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
@@ -29,10 +25,7 @@ logging.basicConfig(level=logging.INFO,
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
-
-logging.debug("Importing modules.PyState")
 from modules.PyState import StateMachine
-logging.debug("Back from modules.PyState")
 
 """
     @startuml
@@ -42,20 +35,21 @@ logging.debug("Back from modules.PyState")
     StartUp --> HairCut : EvStart [BarberSleeping]
     StartUp --> Waiting : EvStart [BarberCutting && WaitingRoom]
     StartUp --> Finish : EvStart [BarberCutting && !WaitingRoom]
+    StartUp : enter : CustomerStart
     
     HairCut --> Finish : EvFinishCutting [Stopping]
     HairCut : enter : StartHairCut
-    HairCut : do    : GetCut
+    HairCut : do    : GetHairCut
     HairCut : exit  : StopHairCut
     
     Waiting --> HairCut : EvBarberReady
     Waiting --> Finish : EvStop
-    Waiting : enter : StartLock
+    Waiting : enter : StartWaiting
     Waiting : do    : Wait
     Waiting : exit  : StopWaiting
     
-    Finish : do : Finish
-        
+    Finish : enter : CustomerDone
+
     @enduml
 """
 
@@ -89,6 +83,7 @@ class StateTables(object):
 # ==============================================================================
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
+
 
 class UserCode(StateMachine):
 
@@ -143,20 +138,19 @@ class UserCode(StateMachine):
         return False
 
     # ===========================================================================
-    def Finish_Finish(self):
+    def Finish_CustomerDone(self):
         """
-        @brief <i>Do</i> function processing for the <i>Finish</i> state
+        @brief Enter function processing for <i>Finish</i> state.
 
-        @details State machine <i>do</i> function processing for the <i>Finish</i> state.
-        This function is called once every state machine iteration to perform processing
-        for the <i>Finish</i> state.
+        @details State machine enter function processing for the <i>Finish</i> state.
+        This function is called when the <i>Finish</i> state is entered.
 
         @todo FIXME
         """
         return
 
     # ===========================================================================
-    def HairCut_GetCut(self):
+    def HairCut_GetHairCut(self):
         """
         @brief <i>Do</i> function processing for the <i>HairCut</i> state
 
@@ -192,6 +186,18 @@ class UserCode(StateMachine):
         """
         return
 
+    # ===========================================================================
+    def StartUp_CustomerStart(self):
+        """
+        @brief Enter function processing for <i>StartUp</i> state.
+
+        @details State machine enter function processing for the <i>StartUp</i> state.
+        This function is called when the <i>StartUp</i> state is entered.
+
+        @todo FIXME
+        """
+        return
+
     # =========================================================
     def Stopping(self):
         """
@@ -208,7 +214,7 @@ class UserCode(StateMachine):
         return False
 
     # ===========================================================================
-    def Waiting_StartLock(self):
+    def Waiting_StartWaiting(self):
         """
         @brief Enter function processing for <i>Waiting</i> state.
 
@@ -253,9 +259,11 @@ class UserCode(StateMachine):
 # ==============================================================================
 
 StateTables.state_transition_table[States.StartUp] = {
-    Events.EvStart: {'state2': States.HairCut, 'guard': UserCode.BarberSleeping, 'transition': None},
-    Events.EvStart: {'state2': States.Waiting, 'guard': UserCode.BarberCutting_AND_WaitingRoom, 'transition': None},
-    Events.EvStart: {'state2': States.Finish, 'guard': UserCode.BarberCutting_AND__NOT_WaitingRoom, 'transition': None},
+    Events.EvStart: [
+        {'state2': States.HairCut, 'guard': UserCode.BarberSleeping, 'transition': None},
+        {'state2': States.Waiting, 'guard': UserCode.BarberCutting_AND_WaitingRoom, 'transition': None},
+        {'state2': States.Finish, 'guard': UserCode.BarberCutting_AND__NOT_WaitingRoom, 'transition': None},
+    ],
 }
 
 StateTables.state_transition_table[States.HairCut] = {
@@ -271,16 +279,16 @@ StateTables.state_transition_table[States.Finish] = {
 }
 
 StateTables.state_function_table[States.StartUp] = \
-    {'enter': None, 'do': None, 'exit': None}
+    {'enter': UserCode.StartUp_CustomerStart, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.HairCut] = \
-    {'enter': UserCode.HairCut_StartHairCut, 'do': UserCode.HairCut_GetCut, 'exit': UserCode.HairCut_StopHairCut}
+    {'enter': UserCode.HairCut_StartHairCut, 'do': UserCode.HairCut_GetHairCut, 'exit': UserCode.HairCut_StopHairCut}
 
 StateTables.state_function_table[States.Waiting] = \
-    {'enter': UserCode.Waiting_StartLock, 'do': UserCode.Waiting_Wait, 'exit': UserCode.Waiting_StopWaiting}
+    {'enter': UserCode.Waiting_StartWaiting, 'do': UserCode.Waiting_Wait, 'exit': UserCode.Waiting_StopWaiting}
 
 StateTables.state_function_table[States.Finish] = \
-    {'enter': None, 'do': UserCode.Finish_Finish, 'exit': None}
+    {'enter': UserCode.Finish_CustomerDone, 'do': None, 'exit': None}
 
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = END = DO NOT MODIFY ===========================

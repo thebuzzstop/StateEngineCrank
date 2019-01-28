@@ -46,6 +46,7 @@ class StateMachine(Thread):
     """ The StateMachine class is the main execution engine """
 
     def __init__(self, id=None, running=None, startup_state=None, function_table=None, transition_table=None):
+        Thread.__init__(self, target=self.run)
         self.id = id
         self.startup_state = startup_state
         self.state_function_table = function_table
@@ -55,8 +56,7 @@ class StateMachine(Thread):
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
-        self.thread = Thread(target=self.run)
-        self.thread.start()
+        self.start()
 
     def run(self):
         logging.debug('SM[%s] StateMachine starting' % self.id)

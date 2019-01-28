@@ -35,8 +35,11 @@ class CodeGen(object):
 
     STATE_TRANSITION_TABLE = '    state_transition_table = {}'
     STATE_TRANSITION_TABLE_TEMPLATE = 'StateTables.state_transition_table[States.%s] = {'
-    STATE_TRANSITION_TABLE_EVENT_TEMPLATE = \
-        "    Events.%s: {'state2': States.%s, 'guard': %s, 'transition': %s},"
+
+    STATE_TRANSITION_TABLE_EVENT_TEMPLATE = "    Events.%s: {'state2': States.%s, 'guard': %s, 'transition': %s},"
+    STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_START = '    Events.%s: ['
+    STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_DATA = "        {'state2': States.%s, 'guard': %s, 'transition': %s},"
+    STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_END = '    ],'
 
     STATE_FUNCTION_TABLE = '    state_function_table = {}'
     STATE_FUNCTION_TABLE_TEMPLATE = 'StateTables.state_function_table[States.%s] = \\'
@@ -246,22 +249,74 @@ class CodeGen(object):
             self.add_line(declaration)
             logging.debug(declaration)
 
+            # Scan for events relevant to the current state.
+            # We need to determine if there is more than one transition for a given event.
+            # This can happen when an event is tied to multiple transitions differentiated by guards.
+            events = {}
+            for trans in self.uml.transitions:
+                if trans['state1'] == state:
+                    event = trans['event']
+                    if trans['guard'] is None:
+                        trans['guard'] = 'None'
+                    if trans['trans'] is None:
+                        trans['trans'] = 'None'
+                    data = {'guard': trans['guard'], 'state2': trans['state2'], 'trans': trans['trans']}
+                    if event not in events.keys():
+                        events[event] = [data]
+                    else:
+                        events[event].append(data)
+
             # scan for events relevant to the current state
             for trans in self.uml.transitions:
                 if trans['state1'] == state:
                     event = trans['event']
-                    state2 = trans['state2']
-                    if trans['guard'] is None:
-                        guard = 'None'
+                    # see if we have already processed this event
+                    if event not in events:
+                        continue
+
+                    # check for a single event for this state
+                    if len(events[event]) == 1:
+                        # process a single event entry
+                        state2 = trans['state2']
+                        if trans['guard'] is 'None':
+                            guard = None
+                        else:
+                            guard = self.STATE_FUNCTION_USERCODE_TEMPLATE % trans['guard']
+                        if trans['trans'] is 'None':
+                            trans_ = None
+                        else:
+                            trans_ = self.STATE_FUNCTION_USERCODE_TEMPLATE % trans['trans']
+                        line = self.STATE_TRANSITION_TABLE_EVENT_TEMPLATE % (event, state2, guard, trans_)
+                        self.add_line(line)
+                        logging.debug(line)
                     else:
-                        guard = self.STATE_FUNCTION_USERCODE_TEMPLATE % trans['guard']
-                    if trans['trans'] is None:
-                        trans_ = 'None'
-                    else:
-                        trans_ = self.STATE_FUNCTION_USERCODE_TEMPLATE % trans['trans']
-                    line = self.STATE_TRANSITION_TABLE_EVENT_TEMPLATE % (event, state2, guard, trans_)
-                    self.add_line(line)
-                    logging.debug(line)
+                        # process an array of event entries
+                        # start the array
+                        line = self.STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_START % event
+                        self.add_line(line)
+                        logging.debug(line)
+                        # add each event data on a separate line
+                        for data in events[event]:
+                            state2 = data['state2']
+                            if data['guard'] is 'None':
+                                guard = None
+                            else:
+                                guard = self.STATE_FUNCTION_USERCODE_TEMPLATE % data['guard']
+                            if data['trans'] is 'None':
+                                trans_ = None
+                            else:
+                                trans_ = self.STATE_FUNCTION_USERCODE_TEMPLATE % data['trans']
+                            line = self.STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_DATA % (state2, guard, trans_)
+                            self.add_line(line)
+                            logging.debug(line)
+
+                        # end the array
+                        line = self.STATE_TRANSITION_TABLE_EVENTS_TEMPLATE_END
+                        self.add_line(line)
+                        logging.debug(line)
+
+                    # don't process this event again
+                    del events[event]
 
             self.add_line(self.STATE_TABLE_CLOSING_BRACE)
             logging.debug(self.STATE_TABLE_CLOSING_BRACE)
