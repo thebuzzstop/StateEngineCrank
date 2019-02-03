@@ -18,25 +18,13 @@ import sys
 import threading
 import enum
 
+# Project imports
+from Borg import Borg
+
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
-
-# Project imports
-
-
-class Borg(object):
-    """ The Borg class ensures that all instantiations refer to the same
-        state and behavior.
-
-        Taken from "Python Cookbook" by David Ascher, Alex Martelli
-        https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html
-    """
-    _shared_state = {}
-
-    def __init__(self):
-        self.__dict__ = self._shared_state
 
 
 class ChairStatus(enum.Enum):
@@ -50,9 +38,25 @@ class WaitingRoom(Borg):
         Implemented as a Borg so that all instantiations of the WaitingRoom class will
         utilize the same data for waiting customers
     """
-    def __init__(self, chairs):
+    def __init__(self, chairs=None):
         Borg.__init__(self)
         if len(self._shared_state) is 0:
-            self.waiting_customers = 0
-            self.chairs = [ChairStatus.Free for _ in range(chairs)]
+            if chairs is not None:
+                self.chairs = [ChairStatus.Free for _ in range(chairs)]
             self.lock = threading.Lock()
+
+    def get_chair(self):
+        with self.lock:
+            for chair in range(len(self.chairs)):
+                if self.chairs[chair] is ChairStatus.Free:
+                    self.chairs[chair] = ChairStatus.InUse
+                    return True
+            return False
+
+    def get_customer(self):
+        with self.lock:
+            for chair in range(len(self.chairs)):
+                if self.chairs[chair] is ChairStatus.InUse:
+                    self.chairs[chair] = ChairStatus.Free
+                    return True
+            return False

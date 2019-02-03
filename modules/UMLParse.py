@@ -21,7 +21,7 @@ Created on May 19, 2016
         1) Guard may be a compound logic equation
             e.g. Foo && Goo || Moo
             Note: ()'s if specified will be removed
-        2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and '_NOT_'
+        2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and 'NOT_'
             respectively
             e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
         3) Spaces are replaced with '_' to concatenate logic expressions
@@ -340,7 +340,7 @@ class UML(modules.Singleton.Singleton):
     RE_SUBS_DICT = {
         r' && ':    r'_AND_',
         r' || ':    r'_OR_',
-        r'!':       r'_NOT_',
+        r'!':       r'NOT_',
         r'()':      r'',
         r'( )':     r'',
         }

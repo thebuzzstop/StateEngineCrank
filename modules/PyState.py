@@ -12,7 +12,7 @@ Created on November 12, 2018
 @copyright: Mark B Sawyer, All Rights Reserved 2018
 """
 
-from threading import (Lock, Thread)
+from threading import Thread
 import time
 
 import logging
@@ -23,12 +23,11 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 class StateFunction(object):
     """ StateMachine function definitions """
 
-    def __init__(self, state=None, enter=None, do=None, exit=None):
+    def __init__(self, state=None, enter=None, do=None, exit_=None):
         self.state = state
         self.enter = enter
         self.do = do
-        self.exit = exit
-        return {self.state: {'enter': self.enter, 'do': self.do, 'exit': self.exit}}
+        self.exit = exit_
 
 
 class StateTransition(object):
@@ -39,19 +38,18 @@ class StateTransition(object):
         self.state2 = state2
         self.guard = guard
         self.transition = transition
-        return {self.event: {'state2': self.state2, 'guard': self.guard, 'transition': self.transition}}
 
 
 class StateMachine(Thread):
     """ The StateMachine class is the main execution engine """
 
-    def __init__(self, id=None, running=None, startup_state=None, function_table=None, transition_table=None):
+    def __init__(self, sm_id=None, running=None, startup_state=None, function_table=None, transition_table=None):
         Thread.__init__(self, target=self.run)
-        self.id = id
+        self.id = sm_id
         self.startup_state = startup_state
         self.state_function_table = function_table
         self.state_transition_table = transition_table
-        self.running = False
+        self.running = running
         self.event_code = None
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
@@ -82,8 +80,6 @@ class StateMachine(Thread):
         # execute current state 'do' function if it exists
         if self.do_func is not None:
             self.do_func(self)
-        else:
-            logging.debug('SM[%s] Empty do function in %s' % (self.id, self.current_state))
 
     def event(self, event):
         # lookup current state in transitions table and check for any transitions
