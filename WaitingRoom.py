@@ -15,11 +15,11 @@ Created on January 25, 2019
 # System imports
 import logging
 import sys
-import threading
-import enum
+from threading import Lock as Lock
+from queue import Queue as Queue
 
 # Project imports
-from Borg import Borg
+import Customer
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
@@ -27,12 +27,20 @@ logging.basicConfig(level=logging.INFO,
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 
-class ChairStatus(enum.Enum):
-    Free = 0
-    InUse = 1
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same
+        state and behavior.
+
+        Taken from "Python Cookbook" by David Ascher, Alex Martelli
+        https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html
+    """
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
 
 
-class WaitingRoom(Borg):
+class WaitingRoom(Borg, Queue):
     """ Waiting Room Implementation
 
         Implemented as a Borg so that all instantiations of the WaitingRoom class will
@@ -41,22 +49,20 @@ class WaitingRoom(Borg):
     def __init__(self, chairs=None):
         Borg.__init__(self)
         if len(self._shared_state) is 0:
-            if chairs is not None:
-                self.chairs = [ChairStatus.Free for _ in range(chairs)]
-            self.lock = threading.Lock()
+            Queue.__init__(self, maxsize=chairs)
+            self.lock = Lock()
 
-    def get_chair(self):
+    def get_chair(self, customer):
         with self.lock:
-            for chair in range(len(self.chairs)):
-                if self.chairs[chair] is ChairStatus.Free:
-                    self.chairs[chair] = ChairStatus.InUse
-                    return True
-            return False
+            if self.full:
+                return False
+            self.put(customer, block=False)
+            return True
 
     def get_customer(self):
         with self.lock:
-            for chair in range(len(self.chairs)):
-                if self.chairs[chair] is ChairStatus.InUse:
-                    self.chairs[chair] = ChairStatus.Free
-                    return True
-            return False
+            if self.empty:
+                return False
+            customer = self.get(block=False)
+            customer.event(Customer.Events.EvBarberReady)
+            return True

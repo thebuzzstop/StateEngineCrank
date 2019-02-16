@@ -41,6 +41,7 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
     Cutting --> Finish : EvFinishCutting [Stopping]
     Cutting --> Cutting : EvFinishCutting [GetWaitingCustomer]
     Cutting --> Sleeping : EvFinishCutting [!GetWaitingCustomer]
+    Cutting --> Cutting : EvStop / SetStopping
     Cutting : enter : StartCutting
     Cutting : do    : Cut
     Cutting : exit  : StopCutting
@@ -98,7 +99,6 @@ class UserCode(StateMachine):
         self.customers = 0
         self.cut_timer = 0
         self.cutting_time = 0
-        self.sleeping = False
         self.sleeping_time = 0
         self.waiting_room = WaitingRoom.WaitingRoom()
         self.stats = Statistics()
@@ -113,12 +113,12 @@ class UserCode(StateMachine):
         for the <i>Cutting</i> state.
         """
         # track total time cutting hair
-        self.cutting_time += 1
+        self.cutting_time = self.cutting_time + 1
 
         # process timer for current haircut
         if self.cut_timer:
-            self.cut_timer -= 1
-        if not self.cut_timer:
+            self.cut_timer = self.cut_timer - 1
+        if self.cut_timer == 0:
             logging.debug('Barber[%s]: Finish cutting %s' % (self.id, self.customers))
             self.event(Events.EvFinishCutting)
 
@@ -131,11 +131,10 @@ class UserCode(StateMachine):
         This function is called when the <i>Cutting</i> state is entered.
         """
         # track total customers
-        self.customers += 1
-        logging.debug('Barber[%s]: Start cutting %s' % (self.id, self.customers))
-
+        self.customers = self.customers + 1
         # start haircut timer
         self.cut_timer = Config.cutting_time()
+        logging.debug('Barber[%s]: Start cutting %s [%s]' % (self.id, self.customers, self.cut_timer))
 
     # ===========================================================================
     def Cutting_StopCutting(self):
@@ -153,13 +152,14 @@ class UserCode(StateMachine):
         @brief Enter function processing for <i>Finish</i> state.
 
         @details State machine enter function processing for the <i>Finish</i> state.
-        This function is called when the <i>Finish</i> state is entered.
+        This function is called when the <i>Finish</i> state is entered at the
+        end of the SleepinBarber simulation.
         """
         logging.debug('Barber[%s]: Done' % self.id)
         with self.stats.lock:
-            self.stats.customers += self.customers
-            self.stats.cutting_time += self.cutting_time
-            self.stats.sleeping_time += self.sleeping_time
+            self.stats.customers = self.stats.customers + self.customers
+            self.stats.cutting_time = self.stats.cutting_time + self.cutting_time
+            self.stats.sleeping_time = self.stats.sleeping_time + self.sleeping_time
 
     # =========================================================
     def GetWaitingCustomer(self):
@@ -183,7 +183,7 @@ class UserCode(StateMachine):
         This function is called once every state machine iteration to perform processing
         for the <i>Sleeping</i> state.
         """
-        self.sleeping_time += 1
+        self.sleeping_time = self.sleeping_time + 1
 
     # ===========================================================================
     def Sleeping_StartSleeping(self):
@@ -194,7 +194,6 @@ class UserCode(StateMachine):
         This function is called when the <i>Sleeping</i> state is entered.
         """
         logging.debug('Barber[%s]: Start sleeping' % self.id)
-        self.sleeping = True
 
     # ===========================================================================
     def Sleeping_StopSleeping(self):
@@ -205,7 +204,6 @@ class UserCode(StateMachine):
         This function is called when the <i>Sleeping</i> state is exited.
         """
         logging.debug('Barber[%s]: Stop sleeping' % self.id)
-        self.sleeping = False
 
     # ===========================================================================
     def StartUp_BarberStart(self):
@@ -230,6 +228,7 @@ class UserCode(StateMachine):
         """
         logging.debug('Barber[%s]: Stopping' % self.id)
 
+
     # =========================================================
     def NOT_GetWaitingCustomer(self):
         """
@@ -250,7 +249,6 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
-
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: [

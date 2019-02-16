@@ -30,6 +30,12 @@ from Customer import UserCode as Customer       # noqa
 from Customer import Events as CustomerEvents   # noqa
 from WaitingRoom import WaitingRoom             # noqa
 
+# An array of barbers to cut hair
+barbers = [Barber(barber_id=_) for _ in range(Config.Barbers)]
+
+# Instantiate the waiting room
+waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
+
 
 class CustomerGenerator(Thread):
 
@@ -52,11 +58,19 @@ class CustomerGenerator(Thread):
 
         # run until the simulation is stopped
         while self.running:
+            # generate a new customer
             self.customer_count += 1
             logging.debug('CG[%s] new customer' % self.customer_count)
-            self.customer_list.append(Customer(customer_id=self.customer_count))
-            self.customer_list[self.customer_count].running = True
-            self.customer_list[self.customer_count].event(CustomerEvents.EvStart)
+            next_customer = Customer(customer_id=self.customer_count, barbers=barbers)
+            next_customer.running = True
+            next_customer.event(CustomerEvents.EvStart)
+            self.customer_list.append(next_customer)
+
+            # alert barber(s) to new customer
+            for cg_barber in barbers:
+                cg_barber.event(BarberEvents.EvCustomerEnter)
+
+            # delay between generating new customers
             sleep = Config.seconds(
                 self.customer_rate - self.customer_variance,
                 self.customer_rate + self.customer_variance
@@ -67,21 +81,13 @@ class CustomerGenerator(Thread):
 
 if __name__ == '__main__':
 
-    # An array of barbers to cut hair
-    barbers = []
-
-    # Instantiate the waiting room and the barber(s)
-    waiting_room = WaitingRoom(Config.WaitingChairs)
-    for barber_id in range(Config.Barbers):
-        barbers.append(Barber(barber_id=barber_id))
-
     # Instantiate the customer generator
-    customers = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance, Config.Customers)
+    customers = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance)
 
     # Start the simulation, i.e. start all barbers and the customer generator
-    for barber_id in range(Config.Barbers):
-        barbers[barber_id].running = True
-        barbers[barber_id].event(BarberEvents.EvStart)
+    for barber in barbers:
+        barber.running = True
+        barber.event(BarberEvents.EvStart)
 
     # Start the customer generator
     customers.running = True
@@ -97,18 +103,24 @@ if __name__ == '__main__':
     customers.running = False
 
     # Tell the barber(s) to stop
-    for id_ in range(Config.Barbers):
-        barbers[id_].event(BarberEvents.EvStop)
+    for barber in barbers:
+        barber.event(BarberEvents.EvStop)
 
     # Tell any waiting customers to stop
     for customer in customers.customer_list:
         customer.event(CustomerEvents.EvStop)
 
     # Joining threads
+    logging.debug('Customers: Join')
     customers.join()
-    for id_ in range(Config.Barbers):
-        barbers[id_].join()
-    logging.info('Barber(s) stopped')
+    logging.debug('Customers: Joined')
+
+    for barber in barbers:
+        logging.debug('Barber[%s] Join' % barber.id)
+        barber.join()
+        logging.debug('Barber[%s] Joined' % barber.id)
+
+    logging.info('Barber(s) all stopped')
 
     # Print some statistics of the simulation
     # for id in range(Config.Philosophers):
