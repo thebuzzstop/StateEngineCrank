@@ -43,9 +43,10 @@ class StateTransition(object):
 class StateMachine(Thread):
     """ The StateMachine class is the main execution engine """
 
-    def __init__(self, sm_id=None, running=None, startup_state=None, function_table=None, transition_table=None):
+    def __init__(self, sm_id=None, name=None, running=None, startup_state=None, function_table=None, transition_table=None):
         Thread.__init__(self, target=self.run)
         self.id = sm_id
+        self.name = name
         self.startup_state = startup_state
         self.state_function_table = function_table
         self.state_transition_table = transition_table
@@ -54,27 +55,29 @@ class StateMachine(Thread):
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
+        logging.debug('%s[%s]-SM StateMachine thread start' % (self.name, self.id))
         self.start()
 
     def run(self):
-        logging.debug('SM[%s] StateMachine starting' % self.id)
-
         # wait until our state machine has been activated
+        logging.debug('%s[%s]-SM StateMachine activating' % (self.name, self.id))
         while not self.running:
             time.sleep(0.1)
+        logging.debug('%s[%s]-SM StateMachine activated' % (self.name, self.id))
 
         # check for an enter function
         if self.enter_func is not None:
-            logging.debug('SM[%s] StateMachine Enter Function %s' % (self.id, self.enter_func))
+            logging.debug('%s[%s]-SM StateMachine Enter Function %s' % (self.name, self.id, self.current_state))
             self.enter_func(self)
 
-        logging.debug('SM[%s] StateMachine running' % self.id)
+        logging.debug('%s[%s]-SM StateMachine running' % (self.name, self.id))
         while self.running:
             if self.event_code is not None:
                 self.event(self.event_code)
                 self.event_code = None
             else:
                 self.do()
+        logging.debug('%s[%s]-SM StateMachine exiting' % (self.name, self.id))
 
     def do(self):
         # execute current state 'do' function if it exists
@@ -82,12 +85,14 @@ class StateMachine(Thread):
             self.do_func(self)
 
     def event(self, event):
+        logging.debug('%s[%s]-SM Event %s' % (self.name, self.id, event))
         # lookup current state in transitions table and check for any transitions
         # associated with the newly received event
         transition_table = self.state_transition_table[self.current_state]
         if event not in transition_table:
             return
         transition = None
+        logging.debug('%s[%s]-SM Event+ %s' % (self.name, self.id, event))
 
         # Event entries in the transition table can be either a single transition with a
         # guard function or a list of transitions, each with a guard function. The first
@@ -118,7 +123,7 @@ class StateMachine(Thread):
             return
 
         # either no guard function or guard function is true
-        logging.debug("SM[%s] Event %s" % (self.id, event))
+        logging.debug('%s[%s]-SM Event++ %s' % (self.name, self.id, event))
 
         # Execute state exit function if it is not None
         exit_func = self.state_function_table[self.current_state]['exit']

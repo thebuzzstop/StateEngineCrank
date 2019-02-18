@@ -15,6 +15,7 @@ Created on January 25, 2019
 
 # System imports
 import sys
+import time
 from enum import Enum
 import logging
 
@@ -38,10 +39,9 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
     StartUp --> Sleeping : EvStart [!GetWaitingCustomer]
     StartUp : enter : BarberStart
 
-    Cutting --> Finish : EvFinishCutting [Stopping]
+    Cutting --> Finish : EvStop
     Cutting --> Cutting : EvFinishCutting [GetWaitingCustomer]
     Cutting --> Sleeping : EvFinishCutting [!GetWaitingCustomer]
-    Cutting --> Cutting : EvStop / SetStopping
     Cutting : enter : StartCutting
     Cutting : do    : Cut
     Cutting : exit  : StopCutting
@@ -71,9 +71,9 @@ class States(Enum):
 
 class Events(Enum):
     EvStart = 1
-    EvFinishCutting = 2
-    EvCustomerEnter = 3
-    EvStop = 4
+    EvStop = 2
+    EvFinishCutting = 3
+    EvCustomerEnter = 4
 
 
 class StateTables(object):
@@ -92,10 +92,11 @@ class StateTables(object):
 class UserCode(StateMachine):
 
     def __init__(self, barber_id=None):
-        StateMachine.__init__(self, sm_id=barber_id, startup_state=States.StartUp,
+        StateMachine.__init__(self, sm_id=barber_id, name='Barber',
+                              startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
-        logging.debug('Barber[%d]: INIT' % barber_id)
+        logging.debug('Barber[%s] INIT' % barber_id)
         self.customers = 0
         self.cut_timer = 0
         self.cutting_time = 0
@@ -112,6 +113,7 @@ class UserCode(StateMachine):
         This function is called once every state machine iteration to perform processing
         for the <i>Cutting</i> state.
         """
+        time.sleep(1)
         # track total time cutting hair
         self.cutting_time = self.cutting_time + 1
 
@@ -119,7 +121,7 @@ class UserCode(StateMachine):
         if self.cut_timer:
             self.cut_timer = self.cut_timer - 1
         if self.cut_timer == 0:
-            logging.debug('Barber[%s]: Finish cutting %s' % (self.id, self.customers))
+            logging.debug('Barber[%s] Finish cutting %s' % (self.id, self.customers))
             self.event(Events.EvFinishCutting)
 
     # ===========================================================================
@@ -134,7 +136,7 @@ class UserCode(StateMachine):
         self.customers = self.customers + 1
         # start haircut timer
         self.cut_timer = Config.cutting_time()
-        logging.debug('Barber[%s]: Start cutting %s [%s]' % (self.id, self.customers, self.cut_timer))
+        logging.debug('Barber[%s] Start cutting %s [%s]' % (self.id, self.customers, self.cut_timer))
 
     # ===========================================================================
     def Cutting_StopCutting(self):
@@ -144,7 +146,7 @@ class UserCode(StateMachine):
         @details State machine <i>exit</i> function processing for the <i>Cutting</i> state.
         This function is called when the <i>Cutting</i> state is exited.
         """
-        logging.debug('Barber[%s]: Stop cutting %s' % (self.id, self.customers))
+        logging.debug('Barber[%s] Stop cutting %s' % (self.id, self.customers))
 
     # ===========================================================================
     def Finish_BarberDone(self):
@@ -155,11 +157,12 @@ class UserCode(StateMachine):
         This function is called when the <i>Finish</i> state is entered at the
         end of the SleepinBarber simulation.
         """
-        logging.debug('Barber[%s]: Done' % self.id)
+        logging.debug('Barber[%s] Done' % self.id)
         with self.stats.lock:
             self.stats.customers = self.stats.customers + self.customers
             self.stats.cutting_time = self.stats.cutting_time + self.cutting_time
             self.stats.sleeping_time = self.stats.sleeping_time + self.sleeping_time
+        self.running = False
 
     # =========================================================
     def GetWaitingCustomer(self):
@@ -172,7 +175,8 @@ class UserCode(StateMachine):
         @retval True - Customer waiting [Guard is active/valid]
         @retval False - Customer NOT waiting [Guard is inactive/invalid]
         """
-        return self.waiting_room.get_customer()
+        with self.waiting_room.lock:
+            return self.waiting_room.get_customer()
 
     # ===========================================================================
     def Sleeping_Sleep(self):
@@ -193,7 +197,7 @@ class UserCode(StateMachine):
         @details State machine enter function processing for the <i>Sleeping</i> state.
         This function is called when the <i>Sleeping</i> state is entered.
         """
-        logging.debug('Barber[%s]: Start sleeping' % self.id)
+        logging.debug('Barber[%s] Start sleeping' % self.id)
 
     # ===========================================================================
     def Sleeping_StopSleeping(self):
@@ -203,7 +207,7 @@ class UserCode(StateMachine):
         @details State machine <i>exit</i> function processing for the <i>Sleeping</i> state.
         This function is called when the <i>Sleeping</i> state is exited.
         """
-        logging.debug('Barber[%s]: Stop sleeping' % self.id)
+        logging.debug('Barber[%s] Stop sleeping' % self.id)
 
     # ===========================================================================
     def StartUp_BarberStart(self):
@@ -213,21 +217,7 @@ class UserCode(StateMachine):
         @details State machine enter function processing for the <i>StartUp</i> state.
         This function is called when the <i>StartUp</i> state is entered.
         """
-        logging.debug('Barber[%s]: Starting' % self.id)
-
-    # =========================================================
-    def Stopping(self):
-        """
-        @brief Guard processing for <i>Stopping</i>
-
-        @details State machine guard processing for <i>Stopping</i>.
-        This function is called whenever the guard <i>Stopping</i> is tested.
-
-        @retval True - Simulation Stopping [Guard is active/valid]
-        @retval False - Simulation NOT Stopping [Guard is inactive/invalid]
-        """
-        logging.debug('Barber[%s]: Stopping' % self.id)
-
+        logging.debug('Barber[%s] Starting' % self.id)
 
     # =========================================================
     def NOT_GetWaitingCustomer(self):
@@ -258,8 +248,8 @@ StateTables.state_transition_table[States.StartUp] = {
 }
 
 StateTables.state_transition_table[States.Cutting] = {
+    Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
     Events.EvFinishCutting: [
-        {'state2': States.Finish, 'guard': UserCode.Stopping, 'transition': None},
         {'state2': States.Cutting, 'guard': UserCode.GetWaitingCustomer, 'transition': None},
         {'state2': States.Sleeping, 'guard': UserCode.NOT_GetWaitingCustomer, 'transition': None},
     ],

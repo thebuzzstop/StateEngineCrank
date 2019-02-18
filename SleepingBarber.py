@@ -63,12 +63,7 @@ class CustomerGenerator(Thread):
             logging.debug('CG[%s] new customer' % self.customer_count)
             next_customer = Customer(customer_id=self.customer_count, barbers=barbers)
             next_customer.running = True
-            next_customer.event(CustomerEvents.EvStart)
             self.customer_list.append(next_customer)
-
-            # alert barber(s) to new customer
-            for cg_barber in barbers:
-                cg_barber.event(BarberEvents.EvCustomerEnter)
 
             # delay between generating new customers
             sleep = Config.seconds(
@@ -77,6 +72,7 @@ class CustomerGenerator(Thread):
             )
             logging.debug('CG[%s] Zzzz [%s]' % (self.customer_count, sleep))
             time.sleep(sleep)
+        logging.debug('CG Done')
 
 
 if __name__ == '__main__':
@@ -111,9 +107,12 @@ if __name__ == '__main__':
         customer.event(CustomerEvents.EvStop)
 
     # Joining threads
-    logging.debug('Customers: Join')
+    for customer in customers.customer_list:
+        customer.join()
+
+    logging.debug('CG: Join')
     customers.join()
-    logging.debug('Customers: Joined')
+    logging.debug('CG: Joined')
 
     for barber in barbers:
         logging.debug('Barber[%s] Join' % barber.id)

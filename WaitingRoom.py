@@ -20,6 +20,7 @@ from queue import Queue as Queue
 
 # Project imports
 import Customer
+import Common
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
@@ -49,20 +50,29 @@ class WaitingRoom(Borg, Queue):
     def __init__(self, chairs=None):
         Borg.__init__(self)
         if len(self._shared_state) is 0:
+            if chairs is None:
+                chairs = Common.Config.WaitingChairs
             Queue.__init__(self, maxsize=chairs)
             self.lock = Lock()
+            self.retval = None
 
     def get_chair(self, customer):
-        with self.lock:
-            if self.full:
-                return False
+        logging.debug('WR: get_chair')
+        if self.full():
+            self.retval = False
+        else:
             self.put(customer, block=False)
-            return True
+            self.retval = True
+        logging.debug('WR: get_chair [%s]' % self.retval)
+        return self.retval
 
     def get_customer(self):
-        with self.lock:
-            if self.empty:
-                return False
+        logging.debug('WR: get_customer')
+        if self.empty():
+            self.retval = False
+        else:
             customer = self.get(block=False)
             customer.event(Customer.Events.EvBarberReady)
-            return True
+            self.retval = True
+        logging.debug('WR: get_customer [%s]' % self.retval)
+        return self.retval

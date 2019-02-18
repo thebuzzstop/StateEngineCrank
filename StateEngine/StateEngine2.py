@@ -466,7 +466,6 @@ class UserCode(StateMachine):
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
 
-
 StateTables.state_transition_table[States.State1] = {
     Events.Event11: {'state2': States.State1, 'guard': UserCode.Guard11, 'transition': None},
     Events.Event12: {'state2': States.State2, 'guard': None, 'transition': None},
