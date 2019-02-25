@@ -24,6 +24,7 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
 from Common import Config as Config             # noqa
+from Common import Statistics as Statistics     # noqa
 from Barber import UserCode as Barber           # noqa
 from Barber import Events as BarberEvents       # noqa
 from Customer import UserCode as Customer       # noqa
@@ -31,10 +32,13 @@ from Customer import Events as CustomerEvents   # noqa
 from WaitingRoom import WaitingRoom             # noqa
 
 # An array of barbers to cut hair
-barbers = [Barber(barber_id=_) for _ in range(Config.Barbers)]
+barbers = [Barber(barber_id=_+1) for _ in range(Config.Barbers)]
 
 # Instantiate the waiting room
 waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
+
+# Instantiate the statistics module
+statistics = Statistics()
 
 
 class CustomerGenerator(Thread):
@@ -107,8 +111,10 @@ if __name__ == '__main__':
         customer.event(CustomerEvents.EvStop)
 
     # Joining threads
+    logging.debug('Main: Joining customers')
     for customer in customers.customer_list:
         customer.join()
+    logging.debug('Main: Customers joined')
 
     logging.debug('CG: Join')
     customers.join()
@@ -121,10 +127,7 @@ if __name__ == '__main__':
 
     logging.info('Barber(s) all stopped')
 
-    # Print some statistics of the simulation
-    # for id in range(Config.Philosophers):
-    #     t = philosophers[id].thinking_seconds
-    #     e = philosophers[id].eating_seconds
-    #     h = int(philosophers[id].hungry_seconds + 0.5)
-    #     total = t + e + h
-    #     print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (id, t, e, h, total))
+    # print statistics
+    statistics.print_barber_stats()
+    statistics.print_customer_stats()
+    statistics.print_summary_stats()

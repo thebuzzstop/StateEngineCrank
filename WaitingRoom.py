@@ -28,6 +28,11 @@ logging.basicConfig(level=logging.INFO,
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 
+class CustomerWaitingError(Exception):
+    """ No customer waiting to return """
+    pass
+
+
 class Borg(object):
     """ The Borg class ensures that all instantiations refer to the same
         state and behavior.
@@ -54,25 +59,31 @@ class WaitingRoom(Borg, Queue):
                 chairs = Common.Config.WaitingChairs
             Queue.__init__(self, maxsize=chairs)
             self.lock = Lock()
-            self.retval = None
+            self.stats = Common.Statistics()
 
     def get_chair(self, customer):
-        logging.debug('WR: get_chair')
         if self.full():
-            self.retval = False
+            chair = False
         else:
             self.put(customer, block=False)
-            self.retval = True
-        logging.debug('WR: get_chair [%s]' % self.retval)
-        return self.retval
+            chair = True
+            with self.stats.lock:
+                self.stats.max_waiters = max(self.stats.max_waiters, self.qsize())
+        logging.debug('WR: get_chair [%s]' % chair)
+        return chair
 
     def get_customer(self):
-        logging.debug('WR: get_customer')
         if self.empty():
-            self.retval = False
+            raise CustomerWaitingError
         else:
             customer = self.get(block=False)
-            customer.event(Customer.Events.EvBarberReady)
-            self.retval = True
-        logging.debug('WR: get_customer [%s]' % self.retval)
-        return self.retval
+        logging.debug('WR: get_customer [%s]' % customer.customer_id)
+        return customer
+
+    def customer_waiting(self):
+        if not self.empty():
+            logging.debug('WR: customer_waiting [TRUE]')
+            return True
+        else:
+            logging.debug('WR: customer_waiting [FALSE]')
+            return False
