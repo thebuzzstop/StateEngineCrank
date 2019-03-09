@@ -31,7 +31,7 @@ from Customer import Events as CustomerEvents   # noqa
 from WaitingRoom import WaitingRoom             # noqa
 
 # An array of barbers to cut hair
-barbers = [Barber(barber_id=_+1) for _ in range(Config.Barbers)]
+barbers = [Barber(id=_+1) for _ in range(Config.Barbers)]
 
 # Instantiate the waiting room
 waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
