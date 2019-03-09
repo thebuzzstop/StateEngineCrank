@@ -1,5 +1,6 @@
-#!/usr/bin/env python
 """
+@package SleepingBarber.Main
+
 Created on January 25, 2019
 
 @author:    Mark Sawyer
@@ -8,8 +9,6 @@ Created on January 25, 2019
 @package:   SleepingBarber(s)
 @brief:     Top level code for SleepingBarber(s) simulation
 @details:   Main driver, instantiates Barber(s) and Customer(s) and drives the state machines
-
-@copyright: Mark B Sawyer, All Rights Reserved 2019
 """
 
 # System imports
@@ -42,6 +41,7 @@ statistics = Statistics()
 
 
 class CustomerGenerator(Thread):
+    """ Class for generating customers based on certain configurable criteria """
 
     def __init__(self, customer_rate, customer_variance):
         Thread.__init__(self, target=self.run)
@@ -65,7 +65,7 @@ class CustomerGenerator(Thread):
             # generate a new customer
             self.customer_count += 1
             logging.debug('CG[%s] new customer' % self.customer_count)
-            next_customer = Customer(customer_id=self.customer_count, barbers=barbers)
+            next_customer = Customer(id=self.customer_count, barbers=barbers)
             next_customer.running = True
             self.customer_list.append(next_customer)
 

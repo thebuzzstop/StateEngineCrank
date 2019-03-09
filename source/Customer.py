@@ -1,17 +1,10 @@
-#!/usr/bin/env python
-"""
-Created on January 25, 2019
-
-@author:    Mark Sawyer
-@date:      25-Jan-2019
-
-@package:   SleepingBarber(s)
-@module:    Customer
-@brief:     Customer - State machine definitions
-@details:   Customer - State machine UML, tables and user state functions
-
-@copyright: Mark B Sawyer, All Rights Reserved 2019
-"""
+##
+# @package SleepingBarber.Customer
+# @brief:   State machine implementation
+# @details: State machine UML, tables and user state functions.
+#           Contains auto-generated and user created custom code.
+# @author:  Mark Sawyer
+# @date:    25-Jan-2019
 
 # System imports
 import sys
@@ -90,15 +83,20 @@ class StateTables(object):
 
 
 class UserCode(StateMachine):
-
-    def __init__(self, customer_id=None, barbers=None):
-        StateMachine.__init__(self, sm_id=customer_id, name='Customer%03d' % customer_id,
+    """ User code unique to the Customer state implementation of the SleepingBarber
+        simulation """
+    def __init__(self, id=None, barbers=None):
+        """ Customer class constructor
+            @param id - customer ID, unique to this customer
+            @param barbers - list of barbers in the simulation
+        """
+        StateMachine.__init__(self, sm_id=id, name='Customer%03d' % id,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
-        logging.debug('Customer[%d] INIT' % customer_id)
+        logging.debug('Customer[%d] INIT' % id)
         self.barbers = barbers
-        self.customer_id = customer_id
+        self.id = id
 
         # clock time of simulation from start to finish
         self.start_time = time.time()

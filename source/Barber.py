@@ -1,17 +1,10 @@
-#!/usr/bin/env python
-"""
-Created on January 25, 2019
-
-@author:    Mark Sawyer
-@date:      25-Jan-2019
-
-@package:   SleepingBarber(s)
-@module:    Barber(s)
-@brief:     Barber - State machine definitions
-@details:   Barber - State machine UML, tables and user state functions
-
-@copyright: Mark B Sawyer, All Rights Reserved 2019
-"""
+##
+# @package  SleepingBarber.Barber
+# @brief:   State machine implementation
+# @details: State machine UML, tables and user state functions.
+#           Contains auto-generated and user created custom code.
+# @author:  Mark Sawyer
+# @date:    25-Jan-2019
 
 # System imports
 import sys
@@ -93,15 +86,20 @@ class StateTables(object):
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
 
-class UserCode(StateMachine):
 
-    def __init__(self, barber_id=None):
-        StateMachine.__init__(self, sm_id=barber_id, name='Barber%d' % barber_id,
+class UserCode(StateMachine):
+    """ User code unique to the Barber state implementation of the SleepingBarber
+        simulation """
+    def __init__(self, id=None):
+        ## Barber class constructor
+        #    @param id - barber ID unique to this barber
+
+        StateMachine.__init__(self, sm_id=id, name='Barber%d' % id,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
-        logging.debug('Barber[%s] INIT' % barber_id)
-        self.id = barber_id
+        logging.debug('Barber[%s] INIT' % id)
+        self.id = id
         self.customers = 0
         self.cut_timer = 0
         self.cutting_time = 0
