@@ -1,0 +1,1041 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>modules.ansi_c package &#8212; StateEngineCrank 20190308 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="modules.python package" href="modules.python.html" />
+    <link rel="prev" title="exceptions module" href="exceptions.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="modules-ansi-c-package">
+<h1>modules.ansi_c package<a class="headerlink" href="#modules-ansi-c-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-modules.ansi_c.CodeGeneration">
+<span id="modules-ansi-c-codegeneration-module"></span><h2>modules.ansi_c.CodeGeneration module<a class="headerlink" href="#module-modules.ansi_c.CodeGeneration" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 19, 2016</p>
+<p>&#64;author:    Mark Sawyer
+&#64;date:      20-May-2016</p>
+<p>&#64;package:   StateEngineCrank
+&#64;brief:     Code Generation (Ansi-C State Engine)
+&#64;details:   Code Generation for StateEngineCrank</p>
+<p>&#64;copyright: Mark B Sawyer, All Rights Reserved 2016</p>
+<dl class="class">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen">
+<em class="property">class </em><code class="descclassname">modules.ansi_c.CodeGeneration.</code><code class="descname">CodeGen</code><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Code Generation for StateEngineCrank</p>
+<p>CodeGeneration module initialization.</p>
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.BLANK_LINE">
+<code class="descname">BLANK_LINE</code><em class="property"> = ''</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.BLANK_LINE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.CODE_LINE_TERMINATOR">
+<code class="descname">CODE_LINE_TERMINATOR</code><em class="property"> = ';'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.CODE_LINE_TERMINATOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_DECLARATION_TEMPLATE">
+<code class="descname">EVT_DECLARATION_TEMPLATE</code><em class="property"> = ['static void {EVT_TAG}(int id)', '{']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_DECLARATION_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_CURSTATE_TEMPLATE">
+<code class="descname">EVT_HANDLER_CURSTATE_TEMPLATE</code><em class="property"> = 'SET_CURRENT_STATE(id, {STATE_TAG});'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_CURSTATE_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_DEFAULT_HOOK">
+<code class="descname">EVT_HANDLER_DEFAULT_HOOK</code><em class="property"> = 'EVT_HANDLER_DEFAULT_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_DEFAULT_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_HEADER_TEMPLATE">
+<code class="descname">EVT_HANDLER_HEADER_TEMPLATE</code><em class="property"> = ['/**', ' * ===========================================================================', ' * &#64;brief Event processing {EVT_TAG}', ' *', ' * &#64;details State machine event processing for {EVT_TAG}.', ' *          This function needs to be called whenever the event', ' *          {EVT_TAG} is detected.', ' * ===========================================================================', ' */']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_HEADER_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_SWITCHDEF_TEMPLATE">
+<code class="descname">EVT_HANDLER_SWITCHDEF_TEMPLATE</code><em class="property"> = ['        default:', '            EVT_HANDLER_DEFAULT_HOOK(id);', '            break;']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_HANDLER_SWITCHDEF_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_PROTO">
+<code class="descname">EVT_PROTO</code><em class="property"> = 'static void {EVT_TAG}(int id);'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_PROTO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.EVT_TAG">
+<code class="descname">EVT_TAG</code><em class="property"> = '{EVT_TAG}'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.EVT_TAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.FUNCTION_CLOSE">
+<code class="descname">FUNCTION_CLOSE</code><em class="property"> = '}'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.FUNCTION_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.FUNCTION_PARENS">
+<code class="descname">FUNCTION_PARENS</code><em class="property"> = '(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.FUNCTION_PARENS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GET_CURRENT_STATE">
+<code class="descname">GET_CURRENT_STATE</code><em class="property"> = 'GET_CURRENT_STATE(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GET_CURRENT_STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_CLOSE">
+<code class="descname">GUARD_FUNC_CLOSE</code><em class="property"> = ['    return TRUE;', '}']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_DECL_TEMPLATE">
+<code class="descname">GUARD_FUNC_DECL_TEMPLATE</code><em class="property"> = ['static BOOL_TYPE {GUARD_FUNC_TAG}(int id)', '{']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_DECL_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_HEADER_TEMPLATE">
+<code class="descname">GUARD_FUNC_HEADER_TEMPLATE</code><em class="property"> = ['/**', ' * &#64;todo FIXME', ' */']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_HEADER_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_PROTO_TEMPLATE">
+<code class="descname">GUARD_FUNC_PROTO_TEMPLATE</code><em class="property"> = 'static BOOL_TYPE {GUARD_FUNC_TAG}(int id);'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_PROTO_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_TAG">
+<code class="descname">GUARD_FUNC_TAG</code><em class="property"> = '{GUARD_FUNC_TAG}'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.GUARD_FUNC_TAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.HOOK_DEFINE">
+<code class="descname">HOOK_DEFINE</code><em class="property"> = '#define '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.HOOK_DEFINE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.HOOK_ENDIF">
+<code class="descname">HOOK_ENDIF</code><em class="property"> = '#endif'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.HOOK_ENDIF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.HOOK_IFNDEF">
+<code class="descname">HOOK_IFNDEF</code><em class="property"> = '#ifndef '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.HOOK_IFNDEF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_CLOSE">
+<code class="descname">MAIN_LOOP_CLOSE</code><em class="property"> = ['goto loop;', '    STATE_ENGINE_TERMINATE_HOOK(id);', '}']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_DECLARATION">
+<code class="descname">MAIN_LOOP_DECLARATION</code><em class="property"> = ['static void StateEngineCrank_MainDoLoop(int id)', '{', '    STATE_ENGINE_INITIALIZE_HOOK(id);', 'loop:']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_DECLARATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_DEFAULT_HOOK">
+<code class="descname">MAIN_LOOP_DEFAULT_HOOK</code><em class="property"> = 'MAIN_LOOP_DEFAULT_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_DEFAULT_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_FINAL_STATE_HOOK">
+<code class="descname">MAIN_LOOP_FINAL_STATE_HOOK</code><em class="property"> = 'MAIN_LOOP_FINAL_STATE_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_FINAL_STATE_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_HEADER">
+<code class="descname">MAIN_LOOP_HEADER</code><em class="property"> = ['/**', ' * ===========================================================================', ' * &#64;brief StateEngineCrank - Main Loop', ' *', ' * &#64;details This is the main state machine processing loop.', ' * ===========================================================================', ' */']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_HEADER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_INITIAL_STATE_HOOK">
+<code class="descname">MAIN_LOOP_INITIAL_STATE_HOOK</code><em class="property"> = 'MAIN_LOOP_INITIAL_STATE_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_INITIAL_STATE_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_DEFAULT">
+<code class="descname">MAIN_LOOP_SWITCH_DEFAULT</code><em class="property"> = ['        default:', '            MAIN_LOOP_DEFAULT_HOOK(id);', '            break;']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_FINAL">
+<code class="descname">MAIN_LOOP_SWITCH_FINAL</code><em class="property"> = ['        case FinalState:', '            MAIN_LOOP_FINAL_STATE_HOOK(id);', '            break;']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_FINAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_INITIAL">
+<code class="descname">MAIN_LOOP_SWITCH_INITIAL</code><em class="property"> = ['        case InitialState:', '            MAIN_LOOP_INITIAL_STATE_HOOK(id);', '            break;']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_INITIAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_USER_DO">
+<code class="descname">MAIN_LOOP_SWITCH_USER_DO</code><em class="property"> = '            '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_LOOP_SWITCH_USER_DO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MAIN_PROTOTYPES">
+<code class="descname">MAIN_PROTOTYPES</code><em class="property"> = ['static void StateEngineCrank_MainDoLoop(int id);']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MAIN_PROTOTYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MissingFunctions">
+<code class="descname">MissingFunctions</code><em class="property"> = []</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MissingFunctions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.MissingPrototypes">
+<code class="descname">MissingPrototypes</code><em class="property"> = []</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.MissingPrototypes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.NUM_THREADS_HOOK">
+<code class="descname">NUM_THREADS_HOOK</code><em class="property"> = 'NUM_THREADS'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.NUM_THREADS_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SET_CURRENT_STATE">
+<code class="descname">SET_CURRENT_STATE</code><em class="property"> = 'SET_CURRENT_STATE(id, state)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SET_CURRENT_STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATES_TYPEDEF_END">
+<code class="descname">STATES_TYPEDEF_END</code><em class="property"> = ['    FinalState = -2 //!&lt; final state is automatic', '} State;']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATES_TYPEDEF_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATES_TYPEDEF_START">
+<code class="descname">STATES_TYPEDEF_START</code><em class="property"> = ['typedef enum STATES {', '    InitialState = -1, //!&lt; initial state is automatic']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATES_TYPEDEF_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_INITIALIZE_HOOK">
+<code class="descname">STATE_ENGINE_INITIALIZE_HOOK</code><em class="property"> = 'STATE_ENGINE_INITIALIZE_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_INITIALIZE_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_RUNNING">
+<code class="descname">STATE_ENGINE_RUNNING</code><em class="property"> = 'STATE_ENGINE_RUNNING(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_RUNNING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_TERMINATE_HOOK">
+<code class="descname">STATE_ENGINE_TERMINATE_HOOK</code><em class="property"> = 'STATE_ENGINE_TERMINATE_HOOK(id)'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATE_ENGINE_TERMINATE_HOOK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.STATE_TAG">
+<code class="descname">STATE_TAG</code><em class="property"> = '{STATE_TAG}'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.STATE_TAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_BREAK">
+<code class="descname">SWITCH_BREAK</code><em class="property"> = '            break;'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_BREAK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE">
+<code class="descname">SWITCH_CASE</code><em class="property"> = '        case '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_CLOSE">
+<code class="descname">SWITCH_CASE_GUARD_CLOSE</code><em class="property"> = '            }'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_ELSE">
+<code class="descname">SWITCH_CASE_GUARD_ELSE</code><em class="property"> = '            } else'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_ELSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_ELSE2">
+<code class="descname">SWITCH_CASE_GUARD_ELSE2</code><em class="property"> = '            } else {'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_ELSE2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_IF">
+<code class="descname">SWITCH_CASE_GUARD_IF</code><em class="property"> = '            if ('</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_IF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_IF2">
+<code class="descname">SWITCH_CASE_GUARD_IF2</code><em class="property"> = ') {'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_GUARD_IF2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_INDENT">
+<code class="descname">SWITCH_CASE_INDENT</code><em class="property"> = '            '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_INDENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_INDENT2">
+<code class="descname">SWITCH_CASE_INDENT2</code><em class="property"> = '                '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CASE_INDENT2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CLOSE">
+<code class="descname">SWITCH_CLOSE</code><em class="property"> = '    }'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_DELIMIT">
+<code class="descname">SWITCH_DELIMIT</code><em class="property"> = ':'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_DELIMIT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.SWITCH_START">
+<code class="descname">SWITCH_START</code><em class="property"> = ['    switch (GET_CURRENT_STATE(id)) // dispatch according to current state', '    {']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.SWITCH_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.TAB_SPACES">
+<code class="descname">TAB_SPACES</code><em class="property"> = '    '</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.TAB_SPACES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_CLOSE">
+<code class="descname">VOID_FUNC_CLOSE</code><em class="property"> = ['    return;', '}']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_CLOSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_DECL_TEMPLATE">
+<code class="descname">VOID_FUNC_DECL_TEMPLATE</code><em class="property"> = ['static void {VOID_FUNC_TAG}(int id)', '{']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_DECL_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_HEADER_TEMPLATE">
+<code class="descname">VOID_FUNC_HEADER_TEMPLATE</code><em class="property"> = ['/**', ' * &#64;todo FIXME', ' */']</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_HEADER_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_PROTO_TEMPLATE">
+<code class="descname">VOID_FUNC_PROTO_TEMPLATE</code><em class="property"> = 'static void {VOID_FUNC_TAG}(int id);'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_PROTO_TEMPLATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_TAG">
+<code class="descname">VOID_FUNC_TAG</code><em class="property"> = '{VOID_FUNC_TAG}'</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.VOID_FUNC_TAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_conditional_hook">
+<code class="descname">add_conditional_hook</code><span class="sig-paren">(</span><em>hook</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_conditional_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_conditional_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add #ifndef conditional hook to source file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_conditional_hook_param">
+<code class="descname">add_conditional_hook_param</code><span class="sig-paren">(</span><em>hook</em>, <em>param</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_conditional_hook_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_conditional_hook_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add #ifndef conditional hook to source file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_event_handler">
+<code class="descname">add_event_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_event_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_event_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add event handler function to source file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_event_switch_cases">
+<code class="descname">add_event_switch_cases</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_event_switch_cases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_event_switch_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add event switch cases to current event function being created.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_line">
+<code class="descname">add_line</code><span class="sig-paren">(</span><em>line_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add line of text to file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_line_template">
+<code class="descname">add_line_template</code><span class="sig-paren">(</span><em>line_text</em>, <em>token</em>, <em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_line_template"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_line_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add line of text to file in memory using template.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_lines">
+<code class="descname">add_lines</code><span class="sig-paren">(</span><em>lines_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add lines of text to file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_lines_template">
+<code class="descname">add_lines_template</code><span class="sig-paren">(</span><em>lines_text</em>, <em>token</em>, <em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_lines_template"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_lines_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add lines of text to file in memory using template.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.add_switch_state">
+<code class="descname">add_switch_state</code><span class="sig-paren">(</span><em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.add_switch_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.add_switch_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a switch case (state) to source file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_event_functions">
+<code class="descname">create_event_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_event_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_event_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create event function handlers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_main_defines">
+<code class="descname">create_main_defines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_main_defines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_main_defines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create main state engine defines.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_main_enums">
+<code class="descname">create_main_enums</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_main_enums"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_main_enums" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create main state engine enumerations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_main_loop">
+<code class="descname">create_main_loop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_main_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_main_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create main state engine monitoring loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_main_prototypes">
+<code class="descname">create_main_prototypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_main_prototypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_main_prototypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create main state engine prototypes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.create_main_variables">
+<code class="descname">create_main_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.create_main_variables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.create_main_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create main state engine variables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_lines">
+<code class="descname">delete_lines</code><span class="sig-paren">(</span><em>start_signature</em>, <em>end_signature</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete lines from file in memory based on location of signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_code">
+<code class="descname">delete_state_engine_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_state_engine_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all state engine code.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_defines">
+<code class="descname">delete_state_engine_defines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_state_engine_defines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_defines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all state engine defines.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_enums">
+<code class="descname">delete_state_engine_enums</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_state_engine_enums"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_enums" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all state engine enumerations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_prototypes">
+<code class="descname">delete_state_engine_prototypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_state_engine_prototypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_prototypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all state engine prototypes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_variables">
+<code class="descname">delete_state_engine_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.delete_state_engine_variables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.delete_state_engine_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all state engine variables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_do_functions">
+<code class="descname">find_user_do_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_do_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_do_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML enter
+functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_enter_functions">
+<code class="descname">find_user_enter_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_enter_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_enter_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML enter
+functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_exit_functions">
+<code class="descname">find_user_exit_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_exit_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_exit_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML exit
+functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_functions">
+<code class="descname">find_user_functions</code><span class="sig-paren">(</span><em>func_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_guard_functions">
+<code class="descname">find_user_guard_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_guard_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_guard_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML guard
+functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.find_user_transition_functions">
+<code class="descname">find_user_transition_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.find_user_transition_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.find_user_transition_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan current list of prototypes and functions for UML transition
+functions.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.re_hook">
+<code class="descname">re_hook</code><em class="property"> = re.compile('(?P&lt;hook&gt;[a-zA-Z_]+[a-zA-Z0-9_]*)')</em><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.re_hook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.update_code">
+<code class="descname">update_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.update_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.update_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update source file code.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.update_user_functions">
+<code class="descname">update_user_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.update_user_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.update_user_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create/Update user functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeGeneration.CodeGen.update_user_prototypes">
+<code class="descname">update_user_prototypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeGeneration.html#CodeGen.update_user_prototypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeGeneration.CodeGen.update_user_prototypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create/Update user prototypes.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-modules.ansi_c.CodeScan">
+<span id="modules-ansi-c-codescan-module"></span><h2>modules.ansi_c.CodeScan module<a class="headerlink" href="#module-modules.ansi_c.CodeScan" title="Permalink to this headline">¶</a></h2>
+<p>Code Scanning (Ansi-C State Engine)</p>
+<p>The purpose of this module is to scan code source files and
+generate a list of function prototypes and function instantiations.</p>
+<dl class="class">
+<dt id="modules.ansi_c.CodeScan.CodeScan">
+<em class="property">class </em><code class="descclassname">modules.ansi_c.CodeScan.</code><code class="descname">CodeScan</code><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">modules.Singleton.Singleton</span></code></p>
+<p>Code Scanning for StateEngineCrank
+The purpose of this module is to scan code source files and
+generate a list of function prototypes and function instantiations.</p>
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.dump_functions">
+<code class="descname">dump_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.dump_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.dump_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump functions we Found.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.dump_prototypes">
+<code class="descname">dump_prototypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.dump_prototypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.dump_prototypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump prototypes we Found.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.find_function">
+<code class="descname">find_function</code><span class="sig-paren">(</span><em>func_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.find_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.find_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan our list of functions (True if found).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.find_prototype">
+<code class="descname">find_prototype</code><span class="sig-paren">(</span><em>proto_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.find_prototype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.find_prototype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan our list of prototypes (True if found).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.functions">
+<code class="descname">functions</code><em class="property"> = []</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.functions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.prototypes">
+<code class="descname">prototypes</code><em class="property"> = []</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.prototypes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.re_func_declaration">
+<code class="descname">re_func_declaration</code><em class="property"> = re.compile('static void (?P&lt;funcName&gt;[a-zA-Z_]+[a-zA-Z0-9_]*)\\(int id\\)')</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.re_func_declaration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.re_func_proto">
+<code class="descname">re_func_proto</code><em class="property"> = re.compile('static void (?P&lt;funcName&gt;[a-zA-Z_]+[a-zA-Z0-9_]*)\\(int id\\);')</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.re_func_proto" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.re_guard_declaration">
+<code class="descname">re_guard_declaration</code><em class="property"> = re.compile('static BOOL_TYPE (?P&lt;guardName&gt;[a-zA-Z_]+[a-zA-Z0-9_]*)\\(int id\\)')</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.re_guard_declaration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.CodeScan.CodeScan.re_guard_proto">
+<code class="descname">re_guard_proto</code><em class="property"> = re.compile('static BOOL_TYPE (?P&lt;guardName&gt;[a-zA-Z_]+[a-zA-Z0-9_]*)\\(int id\\);')</em><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.re_guard_proto" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.scan_code">
+<code class="descname">scan_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.scan_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.scan_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan code for prototypes and functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.scan_user_functions">
+<code class="descname">scan_user_functions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.scan_user_functions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.scan_user_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find start and end line of User Code Prototypes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.CodeScan.CodeScan.scan_user_prototypes">
+<code class="descname">scan_user_prototypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/CodeScan.html#CodeScan.scan_user_prototypes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.CodeScan.CodeScan.scan_user_prototypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find start and end line of User Code Prototypes.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-modules.ansi_c.Signature">
+<span id="modules-ansi-c-signature-module"></span><h2>modules.ansi_c.Signature module<a class="headerlink" href="#module-modules.ansi_c.Signature" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 31, 2016</p>
+<p>&#64;author:    Mark Sawyer
+&#64;date:      27-Jun-2016</p>
+<p>&#64;package:   StateEngineCrank
+&#64;brief:     Signature Processing (Ansi-C State Engine)
+&#64;details:   Signature Processing - creation and identification</p>
+<p>&#64;copyright: Mark B Sawyer, All Rights Reserved 2016</p>
+<dl class="class">
+<dt id="modules.ansi_c.Signature.Signature">
+<em class="property">class </em><code class="descclassname">modules.ansi_c.Signature.</code><code class="descname">Signature</code><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">modules.Singleton.Singleton</span></code></p>
+<p>Class for processing StateEngineCrank signatures in user source code.</p>
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_DEFINES_END">
+<code class="descname">MAIN_CODE_DEFINES_END</code><em class="property"> = ' MAIN STATE CODE DEFINES END - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_DEFINES_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_DEFINES_START">
+<code class="descname">MAIN_CODE_DEFINES_START</code><em class="property"> = ' MAIN STATE CODE DEFINES START - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_DEFINES_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_END">
+<code class="descname">MAIN_CODE_END</code><em class="property"> = ' MAIN STATE CODE END - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_ENUMS_END">
+<code class="descname">MAIN_CODE_ENUMS_END</code><em class="property"> = ' MAIN STATE CODE STATE DEFINES END - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_ENUMS_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_ENUMS_START">
+<code class="descname">MAIN_CODE_ENUMS_START</code><em class="property"> = ' MAIN STATE CODE STATE DEFINES START - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_ENUMS_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_PROTOTYPES_END">
+<code class="descname">MAIN_CODE_PROTOTYPES_END</code><em class="property"> = ' MAIN STATE CODE PROTOTYPES END - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_PROTOTYPES_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_PROTOTYPES_START">
+<code class="descname">MAIN_CODE_PROTOTYPES_START</code><em class="property"> = ' MAIN STATE CODE PROTOTYPES START - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_PROTOTYPES_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_START">
+<code class="descname">MAIN_CODE_START</code><em class="property"> = ' MAIN STATE CODE START - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_VARIABLES_END">
+<code class="descname">MAIN_CODE_VARIABLES_END</code><em class="property"> = ' MAIN STATE CODE VARIABLES END - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_VARIABLES_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.MAIN_CODE_VARIABLES_START">
+<code class="descname">MAIN_CODE_VARIABLES_START</code><em class="property"> = ' MAIN STATE CODE VARIABLES START - DO NOT MODIFY '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.MAIN_CODE_VARIABLES_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_CHAR">
+<code class="descname">SIGNATURE_LINE_CHAR</code><em class="property"> = '='</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_CHAR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_DELIM">
+<code class="descname">SIGNATURE_LINE_DELIM</code><em class="property"> = '// '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_DELIM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_LENGTH">
+<code class="descname">SIGNATURE_LINE_LENGTH</code><em class="property"> = 80</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_LENGTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_LENGTH_0">
+<code class="descname">SIGNATURE_LINE_LENGTH_0</code><em class="property"> = 67</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_LENGTH_0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_NUM_CHARS">
+<code class="descname">SIGNATURE_LINE_NUM_CHARS</code><em class="property"> = 77</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_NUM_CHARS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_PRELIM">
+<code class="descname">SIGNATURE_LINE_PRELIM</code><em class="property"> = 10</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_PRELIM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.SIGNATURE_LINE_START">
+<code class="descname">SIGNATURE_LINE_START</code><em class="property"> = 3</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.SIGNATURE_LINE_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.USER_CODE_END">
+<code class="descname">USER_CODE_END</code><em class="property"> = ' USER STATE CODE END '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.USER_CODE_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.USER_CODE_PROTOTYPES_END">
+<code class="descname">USER_CODE_PROTOTYPES_END</code><em class="property"> = ' USER STATE CODE PROTOTYPES END '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.USER_CODE_PROTOTYPES_END" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.USER_CODE_PROTOTYPES_START">
+<code class="descname">USER_CODE_PROTOTYPES_START</code><em class="property"> = ' USER STATE CODE PROTOTYPES START '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.USER_CODE_PROTOTYPES_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="modules.ansi_c.Signature.Signature.USER_CODE_START">
+<code class="descname">USER_CODE_START</code><em class="property"> = ' USER STATE CODE START '</em><a class="headerlink" href="#modules.ansi_c.Signature.Signature.USER_CODE_START" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature">
+<code class="descname">create_signature</code><span class="sig-paren">(</span><em>signature_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Worker function called during initialization to create signatures</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_defines_end">
+<code class="descname">create_signature_main_code_defines_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_defines_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_defines_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine declarations signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_defines_start">
+<code class="descname">create_signature_main_code_defines_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_defines_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_defines_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine declarations signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_end">
+<code class="descname">create_signature_main_code_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine code signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_enums_end">
+<code class="descname">create_signature_main_code_enums_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_enums_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_enums_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine enumerations signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_enums_start">
+<code class="descname">create_signature_main_code_enums_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_enums_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_enums_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine enumerations signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_proto_end">
+<code class="descname">create_signature_main_code_proto_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_proto_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_proto_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine prototype signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_proto_start">
+<code class="descname">create_signature_main_code_proto_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_proto_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_proto_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine prototype signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_start">
+<code class="descname">create_signature_main_code_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine code signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_vars_end">
+<code class="descname">create_signature_main_code_vars_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_vars_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_vars_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine variables signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_main_code_vars_start">
+<code class="descname">create_signature_main_code_vars_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_main_code_vars_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_main_code_vars_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create state engine variables signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_user_code_end">
+<code class="descname">create_signature_user_code_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_user_code_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_user_code_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create user code signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_user_code_start">
+<code class="descname">create_signature_user_code_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_user_code_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_user_code_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create user code signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_user_proto_end">
+<code class="descname">create_signature_user_proto_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_user_proto_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_user_proto_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create user prototype signature end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signature_user_proto_start">
+<code class="descname">create_signature_user_proto_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signature_user_proto_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signature_user_proto_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create user prototype signature start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.create_signatures">
+<code class="descname">create_signatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.create_signatures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.create_signatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create all signatures (user and main).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_signature">
+<code class="descname">find_signature</code><span class="sig-paren">(</span><em>signature</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find requested signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_signatures">
+<code class="descname">find_signatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_signatures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_signatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all signatures (user and main).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_defines_end">
+<code class="descname">find_state_engine_code_defines_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_defines_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_defines_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code defines end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_defines_start">
+<code class="descname">find_state_engine_code_defines_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_defines_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_defines_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code defines start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_end">
+<code class="descname">find_state_engine_code_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_enums_end">
+<code class="descname">find_state_engine_code_enums_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_enums_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_enums_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code enumerations end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_enums_start">
+<code class="descname">find_state_engine_code_enums_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_enums_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_enums_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code enumerations start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_proto_end">
+<code class="descname">find_state_engine_code_proto_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_proto_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_proto_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code prototypes end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_proto_start">
+<code class="descname">find_state_engine_code_proto_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_proto_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_proto_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code prototypes start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_start">
+<code class="descname">find_state_engine_code_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_variables_end">
+<code class="descname">find_state_engine_code_variables_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_variables_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_variables_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code variables end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_state_engine_code_variables_start">
+<code class="descname">find_state_engine_code_variables_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_state_engine_code_variables_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_state_engine_code_variables_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find state engine code variables start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_user_code_end">
+<code class="descname">find_user_code_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_user_code_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_user_code_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find user code end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_user_code_proto_end">
+<code class="descname">find_user_code_proto_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_user_code_proto_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_user_code_proto_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find user prototypes end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_user_code_proto_start">
+<code class="descname">find_user_code_proto_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_user_code_proto_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_user_code_proto_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find user prototypes start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.find_user_code_start">
+<code class="descname">find_user_code_start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.find_user_code_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.find_user_code_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find user code start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="modules.ansi_c.Signature.Signature.findsignature">
+<code class="descname">findsignature</code><span class="sig-paren">(</span><em>signature</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modules/ansi_c/Signature.html#Signature.findsignature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modules.ansi_c.Signature.Signature.findsignature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find requested signature (state or user, start or end).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-modules.ansi_c">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-modules.ansi_c" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">StateEngineCrank</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Barber.html">Barber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Common.html">Common module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Customer.html">Customer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SleepingBarber.html">SleepingBarber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="StateEngineCrank.html">StateEngineCrank module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="WaitingRoom.html">WaitingRoom module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">exceptions module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">modules.ansi_c package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.python.html">modules.python package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">source</a><ul>
+      <li>Previous: <a href="exceptions.html" title="previous chapter">exceptions module</a></li>
+      <li>Next: <a href="modules.python.html" title="next chapter">modules.python package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Mark Sawyer under the terms of GPLv3.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/modules.ansi_c.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -15,21 +15,24 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../source'))
-sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'StateEngineCrank'
-copyright = '2019, Mark Sawyer'
+copyright = '2019, Mark Sawyer under the terms of GPLv3'
 author = 'Mark Sawyer'
 
 # The short X.Y version
-version = ''
+version = '0.00.01'
 # The full version, including alpha/beta/rc tags
 release = '20190308'
 
 
 # -- General configuration ---------------------------------------------------
+
+# Configure Sphinx to include class constructor docstrings.
+autoclass_content = 'both'
+show_authors = True
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
@@ -40,6 +43,7 @@ release = '20190308'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',

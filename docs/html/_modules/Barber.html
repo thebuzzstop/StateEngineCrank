@@ -1,0 +1,408 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Barber &#8212; StateEngineCrank 20190308 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Barber</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; SleepingBarber.Barber</span>
+
+<span class="sd">* State machine UML, tables and user state functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># System imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># Project imports</span>
+<span class="kn">from</span> <span class="nn">modules.PyState</span> <span class="k">import</span> <span class="n">StateMachine</span>    <span class="c1"># noqa</span>
+<span class="kn">import</span> <span class="nn">WaitingRoom</span>                          <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">Common</span> <span class="k">import</span> <span class="n">Config</span> <span class="k">as</span> <span class="n">Config</span>         <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">Common</span> <span class="k">import</span> <span class="n">Statistics</span> <span class="k">as</span> <span class="n">Statistics</span> <span class="c1"># noqa</span>
+<span class="kn">import</span> <span class="nn">Customer</span>                             <span class="c1"># noqa</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)-15s</span><span class="s1"> </span><span class="si">%(levelname)-8s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading modules: </span><span class="si">%s</span><span class="s1"> as </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="vm">__file__</span><span class="p">,</span> <span class="vm">__name__</span><span class="p">))</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    @startuml</span>
+
+<span class="sd">    [*] --&gt; StartUp</span>
+<span class="sd">    </span>
+<span class="sd">    StartUp --&gt; Finish : EvStop</span>
+<span class="sd">    StartUp --&gt; Cutting : EvStart [WaitingCustomer] / GetCustomer()</span>
+<span class="sd">    StartUp --&gt; Sleeping : EvStart [!WaitingCustomer]</span>
+<span class="sd">    StartUp : enter : BarberStart</span>
+
+<span class="sd">    Sleeping --&gt; Cutting : EvCustomerEnter</span>
+<span class="sd">    Sleeping --&gt; Finish : EvStop</span>
+<span class="sd">    Sleeping : enter : StartSleeping</span>
+<span class="sd">    Sleeping : do    : Sleep</span>
+<span class="sd">    Sleeping : exit  : StopSleeping</span>
+<span class="sd">    </span>
+<span class="sd">    Cutting --&gt; Cutting : EvFinishCutting [WaitingCustomer] / GetCustomer()</span>
+<span class="sd">    Cutting --&gt; Sleeping : EvFinishCutting [!WaitingCustomer]</span>
+<span class="sd">    Cutting --&gt; Stopping : EvStop</span>
+<span class="sd">    Cutting : enter : StartCutting</span>
+<span class="sd">    Cutting : do    : Cut</span>
+
+<span class="sd">    Stopping --&gt; Finish : EvFinishCutting</span>
+<span class="sd">    Stopping : do : Cut</span>
+
+<span class="sd">    Finish : enter : BarberDone</span>
+<span class="sd">        </span>
+<span class="sd">    @enduml</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== MAIN STATE CODE = STATE DEFINES &amp; TABLES = START = DO NOT MODIFY =======</span>
+<span class="c1"># ==============================================================================</span>
+
+
+<div class="viewcode-block" id="States"><a class="viewcode-back" href="../Barber.html#Barber.States">[docs]</a><span class="k">class</span> <span class="nc">States</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">StartUp</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">Finish</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">Cutting</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">Sleeping</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">Stopping</span> <span class="o">=</span> <span class="mi">5</span></div>
+
+
+<div class="viewcode-block" id="Events"><a class="viewcode-back" href="../Barber.html#Barber.Events">[docs]</a><span class="k">class</span> <span class="nc">Events</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">EvStop</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">EvStart</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">EvCustomerEnter</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">EvFinishCutting</span> <span class="o">=</span> <span class="mi">4</span></div>
+
+
+<div class="viewcode-block" id="StateTables"><a class="viewcode-back" href="../Barber.html#Barber.StateTables">[docs]</a><span class="k">class</span> <span class="nc">StateTables</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">state_transition_table</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">state_function_table</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== MAIN STATE CODE = STATE DEFINES &amp; TABLES = END = DO NOT MODIFY =========</span>
+<span class="c1"># ==============================================================================</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== USER STATE CODE = BEGIN ================================================</span>
+<span class="c1"># ==============================================================================</span>
+
+
+<div class="viewcode-block" id="UserCode"><a class="viewcode-back" href="../Barber.html#Barber.UserCode">[docs]</a><span class="k">class</span> <span class="nc">UserCode</span><span class="p">(</span><span class="n">StateMachine</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; User code unique to the Barber state implementation of the SleepingBarber</span>
+<span class="sd">        simulation &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Barber class constructor</span>
+
+<span class="sd">            Parameters:</span>
+<span class="sd">                id - barber ID unique to this barber</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">StateMachine</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sm_id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Barber</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">id</span><span class="p">,</span>
+                              <span class="n">startup_state</span><span class="o">=</span><span class="n">States</span><span class="o">.</span><span class="n">StartUp</span><span class="p">,</span>
+                              <span class="n">function_table</span><span class="o">=</span><span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">,</span>
+                              <span class="n">transition_table</span><span class="o">=</span><span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] INIT&#39;</span> <span class="o">%</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>                    <span class="c1">#: barber ID</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">customers</span> <span class="o">=</span> <span class="mi">0</span>              <span class="c1">#: customers served</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span> <span class="o">=</span> <span class="mi">0</span>              <span class="c1">#: cut timer, used to time the length of a haircut</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutting_time</span> <span class="o">=</span> <span class="mi">0</span>           <span class="c1">#: total time spent cutting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sleeping_time</span> <span class="o">=</span> <span class="mi">0</span>          <span class="c1">#: total time spent sleeping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_customer</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1">#: current customer being served</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span> <span class="o">=</span> <span class="n">WaitingRoom</span><span class="o">.</span><span class="n">WaitingRoom</span><span class="p">()</span>   <span class="c1">#: waiting room instantiation</span>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Cutting_Cut"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Cutting_Cut">[docs]</a>    <span class="k">def</span> <span class="nf">Cutting_Cut</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; *Do* function processing for the *Cutting* state</span>
+
+<span class="sd">            State machine *do* function processing for the *Cutting* state.</span>
+<span class="sd">            This function is called once every state machine iteration to perform processing</span>
+<span class="sd">            for the *Cutting* state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># track total time cutting hair</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutting_time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># process timer for current haircut</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] Finish cutting </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">customers</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">post_event</span><span class="p">(</span><span class="n">Events</span><span class="o">.</span><span class="n">EvFinishCutting</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_customer</span><span class="o">.</span><span class="n">post_event</span><span class="p">(</span><span class="n">Customer</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">EvFinishCutting</span><span class="p">)</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Cutting_StartCutting"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Cutting_StartCutting">[docs]</a>    <span class="k">def</span> <span class="nf">Cutting_StartCutting</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Enter function processing for *Cutting* state.</span>
+
+<span class="sd">            State machine enter function processing for the *Cutting* state.</span>
+<span class="sd">            This function is called when the *Cutting* state is entered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># track total customers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">customers</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># start haircut timer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span> <span class="o">=</span> <span class="n">Config</span><span class="o">.</span><span class="n">cutting_time</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] StartCutting </span><span class="si">%s</span><span class="s1"> [</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">customers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_timer</span><span class="p">))</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Finish_BarberDone"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Finish_BarberDone">[docs]</a>    <span class="k">def</span> <span class="nf">Finish_BarberDone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Enter function processing for *Finish* state.</span>
+
+<span class="sd">            State machine enter function processing for the *Finish* state.</span>
+<span class="sd">            This function is called when the *Finish* state is entered at the</span>
+<span class="sd">            end of the SleepinBarber simulation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] BarberDone&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">Statistics</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">stats</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">stats</span><span class="o">.</span><span class="n">barbers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Sleeping_Sleep"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Sleeping_Sleep">[docs]</a>    <span class="k">def</span> <span class="nf">Sleeping_Sleep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; *Do* function processing for the *Sleeping* state</span>
+
+<span class="sd">            State machine *do* function processing for the *Sleeping* state.</span>
+<span class="sd">            This function is called once every state machine iteration to perform processing</span>
+<span class="sd">            for the *Sleeping* state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sleeping_time</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Sleeping_StartSleeping"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Sleeping_StartSleeping">[docs]</a>    <span class="k">def</span> <span class="nf">Sleeping_StartSleeping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Enter function processing for *Sleeping* state.</span>
+
+<span class="sd">            State machine enter function processing for the *Sleeping* state.</span>
+<span class="sd">            This function is called when the *Sleeping* state is entered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] StartSleeping&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Sleeping_StopSleeping"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Sleeping_StopSleeping">[docs]</a>    <span class="k">def</span> <span class="nf">Sleeping_StopSleeping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; *Exit* function processing for the *Sleeping* state.</span>
+
+<span class="sd">            State machine *exit* function processing for the *Sleeping* state.</span>
+<span class="sd">            This function is called when the *Sleeping* state is exited.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] StopSleeping&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.StartUp_BarberStart"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.StartUp_BarberStart">[docs]</a>    <span class="k">def</span> <span class="nf">StartUp_BarberStart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Enter function processing for *StartUp* state.</span>
+
+<span class="sd">            State machine enter function processing for the *StartUp* state.</span>
+<span class="sd">            This function is called when the *StartUp* state is entered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Barber[</span><span class="si">%s</span><span class="s1">] Starting&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+    <span class="c1"># =========================================================</span>
+<div class="viewcode-block" id="UserCode.GetCustomer"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.GetCustomer">[docs]</a>    <span class="k">def</span> <span class="nf">GetCustomer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; State transition processing for *GetCustomer*</span>
+
+<span class="sd">            State machine state transition processing for *GetCustomer*.</span>
+<span class="sd">            This function is called whenever the state transition *GetCustomer* is taken.</span>
+
+<span class="sd">            A customer is obtained from the waiting room and the customer</span>
+<span class="sd">            event EvBarberReady is delivered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_customer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">get_customer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_customer</span><span class="o">.</span><span class="n">post_event</span><span class="p">(</span><span class="n">Customer</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">EvBarberReady</span><span class="p">)</span></div>
+
+    <span class="c1"># =========================================================</span>
+<div class="viewcode-block" id="UserCode.NOT_WaitingCustomer"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.NOT_WaitingCustomer">[docs]</a>    <span class="k">def</span> <span class="nf">NOT_WaitingCustomer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Guard processing for *NOT_WaitingCustomer*</span>
+
+<span class="sd">            State machine guard processing for *NOT_WaitingCustomer*.</span>
+<span class="sd">            This function is called whenever the guard *NOT_WaitingCustomer* is tested.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                True - Guard is active/valid</span>
+<span class="sd">                False - Guard is inactive/invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">customer_waiting</span><span class="p">()</span></div>
+
+    <span class="c1"># =========================================================</span>
+<div class="viewcode-block" id="UserCode.WaitingCustomer"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.WaitingCustomer">[docs]</a>    <span class="k">def</span> <span class="nf">WaitingCustomer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Guard processing for *GetWaitingCustomer*</span>
+
+<span class="sd">            State machine guard processing for *GetWaitingCustomer*.</span>
+<span class="sd">            This function is called whenever the guard *GetWaitingCustomer* is tested.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                True - Customer waiting [Guard is active/valid]</span>
+<span class="sd">                False - Customer NOT waiting [Guard is inactive/invalid]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_room</span><span class="o">.</span><span class="n">customer_waiting</span><span class="p">()</span></div>
+
+    <span class="c1"># ===========================================================================</span>
+<div class="viewcode-block" id="UserCode.Stopping_Cut"><a class="viewcode-back" href="../Barber.html#Barber.UserCode.Stopping_Cut">[docs]</a>    <span class="k">def</span> <span class="nf">Stopping_Cut</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; *Do* function processing for the *Stopping* state</span>
+
+<span class="sd">            State machine *do* function processing for the *Stopping* state.</span>
+<span class="sd">            This function is called once every state machine iteration to perform processing</span>
+<span class="sd">            for the *Stopping* state.</span>
+
+<span class="sd">            Basically we are performing the same function as the *Cutting_Cut* function</span>
+<span class="sd">            since we are still cutting a customers hair. The main difference is that when we</span>
+<span class="sd">            are in this state and the *EvFinishCutting* event is thrown we will transition</span>
+<span class="sd">            to the *Finish* state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cutting_Cut</span><span class="p">()</span></div></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== USER STATE CODE = END ==================================================</span>
+<span class="c1"># ==============================================================================</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================</span>
+<span class="c1"># ==============================================================================</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">StartUp</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvStop</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Finish</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvStart</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Cutting</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">WaitingCustomer</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">GetCustomer</span><span class="p">},</span>
+        <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Sleeping</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">NOT_WaitingCustomer</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Finish</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Cutting</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvFinishCutting</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Cutting</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">WaitingCustomer</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">GetCustomer</span><span class="p">},</span>
+        <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Sleeping</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">NOT_WaitingCustomer</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+    <span class="p">],</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvStop</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Stopping</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Sleeping</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvCustomerEnter</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Cutting</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvStop</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Finish</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_transition_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Stopping</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Events</span><span class="o">.</span><span class="n">EvFinishCutting</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;state2&#39;</span><span class="p">:</span> <span class="n">States</span><span class="o">.</span><span class="n">Finish</span><span class="p">,</span> <span class="s1">&#39;guard&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;transition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">StartUp</span><span class="p">]</span> <span class="o">=</span> \
+    <span class="p">{</span><span class="s1">&#39;enter&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">StartUp_BarberStart</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Finish</span><span class="p">]</span> <span class="o">=</span> \
+    <span class="p">{</span><span class="s1">&#39;enter&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Finish_BarberDone</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Cutting</span><span class="p">]</span> <span class="o">=</span> \
+    <span class="p">{</span><span class="s1">&#39;enter&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Cutting_StartCutting</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Cutting_Cut</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Sleeping</span><span class="p">]</span> <span class="o">=</span> \
+    <span class="p">{</span><span class="s1">&#39;enter&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Sleeping_StartSleeping</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Sleeping_Sleep</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Sleeping_StopSleeping</span><span class="p">}</span>
+
+<span class="n">StateTables</span><span class="o">.</span><span class="n">state_function_table</span><span class="p">[</span><span class="n">States</span><span class="o">.</span><span class="n">Stopping</span><span class="p">]</span> <span class="o">=</span> \
+    <span class="p">{</span><span class="s1">&#39;enter&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;do&#39;</span><span class="p">:</span> <span class="n">UserCode</span><span class="o">.</span><span class="n">Stopping_Cut</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># ===== MAIN STATE CODE TABLES = END = DO NOT MODIFY ===========================</span>
+<span class="c1"># ==============================================================================</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">StateEngineCrank</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Mark Sawyer under the terms of GPLv3.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,431 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Customer module &#8212; StateEngineCrank 20190308 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SleepingBarber module" href="SleepingBarber.html" />
+    <link rel="prev" title="Common module" href="Common.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Customer">
+<span id="customer-module"></span><h1>Customer module<a class="headerlink" href="#module-Customer" title="Permalink to this headline">¶</a></h1>
+<p>SleepingBarber.Customer</p>
+<ul class="simple">
+<li>State machine UML, tables and user state functions.</li>
+<li>Contains auto-generated and user created custom code.</li>
+</ul>
+<dl class="class">
+<dt id="Customer.Events">
+<em class="property">class </em><code class="descclassname">Customer.</code><code class="descname">Events</code><a class="reference internal" href="_modules/Customer.html#Events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.Events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="attribute">
+<dt id="Customer.Events.EvBarberReady">
+<code class="descname">EvBarberReady</code><em class="property"> = 4</em><a class="headerlink" href="#Customer.Events.EvBarberReady" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.Events.EvFinishCutting">
+<code class="descname">EvFinishCutting</code><em class="property"> = 3</em><a class="headerlink" href="#Customer.Events.EvFinishCutting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.Events.EvStart">
+<code class="descname">EvStart</code><em class="property"> = 1</em><a class="headerlink" href="#Customer.Events.EvStart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.Events.EvStop">
+<code class="descname">EvStop</code><em class="property"> = 2</em><a class="headerlink" href="#Customer.Events.EvStop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Customer.StateTables">
+<em class="property">class </em><code class="descclassname">Customer.</code><code class="descname">StateTables</code><a class="reference internal" href="_modules/Customer.html#StateTables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.StateTables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="attribute">
+<dt id="Customer.StateTables.state_function_table">
+<code class="descname">state_function_table</code><em class="property"> = {&lt;States.HairCut: 2&gt;: {'do': &lt;function UserCode.HairCut_GetHairCut&gt;, 'exit': &lt;function UserCode.HairCut_StopHairCut&gt;, 'enter': &lt;function UserCode.HairCut_StartHairCut&gt;}, &lt;States.Finish: 4&gt;: {'do': None, 'exit': None, 'enter': &lt;function UserCode.Finish_CustomerDone&gt;}, &lt;States.StartUp: 1&gt;: {'do': None, 'exit': None, 'enter': &lt;function UserCode.StartUp_CustomerStart&gt;}, &lt;States.Waiting: 3&gt;: {'do': &lt;function UserCode.Waiting_Wait&gt;, 'exit': &lt;function UserCode.Waiting_StopWaiting&gt;, 'enter': &lt;function UserCode.Waiting_StartWaiting&gt;}}</em><a class="headerlink" href="#Customer.StateTables.state_function_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.StateTables.state_transition_table">
+<code class="descname">state_transition_table</code><em class="property"> = {&lt;States.HairCut: 2&gt;: {&lt;Events.EvFinishCutting: 3&gt;: {'guard': None, 'state2': &lt;States.Finish: 4&gt;, 'transition': None}}, &lt;States.Finish: 4&gt;: {}, &lt;States.StartUp: 1&gt;: {&lt;Events.EvStart: 1&gt;: [{'guard': &lt;function UserCode.BarberSleeping&gt;, 'state2': &lt;States.HairCut: 2&gt;, 'transition': None}, {'guard': &lt;function UserCode.BarberCutting_AND_WaitingRoomChair&gt;, 'state2': &lt;States.Waiting: 3&gt;, 'transition': &lt;function UserCode.GetChair&gt;}, {'guard': &lt;function UserCode.BarberCutting_AND_NOT_WaitingRoomChair&gt;, 'state2': &lt;States.Finish: 4&gt;, 'transition': &lt;function UserCode.NoHairCut&gt;}], &lt;Events.EvStop: 2&gt;: {'guard': None, 'state2': &lt;States.Finish: 4&gt;, 'transition': None}}, &lt;States.Waiting: 3&gt;: {&lt;Events.EvStop: 2&gt;: {'guard': None, 'state2': &lt;States.Finish: 4&gt;, 'transition': None}, &lt;Events.EvBarberReady: 4&gt;: {'guard': None, 'state2': &lt;States.HairCut: 2&gt;, 'transition': None}}}</em><a class="headerlink" href="#Customer.StateTables.state_transition_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Customer.States">
+<em class="property">class </em><code class="descclassname">Customer.</code><code class="descname">States</code><a class="reference internal" href="_modules/Customer.html#States"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.States" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="attribute">
+<dt id="Customer.States.Finish">
+<code class="descname">Finish</code><em class="property"> = 4</em><a class="headerlink" href="#Customer.States.Finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.States.HairCut">
+<code class="descname">HairCut</code><em class="property"> = 2</em><a class="headerlink" href="#Customer.States.HairCut" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.States.StartUp">
+<code class="descname">StartUp</code><em class="property"> = 1</em><a class="headerlink" href="#Customer.States.StartUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.States.Waiting">
+<code class="descname">Waiting</code><em class="property"> = 3</em><a class="headerlink" href="#Customer.States.Waiting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Customer.UserCode">
+<em class="property">class </em><code class="descclassname">Customer.</code><code class="descname">UserCode</code><span class="sig-paren">(</span><em>id=None</em>, <em>barbers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">modules.PyState.StateMachine</span></code></p>
+<p>User code unique to the Customer state implementation of the SleepingBarber simulation</p>
+<p>Customer class constructor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>- customer ID</strong><strong>, </strong><strong>unique to this customer</strong> (<em>id</em>) – </li>
+<li><strong>- list of barbers in the simulation</strong> (<em>barbers</em><em>[</em><em>]</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="Customer.UserCode.BarberCutting_AND_NOT_WaitingRoomChair">
+<code class="descname">BarberCutting_AND_NOT_WaitingRoomChair</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.BarberCutting_AND_NOT_WaitingRoomChair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.BarberCutting_AND_NOT_WaitingRoomChair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Guard processing for BarberCutting_AND_NOT_WaitingRoomChair</p>
+<p>State machine guard processing for BarberCutting_AND_NOT_WaitingRoomChair.
+This function is called whenever the guard BarberCutting_AND_NOT_WaitingRoomChair is tested.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True - Guard is active/valid. All barbers are cutting and there are no waiting room chairs free.
+False - Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.BarberCutting_AND_WaitingRoomChair">
+<code class="descname">BarberCutting_AND_WaitingRoomChair</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.BarberCutting_AND_WaitingRoomChair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.BarberCutting_AND_WaitingRoomChair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Guard processing for BarberCutting_AND_WaitingRoomChair</p>
+<p>State machine guard processing for BarberCutting_AND_WaitingRoomChair.
+This function is called whenever the guard BarberCutting_AND_WaitingRoomChair is tested.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True - Guard is active/valid. All barbers are cutting and there are waiting room chairs free.
+False - Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.BarberSleeping">
+<code class="descname">BarberSleeping</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.BarberSleeping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.BarberSleeping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Guard processing for BarberSleeping</p>
+<p>State machine guard processing for BarberSleeping.
+This function is called whenever the guard BarberSleeping is tested.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True - Guard is active/valid
+False - Guard is inactive/invalid</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.Finish_CustomerDone">
+<code class="descname">Finish_CustomerDone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.Finish_CustomerDone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.Finish_CustomerDone" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Enter</em> function processing for <em>Finish</em> state.</p>
+<p>State machine <em>enter</em> function processing for the <em>Finish</em> state.
+This function is called when the <em>Finish</em> state is entered.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.GetChair">
+<code class="descname">GetChair</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.GetChair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.GetChair" title="Permalink to this definition">¶</a></dt>
+<dd><p>State transition processing for <em>GetChair</em></p>
+<p>State machine state transition processing for <em>GetChair</em>.
+This function is called whenever the state transition <em>GetChair</em> is taken.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.HairCut_GetHairCut">
+<code class="descname">HairCut_GetHairCut</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.HairCut_GetHairCut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.HairCut_GetHairCut" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Do</em> function processing for the <em>HairCut</em> state</p>
+<p>State machine <em>do</em> function processing for the <em>HairCut</em> state.
+This function is called once every state machine iteration to perform processing
+for the <em>HairCut</em> state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.HairCut_StartHairCut">
+<code class="descname">HairCut_StartHairCut</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.HairCut_StartHairCut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.HairCut_StartHairCut" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Enter</em> function processing for <em>HairCut</em> state.</p>
+<p>State machine enter function processing for the <em>HairCut</em> state.
+This function is called when the <em>HairCut</em> state is entered.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.HairCut_StopHairCut">
+<code class="descname">HairCut_StopHairCut</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.HairCut_StopHairCut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.HairCut_StopHairCut" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Exit</em> function processing for the <em>HairCut</em> state.</p>
+<p>State machine exit function processing for the <em>HairCut</em> state.
+This function is called when the <em>HairCut</em> state is exited.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.NoHairCut">
+<code class="descname">NoHairCut</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.NoHairCut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.NoHairCut" title="Permalink to this definition">¶</a></dt>
+<dd><p>State transition processing for NoHairCut</p>
+<p>State machine state transition processing for NoHairCut.
+This function is called whenever the state transition NoHairCut is taken.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.StartUp_CustomerStart">
+<code class="descname">StartUp_CustomerStart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.StartUp_CustomerStart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.StartUp_CustomerStart" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Enter</em> function processing for <em>StartUp</em> state.</p>
+<p>State machine enter function processing for the <em>StartUp</em> state.
+This function is called when the <em>StartUp</em> state is entered.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.Waiting_StartWaiting">
+<code class="descname">Waiting_StartWaiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.Waiting_StartWaiting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.Waiting_StartWaiting" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Enter</em> function processing for <em>Waiting</em> state.</p>
+<p>State machine enter function processing for the <em>Waiting</em> state.
+This function is called when the <em>Waiting</em> state is entered.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.Waiting_StopWaiting">
+<code class="descname">Waiting_StopWaiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.Waiting_StopWaiting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.Waiting_StopWaiting" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Exit</em> function processing for the <em>Waiting</em> state.</p>
+<p>State machine exit function processing for the <em>Waiting</em> state.
+This function is called when the <em>Waiting</em> state is exited.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Customer.UserCode.Waiting_Wait">
+<code class="descname">Waiting_Wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Customer.html#UserCode.Waiting_Wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Customer.UserCode.Waiting_Wait" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Do</em> function processing for the <em>Waiting</em> state</p>
+<p>State machine do function processing for the <em>Waiting</em> state.
+This function is called once every state machine iteration to perform processing
+for the <em>Waiting</em> state.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.barbers">
+<code class="descname">barbers</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.barbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of barbers in this simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.cutting_time">
+<code class="descname">cutting_time</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.cutting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>cutting time - simulation time (seconds)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.cutting_time_elapsed">
+<code class="descname">cutting_time_elapsed</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.cutting_time_elapsed" title="Permalink to this definition">¶</a></dt>
+<dd><p>cutting clock time - elapsed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.cutting_time_finish">
+<code class="descname">cutting_time_finish</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.cutting_time_finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>cutting clock time - finish</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.cutting_time_start">
+<code class="descname">cutting_time_start</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.cutting_time_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>cutting clock time - start</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.finish_time">
+<code class="descname">finish_time</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.finish_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>simulation clock stop time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.id">
+<code class="descname">id</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>our customer ID</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.start_time">
+<code class="descname">start_time</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.start_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>simulation clock start time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.waiting_room">
+<code class="descname">waiting_room</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.waiting_room" title="Permalink to this definition">¶</a></dt>
+<dd><p>establish access to waitingroom</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.waiting_time">
+<code class="descname">waiting_time</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.waiting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>waiting time - simulation time (seconds)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.waiting_time_elapsed">
+<code class="descname">waiting_time_elapsed</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.waiting_time_elapsed" title="Permalink to this definition">¶</a></dt>
+<dd><p>waiting clock time - elapsed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.waiting_time_finish">
+<code class="descname">waiting_time_finish</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.waiting_time_finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>waiting clock time - finish</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Customer.UserCode.waiting_time_start">
+<code class="descname">waiting_time_start</code><em class="property"> = None</em><a class="headerlink" href="#Customer.UserCode.waiting_time_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>waiting clock time - start</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">StateEngineCrank</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Barber.html">Barber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Common.html">Common module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Customer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SleepingBarber.html">SleepingBarber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="StateEngineCrank.html">StateEngineCrank module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="WaitingRoom.html">WaitingRoom module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">exceptions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.ansi_c.html">modules.ansi_c package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.python.html">modules.python package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">source</a><ul>
+      <li>Previous: <a href="Common.html" title="previous chapter">Common module</a></li>
+      <li>Next: <a href="SleepingBarber.html" title="next chapter">SleepingBarber module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Mark Sawyer under the terms of GPLv3.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/Customer.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

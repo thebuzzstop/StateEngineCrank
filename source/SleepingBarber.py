@@ -1,14 +1,7 @@
-"""
-@package SleepingBarber.Main
+""" SleepingBarber.Main
 
-Created on January 25, 2019
-
-@author:    Mark Sawyer
-@date:      25-Jan-2019
-
-@package:   SleepingBarber(s)
-@brief:     Top level code for SleepingBarber(s) simulation
-@details:   Main driver, instantiates Barber(s) and Customer(s) and drives the state machines
+* Top level code for SleepingBarber(s) simulation.
+* Main driver, instantiates Barber(s) and Customer(s) and drives the state machines
 """
 
 # System imports
@@ -30,30 +23,34 @@ from Customer import UserCode as Customer       # noqa
 from Customer import Events as CustomerEvents   # noqa
 from WaitingRoom import WaitingRoom             # noqa
 
-# An array of barbers to cut hair
+#: An array of barbers to cut hair
 barbers = [Barber(id=_+1) for _ in range(Config.Barbers)]
 
-# Instantiate the waiting room
+#: Instantiate the waiting room
 waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
 
-# Instantiate the statistics module
+#: Instantiate the statistics module
 statistics = Statistics()
 
 
 class CustomerGenerator(Thread):
-    """ Class for generating customers based on certain configurable criteria """
+    """ Class for generating customers based on configurable criteria. """
 
     def __init__(self, customer_rate, customer_variance):
         Thread.__init__(self, target=self.run)
-        self.customer_rate = customer_rate
-        self.customer_variance = customer_variance
-        self.customer_count = 0
-        self.customer_list = []
-        self.running = False
+        self.customer_rate = customer_rate          #: rate at which customers will be generated
+        self.customer_variance = customer_variance  #: variance in rate, used by random number generator
+        self.customer_count = 0                     #: total customers
+        self.customer_list = []                     #: list of customer objects
+        self.running = False                        #: boolean determining when we are supposed to run
         logging.debug('CG: Start')
         self.start()
 
     def run(self):
+        """ Customer generator main thread
+
+            The customer generator thread runs in the background creating customers for the simulation.
+        """
         logging.debug('CG: run.wait')
         # wait until the simulation is running
         while not self.running:

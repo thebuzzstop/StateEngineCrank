@@ -1,9 +1,8 @@
-##
-# @package    SleepingBarber.WaitingRoom
-# @brief:     Customer waiting room support for SleepingBarber(s) simulation
-# @details:   Provides synchronized access to waiting room for barber(s) and customer(s)
-# @author:    Mark Sawyer
-# @date:      27-Jan-2019
+""" SleepingBarber.WaitingRoom
+
+* Customer waiting room support for SleepingBarber(s) simulation
+* Provides synchronized access to waiting room for barber(s) and customer(s)
+"""
 
 # System imports
 import logging
@@ -46,35 +45,34 @@ class WaitingRoom(Borg, Queue):
         Implemented as a Borg so that all instantiations of the WaitingRoom class will
         utilize the same data for waiting customers
 
-        Implements a Queue (FIFO) for customers waiting for a haircut.
-        Implements a Lock to prevent deadlock and race conditions between barbers and customers.
-        Anyone calling a WaitingRoom function needs to obtain the lock before calling.
+        * Implements a Queue (FIFO) for customers waiting for a haircut.
+        * Implements a Lock to prevent deadlock and race conditions between barbers and customers.
+        * Anyone calling a WaitingRoom function needs to obtain the lock before calling.
     """
     def __init__(self, chairs=None):
         """ Class constructor
-            @param chairs - number of chairs in the waiting room
+
+            Parameters:
+                chairs - number of chairs in the waiting room
         """
         Borg.__init__(self)
         if len(self._shared_state) is 0:
             if chairs is None:
                 chairs = Common.Config.WaitingChairs
             Queue.__init__(self, maxsize=chairs)
-
-            ## @var lock
-            # waitingroom lock, needs to be obtained before calling WaitingRoom methods
-            self.lock = Lock()
-
-            ## @var stats
-            # statistics module, used to gather simulation statistics
-            self.stats = Common.Statistics()
+            self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
+            self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
 
     def get_chair(self, customer):
         """ Function called by a customer to get a chair in the waiting room
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            @param customer - class object of the customer needing a chair
-            @retval True - Chair available, customer added to the waiting queue
-            @retval False - No chair available
+            Parameters:
+                customer: Customer class object of the customer needing a chair
+
+            Returns:
+                True - Chair available, customer added to the waiting queue
+                False - No chair available
         """
         if self.full():
             chair = False
@@ -90,8 +88,11 @@ class WaitingRoom(Borg, Queue):
         """ Function called by a barber to get a customer from the waiting room
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            @returns Customer object of the next waiting customer from the queue.
-            @exception Raises CustomerWaitingError if there is no customer waiting.
+            Returns:
+                Customer object of the next waiting customer from the queue.
+
+            Raises:
+                CustomerWaitingError if there is no customer waiting.
         """
         if self.empty():
             raise CustomerWaitingError
@@ -103,8 +104,10 @@ class WaitingRoom(Borg, Queue):
     def customer_waiting(self):
         """ Function to test if a customer is waiting
             It is assumed that the caller has obtained the WaitingRoom lock.
-            @retval True - Customer is waiting
-            @retval False - No customer is waiting
+
+            Returns:
+                True - Customer is waiting
+                False - No customer is waiting
         """
         if not self.empty():
             logging.debug('WR: customer_waiting [TRUE]')

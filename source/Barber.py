@@ -1,11 +1,7 @@
-##
-# @package  SleepingBarber.Barber
-# @brief:   State machine implementation
-# @details: State machine UML, tables and user state functions.
-#           Contains auto-generated and user created custom code.
-# @author:  Mark Sawyer
-# @date:    25-Jan-2019
+""" SleepingBarber.Barber
 
+* State machine UML, tables and user state functions.
+"""
 # System imports
 import sys
 import time
@@ -91,30 +87,31 @@ class UserCode(StateMachine):
     """ User code unique to the Barber state implementation of the SleepingBarber
         simulation """
     def __init__(self, id=None):
-        ## Barber class constructor
-        #    @param id - barber ID unique to this barber
+        """ Barber class constructor
 
+            Parameters:
+                id - barber ID unique to this barber
+        """
         StateMachine.__init__(self, sm_id=id, name='Barber%d' % id,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
         logging.debug('Barber[%s] INIT' % id)
-        self.id = id
-        self.customers = 0
-        self.cut_timer = 0
-        self.cutting_time = 0
-        self.sleeping_time = 0
-        self.waiting_room = WaitingRoom.WaitingRoom()
-        self.current_customer = None
+        self.id = id                    #: barber ID
+        self.customers = 0              #: customers served
+        self.cut_timer = 0              #: cut timer, used to time the length of a haircut
+        self.cutting_time = 0           #: total time spent cutting
+        self.sleeping_time = 0          #: total time spent sleeping
+        self.current_customer = None    #: current customer being served
+        self.waiting_room = WaitingRoom.WaitingRoom()   #: waiting room instantiation
 
     # ===========================================================================
     def Cutting_Cut(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Cutting</i> state
+        """ *Do* function processing for the *Cutting* state
 
-        @details State machine <i>do</i> function processing for the <i>Cutting</i> state.
-        This function is called once every state machine iteration to perform processing
-        for the <i>Cutting</i> state.
+            State machine *do* function processing for the *Cutting* state.
+            This function is called once every state machine iteration to perform processing
+            for the *Cutting* state.
         """
         time.sleep(1)
         # track total time cutting hair
@@ -130,11 +127,10 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Cutting_StartCutting(self):
-        """
-        @brief Enter function processing for <i>Cutting</i> state.
+        """ Enter function processing for *Cutting* state.
 
-        @details State machine enter function processing for the <i>Cutting</i> state.
-        This function is called when the <i>Cutting</i> state is entered.
+            State machine enter function processing for the *Cutting* state.
+            This function is called when the *Cutting* state is entered.
         """
         # track total customers
         self.customers += 1
@@ -144,12 +140,11 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Finish_BarberDone(self):
-        """
-        @brief Enter function processing for <i>Finish</i> state.
+        """ Enter function processing for *Finish* state.
 
-        @details State machine enter function processing for the <i>Finish</i> state.
-        This function is called when the <i>Finish</i> state is entered at the
-        end of the SleepinBarber simulation.
+            State machine enter function processing for the *Finish* state.
+            This function is called when the *Finish* state is entered at the
+            end of the SleepinBarber simulation.
         """
         logging.debug('Barber[%s] BarberDone' % self.id)
         stats = Statistics()
@@ -159,56 +154,51 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Sleeping_Sleep(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Sleeping</i> state
+        """ *Do* function processing for the *Sleeping* state
 
-        @details State machine <i>do</i> function processing for the <i>Sleeping</i> state.
-        This function is called once every state machine iteration to perform processing
-        for the <i>Sleeping</i> state.
+            State machine *do* function processing for the *Sleeping* state.
+            This function is called once every state machine iteration to perform processing
+            for the *Sleeping* state.
         """
         time.sleep(1)
         self.sleeping_time += 1
 
     # ===========================================================================
     def Sleeping_StartSleeping(self):
-        """
-        @brief Enter function processing for <i>Sleeping</i> state.
+        """ Enter function processing for *Sleeping* state.
 
-        @details State machine enter function processing for the <i>Sleeping</i> state.
-        This function is called when the <i>Sleeping</i> state is entered.
+            State machine enter function processing for the *Sleeping* state.
+            This function is called when the *Sleeping* state is entered.
         """
         logging.debug('Barber[%s] StartSleeping' % self.id)
 
     # ===========================================================================
     def Sleeping_StopSleeping(self):
-        """
-        @brief <i>Exit</i> function processing for the <i>Sleeping</i> state.
+        """ *Exit* function processing for the *Sleeping* state.
 
-        @details State machine <i>exit</i> function processing for the <i>Sleeping</i> state.
-        This function is called when the <i>Sleeping</i> state is exited.
+            State machine *exit* function processing for the *Sleeping* state.
+            This function is called when the *Sleeping* state is exited.
         """
         logging.debug('Barber[%s] StopSleeping' % self.id)
 
     # ===========================================================================
     def StartUp_BarberStart(self):
-        """
-        @brief Enter function processing for <i>StartUp</i> state.
+        """ Enter function processing for *StartUp* state.
 
-        @details State machine enter function processing for the <i>StartUp</i> state.
-        This function is called when the <i>StartUp</i> state is entered.
+            State machine enter function processing for the *StartUp* state.
+            This function is called when the *StartUp* state is entered.
         """
         logging.debug('Barber[%s] Starting' % self.id)
 
     # =========================================================
     def GetCustomer(self):
-        """
-        @brief State transition processing for <i>GetCustomer</i>
+        """ State transition processing for *GetCustomer*
 
-        @details State machine state transition processing for <i>GetCustomer</i>.
-        This function is called whenever the state transition <i>GetCustomer</i> is taken.
+            State machine state transition processing for *GetCustomer*.
+            This function is called whenever the state transition *GetCustomer* is taken.
 
-        A customer is obtained from the waiting room and the customer
-        event EvBarberReady is delivered.
+            A customer is obtained from the waiting room and the customer
+            event EvBarberReady is delivered.
         """
         with self.waiting_room.lock:
             self.current_customer = self.waiting_room.get_customer()
@@ -216,45 +206,44 @@ class UserCode(StateMachine):
 
     # =========================================================
     def NOT_WaitingCustomer(self):
-        """
-        @brief Guard processing for <i>NOT_WaitingCustomer</i>
+        """ Guard processing for *NOT_WaitingCustomer*
 
-        @details State machine guard processing for <i>NOT_WaitingCustomer</i>.
-        This function is called whenever the guard <i>NOT_WaitingCustomer</i> is tested.
+            State machine guard processing for *NOT_WaitingCustomer*.
+            This function is called whenever the guard *NOT_WaitingCustomer* is tested.
 
-        @retval True Guard is active/valid
-        @retval False Guard is inactive/invalid
+            Returns:
+                True - Guard is active/valid
+                False - Guard is inactive/invalid
         """
         with self.waiting_room.lock:
             return not self.waiting_room.customer_waiting()
 
     # =========================================================
     def WaitingCustomer(self):
-        """
-        @brief Guard processing for <i>GetWaitingCustomer</i>
+        """ Guard processing for *GetWaitingCustomer*
 
-        @details State machine guard processing for <i>GetWaitingCustomer</i>.
-        This function is called whenever the guard <i>GetWaitingCustomer</i> is tested.
+            State machine guard processing for *GetWaitingCustomer*.
+            This function is called whenever the guard *GetWaitingCustomer* is tested.
 
-        @retval True - Customer waiting [Guard is active/valid]
-        @retval False - Customer NOT waiting [Guard is inactive/invalid]
+            Returns:
+                True - Customer waiting [Guard is active/valid]
+                False - Customer NOT waiting [Guard is inactive/invalid]
         """
         with self.waiting_room.lock:
             return self.waiting_room.customer_waiting()
 
     # ===========================================================================
     def Stopping_Cut(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Stopping</i> state
+        """ *Do* function processing for the *Stopping* state
 
-        @details State machine <i>do</i> function processing for the <i>Stopping</i> state.
-        This function is called once every state machine iteration to perform processing
-        for the <i>Stopping</i> state.
+            State machine *do* function processing for the *Stopping* state.
+            This function is called once every state machine iteration to perform processing
+            for the *Stopping* state.
 
-        Basically we are performing the same function as the <i>Cutting_Cut</i> function
-        since we are still cutting a customers hair. The main difference is that when we
-        are in this state and the <i>EvFinishCutting</i> event is thrown we will transition
-        to the <i>Finish</i> state.
+            Basically we are performing the same function as the *Cutting_Cut* function
+            since we are still cutting a customers hair. The main difference is that when we
+            are in this state and the *EvFinishCutting* event is thrown we will transition
+            to the *Finish* state.
         """
         self.Cutting_Cut()
 

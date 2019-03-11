@@ -1,0 +1,314 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Common module &#8212; StateEngineCrank 20190308 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Customer module" href="Customer.html" />
+    <link rel="prev" title="Barber module" href="Barber.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Common">
+<span id="common-module"></span><h1>Common module<a class="headerlink" href="#module-Common" title="Permalink to this headline">¶</a></h1>
+<p>SleepingBarber.Common</p>
+<p>Shared code and configuration definitions</p>
+<dl class="class">
+<dt id="Common.Borg">
+<em class="property">class </em><code class="descclassname">Common.</code><code class="descname">Borg</code><a class="reference internal" href="_modules/Common.html#Borg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Borg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>The Borg class ensures that all instantiations refer to the same
+state and behavior.</p>
+<p>Taken from “Python Cookbook” by David Ascher, Alex Martelli
+<a class="reference external" href="https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html">https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html</a></p>
+<p>Class constructor</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Common.Config">
+<em class="property">class </em><code class="descclassname">Common.</code><code class="descname">Config</code><a class="reference internal" href="_modules/Common.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>SleepingBarber configuration items</p>
+<dl class="attribute">
+<dt id="Common.Config.Barbers">
+<code class="descname">Barbers</code><em class="property"> = 4</em><a class="headerlink" href="#Common.Config.Barbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of barbers cutting hair</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.CustomerRate">
+<code class="descname">CustomerRate</code><em class="property"> = 3</em><a class="headerlink" href="#Common.Config.CustomerRate" title="Permalink to this definition">¶</a></dt>
+<dd><p>rate for new customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.CustomerVariance">
+<code class="descname">CustomerVariance</code><em class="property"> = 1</em><a class="headerlink" href="#Common.Config.CustomerVariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>variance in the customer rate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.HairCut_Max">
+<code class="descname">HairCut_Max</code><em class="property"> = 13</em><a class="headerlink" href="#Common.Config.HairCut_Max" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum number of seconds to cut hair</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.HairCut_Min">
+<code class="descname">HairCut_Min</code><em class="property"> = 9</em><a class="headerlink" href="#Common.Config.HairCut_Min" title="Permalink to this definition">¶</a></dt>
+<dd><p>minimum number of seconds to cut hair</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.SimulationLoops">
+<code class="descname">SimulationLoops</code><em class="property"> = 100</em><a class="headerlink" href="#Common.Config.SimulationLoops" title="Permalink to this definition">¶</a></dt>
+<dd><p>total number of loops (seconds) to run</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Config.WaitingChairs">
+<code class="descname">WaitingChairs</code><em class="property"> = 4</em><a class="headerlink" href="#Common.Config.WaitingChairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of chairs in the waiting room</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="Common.Config.cutting_time">
+<em class="property">static </em><code class="descname">cutting_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Common.html#Config.cutting_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Config.cutting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function to return a random time between minimum and maximum
+time specified in the configuration class</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="Common.Config.seconds">
+<em class="property">static </em><code class="descname">seconds</code><span class="sig-paren">(</span><em>minimum</em>, <em>maximum</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Common.html#Config.seconds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Config.seconds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return a random integer between ‘minimum’ and ‘maximum’.</p>
+<ul class="simple">
+<li>Used as the number of seconds for a haircut.</li>
+<li>Used as the number of seconds between new customers.</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Common.Statistics">
+<em class="property">class </em><code class="descclassname">Common.</code><code class="descname">Statistics</code><a class="reference internal" href="_modules/Common.html#Statistics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Statistics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Common.Borg" title="Common.Borg"><code class="xref py py-class docutils literal notranslate"><span class="pre">Common.Borg</span></code></a></p>
+<p>Gather statistics for SleepingBarber simulation</p>
+<p>Class constructor</p>
+<dl class="attribute">
+<dt id="Common.Statistics.barber_cutting_time">
+<code class="descname">barber_cutting_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.barber_cutting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total cutting time for all barbers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.barber_sleeping_time">
+<code class="descname">barber_sleeping_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.barber_sleeping_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total sleeping time for all barbers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.barber_total_customers">
+<code class="descname">barber_total_customers</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.barber_total_customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>total number of customers served</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.barbers">
+<code class="descname">barbers</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.barbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of barbers instantiated in the simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.customers">
+<code class="descname">customers</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of customers instantiated in the simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.customers_cutting_time">
+<code class="descname">customers_cutting_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.customers_cutting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total cutting time for all customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.customers_elapsed_time">
+<code class="descname">customers_elapsed_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.customers_elapsed_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total elapsed time for all customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.customers_simulation_time">
+<code class="descname">customers_simulation_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.customers_simulation_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total simulation time (cutting + waiting) for all customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.customers_waiting_time">
+<code class="descname">customers_waiting_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.customers_waiting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>total waiting time for all customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.lock">
+<code class="descname">lock</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>obtained by callers to ensure sole access</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.lost_customers">
+<code class="descname">lost_customers</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.lost_customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of customers lost due to no chairs in waiting room</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.max_waiters">
+<code class="descname">max_waiters</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.max_waiters" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum number of waiters at encountered during the simulation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Common.Statistics.print_barber_stats">
+<code class="descname">print_barber_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Common.html#Statistics.print_barber_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Statistics.print_barber_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>print barber statistics</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Common.Statistics.print_customer_stats">
+<code class="descname">print_customer_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Common.html#Statistics.print_customer_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Statistics.print_customer_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>print customer statistics</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Common.Statistics.print_summary_stats">
+<code class="descname">print_summary_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Common.html#Statistics.print_summary_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Common.Statistics.print_summary_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>print summary statistics for barbers and customers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.simulation_finish_time">
+<code class="descname">simulation_finish_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.simulation_finish_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>clock time, finish time of simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Common.Statistics.simulation_start_time">
+<code class="descname">simulation_start_time</code><em class="property"> = None</em><a class="headerlink" href="#Common.Statistics.simulation_start_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>clock time, start of simulation</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">StateEngineCrank</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Barber.html">Barber module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Common module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Customer.html">Customer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SleepingBarber.html">SleepingBarber module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="StateEngineCrank.html">StateEngineCrank module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="WaitingRoom.html">WaitingRoom module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">exceptions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.ansi_c.html">modules.ansi_c package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.python.html">modules.python package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">source</a><ul>
+      <li>Previous: <a href="Barber.html" title="previous chapter">Barber module</a></li>
+      <li>Next: <a href="Customer.html" title="next chapter">Customer module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Mark Sawyer under the terms of GPLv3.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/Common.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
