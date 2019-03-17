@@ -12,6 +12,7 @@ set BUILDDIR=build
 set CONFIGDIR=.
 
 if "%1" == "" goto help
+if "%1" == "clean" goto clean
 
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
@@ -31,6 +32,11 @@ goto end
 
 :help
 %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
+goto end
+
+:clean
+cd %BUILDDIR%
+rm -rfd * .[a-zA-Z]*
 
 :end
 popd
