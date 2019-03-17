@@ -1,22 +1,14 @@
-#!/usr/bin/env python
-"""
-Created on November 12, 2018
+""" DiningPhilosophers.main
 
-@author:    Mark Sawyer
-@date:      12-Nov-2018
-
-@package:   DiningPhilosophers
-@brief:     State machine definitions
-@details:   State machine UML, tables and user state functions
-
-@copyright: Mark B Sawyer, All Rights Reserved 2018
+    DiningPhilosophers state machine UML, tables and user state functions
 """
 
 # System imports
 import sys
 from enum import Enum
 import random
-from threading import (Lock, Thread)
+from threading import Lock
+from threading import Thread
 import time
 
 import logging
@@ -29,9 +21,9 @@ logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
 
-logging.debug("Importing modules.PyState")
+logging.debug('Importing modules.PyState')
 from modules.PyState import StateMachine
-logging.debug("Back from modules.PyState")
+logging.debug('Back from modules.PyState')
 
 """
     @startuml
@@ -39,8 +31,7 @@ logging.debug("Back from modules.PyState")
          [*] --> StartUp
 
     StartUp --> Thinking : EvStart [Think]
-    StartUp --> Hungry : EvStart [Eat]
-    
+    StartUp --> Hungry : EvStart [Eat]  
     StartUp --> Finish : EvStop
     StartUp : enter : StartUp
 
@@ -100,7 +91,7 @@ class Config(object):
     Think_Min = 15          # minimum number of seconds to think
     Think_Max = 45          # maximum number of seconds to think
     Philosophers = 9        # number of philosophers dining
-    Dining_Loops = 10000    # number of main loops for dining
+    Dining_Loops = 200    # number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -109,6 +100,7 @@ class ForkStatus(Enum):
 
 
 class Waiter(object):
+    """ Waiter class used to provide synchronization between philosophers wanting to eat """
 
     def __init__(self):
         self.lock = Lock()
@@ -127,19 +119,23 @@ class Waiter(object):
         self.lock.release()
 
 
-# Initialize all forks to 'free' (1 for each philosopher)
+#: Forks - 1 for each philosophers, initialized 'free'
 forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
 
-# Array of philosophers, populated in __main__
-philosophers = [None for _ in range(Config.Philosophers)]  # type: List[None]
+#: Philosophers, populated in __main__
+philosophers = []  # type: List[Philosopher]
 
-# Waiter who grants requests for access to forks
+#: Waiter who grants requests for access to forks
 waiter = Waiter()
 
 
 def seconds(minimum, maximum):
     """ Function to return a random integer between 'minimum' and 'maximum'.
         Used as the number of seconds to either 'eat' or 'think'.
+
+        Arguments:
+            minimum - minimum number of seconds to either eat or think
+            maximum - maximum number of seconds to either eat or think
     """
     return random.randint(minimum, maximum)
 
@@ -150,97 +146,93 @@ def seconds(minimum, maximum):
 
 class UserCode(StateMachine):
 
-    def __init__(self, id=None):
-        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
+    def __init__(self, user_id=None):
+        StateMachine.__init__(self, sm_id=user_id, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.id = id                # id used to identify forks and threads
-        self.events_counter = 0     # counter for tracking events
-        self.eating_seconds = 0     # number of seconds spent eating
-        self.thinking_seconds = 0   # number of seconds spent thinking
-        self.hungry_seconds = 0     # number of seconds spent hungry
-        self.event_timer = 0        # timer used to time eating & thinking
+        self.id = user_id           #: id used to identify forks and threads
+        self.events_counter = 0     #: counter for tracking events
+        self.eating_seconds = 0     #: number of seconds spent eating
+        self.thinking_seconds = 0   #: number of seconds spent thinking
+        self.hungry_seconds = 0     #: number of seconds spent hungry
+        self.event_timer = 0        #: timer used to time eating & thinking
 
+        self.initial_state = None   #: starting state for a philosopher
         if random.randint(0,1) == 0:
             self.initial_state = States.Thinking
         else:
             self.initial_state = States.Hungry
 
-        self.left_fork = id
-        self.right_fork = (id + 1) % Config.Philosophers
+        self.left_fork = self.id     #: left fork id for this philosopher
+        self.right_fork = (self.id + 1) % Config.Philosophers    #: right fork id for this philosopher
 
     # ===========================================================================
     def StartUp_StartUp(self):
-        """
-        @brief Enter function processing for <i>StartUp</i> state.
+        """ *Enter* function processing for *StartUp* state.
 
-        @details State machine enter function processing for the <i>StartUp</i> state.
-        This function is called when the <i>StartUp</i> state is entered.
+        State machine enter function processing for the *StartUp* state.
+
+        This function is called when the *StartUp* state is entered.
         """
         self.event(Events.EvStart)
-        return
 
     # ===========================================================================
     def Eating_Eat(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Eating</i> state
+        """ *Do* function processing for the *Eating* state
 
-        @details State machine <i>do</i> function processing for the <i>Eating</i> state.
+        State machine *do* function processing for the *Eating* state.
+
         This function is called once every state machine iteration to perform processing
-        for the <i>Eating</i> state.
+        for the *Eating* state.
         """
         time.sleep(1)
         self.eating_seconds += 1
         self.event_timer -= 1
         if self.event_timer == 0:
             self.event(Events.EvFull)
-        return
 
     # ===========================================================================
     def Eating_PutDownForks(self):
-        """
-        @brief <i>Exit</i> function processing for the <i>Eating</i> state.
+        """ *Exit* function processing for the *Eating* state.
 
-        @details State machine <i>exit</i> function processing for the <i>Eating</i> state.
-        This function is called when the <i>Eating</i> state is exited.
+        State machine *exit* function processing for the *Eating* state.
+
+        This function is called when the *Eating* state is exited.
         """
         forks[self.left_fork] = ForkStatus.Free
         forks[self.right_fork] = ForkStatus.Free
-        return
 
     # ===========================================================================
     def Eating_StartEatingTimer(self):
-        """
-        @brief Enter function processing for <i>Eating</i> state.
+        """ *Enter* function processing for *Eating* state.
 
-        @details State machine enter function processing for the <i>Eating</i> state.
-        This function is called when the <i>Eating</i> state is entered.
+        State machine enter function processing for the *Eating* state.
+
+        This function is called when the *Eating* state is entered.
         """
         self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
         logging.info('SM[%s] Eating (%s)' % (self.id, self.event_timer))
-        return
 
     # ===========================================================================
     def Finish_Finish(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Finish</i> state
+        """ *Do* function processing for the *Finish* state
 
-        @details State machine <i>do</i> function processing for the <i>Finish</i> state.
+        State machine *do* function processing for the *Finish* state.
+
         This function is called once every state machine iteration to perform processing
-        for the <i>Finish</i> state.
+        for the *Finish* state.
         """
         logging.info('SM[%s] Finished' % self.id)
         self.running = False
-        return
 
     # ===========================================================================
     def Hungry_AskPermission(self):
-        """
-        @brief Enter function processing for <i>Hungry</i> state.
+        """ *Enter* function processing for *Hungry* state.
 
-        @details State machine enter function processing for the <i>Hungry</i> state.
-        This function is called when the <i>Hungry</i> state is entered.
+        State machine *Enter* function processing for the *Hungry* state.
+
+        This function is called when the *Hungry* state is entered.
         """
         logging.info('SM[%s] Hungry!' % self.id)
         tstart = time.time()
@@ -250,59 +242,54 @@ class UserCode(StateMachine):
         self.hungry_seconds += thungry
         logging.info('SM[%s] Hungry (%s)' % (self.id, round(thungry)))
         self.event(Events.EvHavePermission)
-        return
 
     # =========================================================
     def PickUpForks(self):
-        """
-        @brief State transition processing for <i>PickUpForks</i>
+        """ State transition processing for *PickUpForks*
 
-        @details State machine state transition processing for <i>PickUpForks</i>.
-        This function is called whenever the state transition <i>PickUpForks</i> is taken.
+        State machine state transition processing for *PickUpForks*.
+
+        This function is called whenever the state transition *PickUpForks* is taken.
         """
         forks[self.left_fork] = ForkStatus.InUse
         forks[self.right_fork] = ForkStatus.InUse
         waiter.thank_you()
-        return
 
     # =========================================================
     def ThankWaiter(self):
-        """
-        @brief State transition processing for <i>ThankWaiter</i>
+        """ State transition processing for *ThankWaiter*
 
-        @details State machine state transition processing for <i>ThankWaiter</i>.
-        This function is called whenever the state transition <i>ThankWaiter</i> is taken.
+        State machine state transition processing for *ThankWaiter*.
+
+        This function is called whenever the state transition *ThankWaiter* is taken.
         """
         waiter.thank_you()
-        return
 
     # ===========================================================================
     def Thinking_StartThinkingTimer(self):
-        """
-        @brief Enter function processing for <i>Thinking</i> state.
+        """ *Enter* function processing for *Thinking* state.
 
-        @details State machine enter function processing for the <i>Thinking</i> state.
-        This function is called when the <i>Thinking</i> state is entered.
+        State machine *enter* function processing for the *Thinking* state.
+
+        This function is called when the *Thinking* state is entered.
         """
         self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
         logging.info('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
-        return
 
     # ===========================================================================
     def Thinking_Think(self):
-        """
-        @brief <i>Do</i> function processing for the <i>Thinking</i> state
+        """ *Do* function processing for the *Thinking* state
 
-        @details State machine <i>do</i> function processing for the <i>Thinking</i> state.
+        State machine *do* function processing for the *Thinking* state.
+
         This function is called once every state machine iteration to perform processing
-        for the <i>Thinking</i> state.
+        for the *Thinking* state.
         """
         time.sleep(1)
         self.thinking_seconds += 1
         self.event_timer -= 1
         if self.event_timer == 0:
             self.event(Events.EvHungry)
-        return
 
     def Think(self):
         return self.initial_state is States.Thinking
@@ -366,25 +353,25 @@ StateTables.state_function_table[States.Eating] = \
 
 class Philosopher(UserCode):
 
-    def __init__(self, id=None):
-        UserCode.__init__(self, id=id)       # must call super-class
-        self.id = id
-        self.exit_code = 0          # exit code returned by this philosopher
-        self.running = False        # True, simulation is running
-        self.has_forks = False      # True, philosopher has possession of both forks
+    def __init__(self, philosopher_id=None):
+        UserCode.__init__(self, user_id=philosopher_id)
+        self.id = philosopher_id
+        self.exit_code = 0          #: exit code returned by this philosopher
+        self.running = False        #: True, simulation is running
+        self.has_forks = False      #: True, philosopher has possession of both forks
 
 
 if __name__ == '__main__':
 
-    # Initialize all philosophers
-    for id in range(Config.Philosophers):
-        philosophers[id] = Philosopher(id=id)
+    # Instantiate and initialize all philosophers
+    for id_ in range(Config.Philosophers):
+        philosophers.append(Philosopher(philosopher_id=id_))
 
     # Philosophers have been instantiated and threads created
     # Start the simulation, i.e. start all philosophers eating
-    for id in range(Config.Philosophers):
-        philosophers[id].running = True
-        philosophers[id].event_code = Events.EvStart
+    for p in philosophers:
+        p.running = True
+        p.post_event(Events.EvStart)
 
     # Wait for the simulation to complete
     for loop in range(Config.Dining_Loops):
@@ -394,18 +381,18 @@ if __name__ == '__main__':
             logging.info('Iterations: %s' % loop)
 
     # Tell philosophers to stop
-    for id in range(Config.Philosophers):
-        philosophers[id].event_code = Events.EvStop
+    for p in philosophers:
+        p.post_event(Events.EvStop)
 
     # Joining threads
-    for id in range(Config.Philosophers):
-        philosophers[id].thread.join()
+    for p in philosophers:
+        p.join()
     logging.info('All philosophers stopped')
 
     # Print some statistics of the simulation
-    for id in range(Config.Philosophers):
-        t = philosophers[id].thinking_seconds
-        e = philosophers[id].eating_seconds
-        h = int(philosophers[id].hungry_seconds + 0.5)
+    for p in philosophers:
+        t = p.thinking_seconds
+        e = p.eating_seconds
+        h = int(p.hungry_seconds + 0.5)
         total = t + e + h
-        print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (id, t, e, h, total))
+        print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))

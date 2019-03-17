@@ -1,12 +1,11 @@
 SleepingBarber package
 ======================
 
-Submodules
-----------
+Modules
+-------
 
 SleepingBarber.Barber module
 ----------------------------
-
 .. automodule:: SleepingBarber.Barber
     :members:
     :undoc-members:
@@ -14,7 +13,6 @@ SleepingBarber.Barber module
 
 SleepingBarber.Common module
 ----------------------------
-
 .. automodule:: SleepingBarber.Common
     :members:
     :undoc-members:
@@ -22,7 +20,6 @@ SleepingBarber.Common module
 
 SleepingBarber.Customer module
 ------------------------------
-
 .. automodule:: SleepingBarber.Customer
     :members:
     :undoc-members:
@@ -30,7 +27,6 @@ SleepingBarber.Customer module
 
 SleepingBarber.main module
 --------------------------
-
 .. automodule:: SleepingBarber.main
     :members:
     :undoc-members:
@@ -38,7 +34,6 @@ SleepingBarber.main module
 
 SleepingBarber.WaitingRoom module
 ---------------------------------
-
 .. automodule:: SleepingBarber.WaitingRoom
     :members:
     :undoc-members:
@@ -46,17 +41,7 @@ SleepingBarber.WaitingRoom module
 
 SleepingBarber.exceptions module
 --------------------------------
-
 .. automodule:: SleepingBarber.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-#Module contents
-#---------------
-#
-#.. automodule:: SleepingBarber
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:

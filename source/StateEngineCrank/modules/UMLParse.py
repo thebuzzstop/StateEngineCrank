@@ -5,71 +5,73 @@
     structures containing all of the information required for the
     rest of the modules for code generation.
 
-    Typical syntax for a state transition
+    Example:
+        Typical syntax for a state transition
 
-    State1 --> State2 : Event [Guard] / Function
+        State1 --> State2 : Event [Guard] / Function
 
-    [Guard] syntax rules:
-        1) Guard may be a compound logic equation
-            e.g. Foo && Goo || Moo
-            Note: ()'s if specified will be removed
-        2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and 'NOT_'
-            respectively
-            e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
-        3) Spaces are replaced with '_' to concatenate logic expressions
-            e.g. [FooGuard AND GooGuard] ==> [FooGuard_AND_GooGuard]
-                 This will allow for the creation of a hybrid guard function
-                 which will perform any required logical operations.
+        [Guard] syntax rules:
+            1) Guard may be a compound logic equation
+                e.g. Foo && Goo || Moo
+                Note: ()'s if specified will be removed
+            2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and 'NOT_'
+                respectively
+                e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
+            3) Spaces are replaced with '_' to concatenate logic expressions
+                e.g. [FooGuard AND GooGuard] ==> [FooGuard_AND_GooGuard]
+                     This will allow for the creation of a hybrid guard function
+                     which will perform any required logical operations.
 
-    @startuml
-        [*] --> FindStartUML
+        @startuml
+            [*] --> FindStartUML
 
-        FindStartUML --> WrapUp : EOF
-        FindStartUML --> Parse  : StartUML
-        FindStartUML : entry : Enter
-        FindStartUML : do    : Do
-        FindStartUML : exit  : Exit
+            FindStartUML --> WrapUp : EOF
+            FindStartUML --> Parse  : StartUML
+            FindStartUML : entry : Enter
+            FindStartUML : do    : Do
+            FindStartUML : exit  : Exit
 
-        Parse --> WrapUp     : EndUML || EOF
-        Parse --> Transition : EvState_New
-        Parse --> Transition : EvState_Self
-        Parse --> Guard      : EvGuard
-        Parse --> Event      : EvEvent
-        Parse : entry : Enter
-        Parse : do    : Do
-        Parse : exit  : Exit
+            Parse --> WrapUp     : EndUML || EOF
+            Parse --> Transition : EvState_New
+            Parse --> Transition : EvState_Self
+            Parse --> Guard      : EvGuard
+            Parse --> Event      : EvEvent
+            Parse : entry : Enter
+            Parse : do    : Do
+            Parse : exit  : Exit
 
-        Transition --> Parse  : EvContinue
-        Transition --> WrapUp : EndUML || EOF
-        Transition : enter : Enter
-        Transition : do    : Do
-        Transition : exit  : Exit
+            Transition --> Parse  : EvContinue
+            Transition --> WrapUp : EndUML || EOF
+            Transition : enter : Enter
+            Transition : do    : Do
+            Transition : exit  : Exit
 
-        Guard --> Parse  : EvContinue
-        Guard --> WrapUp : EndUML || EOF
-        Guard : entry : Enter
-        Guard : do    : Do
-        Guard : exit  : Exit
+            Guard --> Parse  : EvContinue
+            Guard --> WrapUp : EndUML || EOF
+            Guard : entry : Enter
+            Guard : do    : Do
+            Guard : exit  : Exit
 
-        Event --> Parse  : EvContinue
-        Event --> WrapUp : EndUML || EOF
-        Event : entry : Enter
-        Event : do    : Do
-        Event : exit  : Exit
+            Event --> Parse  : EvContinue
+            Event --> WrapUp : EndUML || EOF
+            Event : entry : Enter
+            Event : do    : Do
+            Event : exit  : Exit
 
-        WrapUp --> Error : GotError
-        WrapUp --> [*]   : NoErrors
-        WrapUp : entry : Enter
-        WrapUp : do    : Do
-        WrapUp : exit  : Exit
+            WrapUp --> Error : GotError
+            WrapUp --> [*]   : NoErrors
+            WrapUp : entry : Enter
+            WrapUp : do    : Do
+            WrapUp : exit  : Exit
 
-        Error --> [*]
-        Error : enter : Enter
-        Error : do    : Do
-        Error : exit  : Exit
-    @enduml
+            Error --> [*]
+            Error : enter : Enter
+            Error : do    : Do
+            Error : exit  : Exit
 
+        @enduml
 """
+
 # System imports
 import logging
 import re
@@ -83,56 +85,55 @@ import modules.Singleton  # noqa 408
 
 class UML(modules.Singleton.Singleton):
     """
-    Overview:
-    Locates UML in source code and parses for states, transitions
-    events, guards, transfer functions producing the UML data
-    structures containing all of the information required for the
-    rest of the modules for code generation.
+        Overview:
+        Locates UML in source code and parses for states, transitions
+        events, guards, transfer functions producing the UML data
+        structures containing all of the information required for the
+        rest of the modules for code generation.
 
-    =================================
-    Regular expression string parsing
-    =================================
-    This module is responsible for parsing UML.
-    There are two (2) basic tasks related to parsing the UML :
+        # =================================
+        # Regular expression string parsing
+        # =================================
+        This module is responsible for parsing UML.
+        There are two (2) basic tasks related to parsing the UML :
         1) Parse State transitions (e.g. State1 --> State2)
         2) Parse State functions (enter/do/exit)
 
-    ================================
-    Fully specified state transition
-    ================================
+        # ================================
+        # Fully specified state transition
+        # ================================
         State1 --> State2 : Event [Guard] / Function()
 
-    Not all parts are necessary
-        State1 --> State2 : Event  # all state and event parts must be present
-        [Guard]                    # optional, guards
-        [Guard()]                  # optional, guards, ()'s may be present
-        / Function                 # optional, transition function
-        / Function()               # optional, transition function, ()'s may be present
+        Not all parts are necessary
+            State1 --> State2 : Event  # all state and event parts must be present
+            [Guard]                    # optional, guards
+            [Guard()]                  # optional, guards, ()'s may be present
+            / Function                 # optional, transition function
+            / Function()               # optional, transition function, ()'s may be present
 
-    Regular expressions required to support all contingencies
-        [0] State1
-        [1] -->
-        [2] State2
-        [3] :
-        [4] Event
+        Regular expressions required to support all contingencies
+            [0] State1
+            [1] -->
+            [2] State2
+            [3] :
+            [4] Event
 
-        [5] [Guard]
-        [6] /
-        [7] Function
+            [5] [Guard]
+            [6] /
+            [7] Function
 
-        [5] [Guard]
+            [5] [Guard]
 
-        [5] /
-        [6] Function
+            [5] /
+            [6] Function
 
-    ===========================================
-    Fully specified Enter/Do/Exit functions
-    Note: enter/do/exit functions are optional
-    ===========================================
+        # ===========================================
+        # Fully specified Enter/Do/Exit functions
+        # Note: enter/do/exit functions are optional
+        # ===========================================
         State1 : enter : Enter()
         State1 : do    : Do()
         State1 : exit  : Exit()
-
     """
 
     # Some string constants we either look for or use
@@ -202,20 +203,20 @@ class UML(modules.Singleton.Singleton):
         self.guards = []            #: list of guards, transition guard functions
         self.trans = []             #: list of transitions, transition functions
 
-        self.guard_funcs = []       #:list of function names, guards
-        self.trans_funcs = []       #:list of function names, transitions
-        self.do_funcs = []          #:list of function names, dos
-        self.enter_funcs = []       #:list of function names, enters
-        self.exit_funcs = []        #:list of function names, exits
+        self.guard_funcs = []       #: list of function names, guards
+        self.trans_funcs = []       #: list of function names, transitions
+        self.do_funcs = []          #: list of function names, dos
+        self.enter_funcs = []       #: list of function names, enters
+        self.exit_funcs = []        #: list of function names, exits
 
-        self.enter_func_states = {} #:dictionary of enter function states
-        self.do_func_states = {}    #:dictionary of do function states
-        self.exit_func_states = {}  #:dictionary of exit function states
+        self.enter_func_states = {} #: dictionary of enter function states
+        self.do_func_states = {}    #: dictionary of do function states
+        self.exit_func_states = {}  #: dictionary of exit function states
 
-        self.states = []            #:list of states, associated with enter/do/exit
-        self.enters = {}            #:dictionary of functions, enter
-        self.dos = {}               #:dictionary of functions, do
-        self.exits = {}             #:dictionary of functions, exit
+        self.states = []            #: list of states, associated with enter/do/exit
+        self.enters = {}            #: dictionary of functions, enter
+        self.dos = {}               #: dictionary of functions, do
+        self.exits = {}             #: dictionary of functions, exit
 
         # RE search/match result strings (state transitions)
         self.state1 = None

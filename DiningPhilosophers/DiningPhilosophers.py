@@ -121,6 +121,7 @@ class Waiter(object):
         logging.debug('SM[%s] waiter release' % id)
         self.lock.release()
 
+
 # Initialize all forks to 'free' (1 for each philosopher)
 forks = [ForkStatus.Free for _ in range(Config.Philosophers)]
 
@@ -138,7 +139,6 @@ waiter = Waiter()
 class UserCode(StateMachine):
 
     def __init__(self, id=None):
-
         StateMachine.__init__(self, id=id, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)

@@ -1,14 +1,6 @@
 StateEngineCrank.modules package
 ================================
 
-Subpackages
------------
-
-.. toctree::
-
-    StateEngineCrank.modules.ansi_c
-    StateEngineCrank.modules.python
-
 Submodules
 ----------
 
