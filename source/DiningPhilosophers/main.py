@@ -86,26 +86,33 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 15            # minimum number of seconds to eat
-    Eat_Max = 45            # maximum number of seconds to eat
-    Think_Min = 15          # minimum number of seconds to think
-    Think_Max = 45          # maximum number of seconds to think
-    Philosophers = 9        # number of philosophers dining
-    Dining_Loops = 200    # number of main loops for dining
+    Eat_Min = 15            #: minimum number of seconds to eat
+    Eat_Max = 45            #: maximum number of seconds to eat
+    Think_Min = 15          #: minimum number of seconds to think
+    Think_Max = 45          #: maximum number of seconds to think
+    Philosophers = 9        #: number of philosophers dining
+    Dining_Loops = 600      #: number of main loops for dining
 
 
 class ForkStatus(Enum):
-    Free = 0
-    InUse = 1
+    Free = 0            #: Fork is free for use
+    InUse = 1           #: Fork is currently in use by a philosopher
 
 
 class Waiter(object):
     """ Waiter class used to provide synchronization between philosophers wanting to eat """
 
     def __init__(self):
-        self.lock = Lock()
+        self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
 
     def request(self, id, left_fork, right_fork):
+        """ Request to dine
+
+            Arguments:
+                id - ID of Philosopher making the request
+                left_fork - ID of left fork required to eat
+                right_fork - ID of right fork required to eat
+        """
         logging.debug('SM[%s] waiter[in]' % id)
         self.lock.acquire()
         while forks[left_fork] is ForkStatus.InUse:
@@ -115,6 +122,10 @@ class Waiter(object):
         logging.debug('SM[%s] waiter[out]' % id)
 
     def thank_you(self):
+        """ Philosopher thank you to the waiter
+
+            We use this opportunity to release the Waiter lock
+        """
         logging.debug('SM[%s] waiter release' % id)
         self.lock.release()
 
@@ -151,7 +162,6 @@ class UserCode(StateMachine):
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.id = user_id           #: id used to identify forks and threads
         self.events_counter = 0     #: counter for tracking events
         self.eating_seconds = 0     #: number of seconds spent eating
         self.thinking_seconds = 0   #: number of seconds spent thinking
@@ -253,6 +263,7 @@ class UserCode(StateMachine):
         """
         forks[self.left_fork] = ForkStatus.InUse
         forks[self.right_fork] = ForkStatus.InUse
+        # thanking the waiter releases the Waiter's lock
         waiter.thank_you()
 
     # =========================================================
@@ -263,6 +274,7 @@ class UserCode(StateMachine):
 
         This function is called whenever the state transition *ThankWaiter* is taken.
         """
+        # thanking the waiter releases the Waiter's lock
         waiter.thank_you()
 
     # ===========================================================================
@@ -292,9 +304,21 @@ class UserCode(StateMachine):
             self.event(Events.EvHungry)
 
     def Think(self):
+        """ Guard function
+
+            Returns:
+                True - Philosopher's initial state is *Thinking*
+                False - Philosopher's initial state is NOT *Thinking*
+        """
         return self.initial_state is States.Thinking
 
     def Eat(self):
+        """ Guard function
+
+            Returns:
+                True - Philosopher's initial state is *Eating*
+                False - Philosopher's initial state is NOT *Eating*
+        """
         return self.initial_state is States.Hungry
 
 # ==============================================================================
@@ -355,7 +379,6 @@ class Philosopher(UserCode):
 
     def __init__(self, philosopher_id=None):
         UserCode.__init__(self, user_id=philosopher_id)
-        self.id = philosopher_id
         self.exit_code = 0          #: exit code returned by this philosopher
         self.running = False        #: True, simulation is running
         self.has_forks = False      #: True, philosopher has possession of both forks
