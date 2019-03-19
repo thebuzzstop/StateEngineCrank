@@ -1,8 +1,5 @@
-DiningPhilosophers package
-==========================
-
-Modules
--------
+DiningPhilosophers
+==================
 
 DiningPhilosophers.main module
 ------------------------------

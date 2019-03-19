@@ -1,12 +1,8 @@
-StateEngineCrank.modules.python package
-=======================================
-
-Submodules
-----------
+StateEngineCrank.modules.python
+===============================
 
 StateEngineCrank.modules.python.CodeGeneration module
 -----------------------------------------------------
-
 .. automodule:: StateEngineCrank.modules.python.CodeGeneration
     :members:
     :undoc-members:
@@ -14,7 +10,6 @@ StateEngineCrank.modules.python.CodeGeneration module
 
 StateEngineCrank.modules.python.CodeScan module
 -----------------------------------------------
-
 .. automodule:: StateEngineCrank.modules.python.CodeScan
     :members:
     :undoc-members:
@@ -22,17 +17,7 @@ StateEngineCrank.modules.python.CodeScan module
 
 StateEngineCrank.modules.python.Signature module
 ------------------------------------------------
-
 .. automodule:: StateEngineCrank.modules.python.Signature
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: StateEngineCrank.modules.python
     :members:
     :undoc-members:
     :show-inheritance:

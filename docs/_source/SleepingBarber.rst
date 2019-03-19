@@ -1,8 +1,5 @@
-SleepingBarber package
-======================
-
-Modules
--------
+SleepingBarber
+==============
 
 SleepingBarber.Barber module
 ----------------------------

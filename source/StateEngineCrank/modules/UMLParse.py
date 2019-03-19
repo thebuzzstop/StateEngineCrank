@@ -5,12 +5,14 @@
     structures containing all of the information required for the
     rest of the modules for code generation.
 
-    Example:
+    Example::
+
         Typical syntax for a state transition
 
         State1 --> State2 : Event [Guard] / Function
 
         [Guard] syntax rules:
+
             1) Guard may be a compound logic equation
                 e.g. Foo && Goo || Moo
                 Note: ()'s if specified will be removed
@@ -19,10 +21,11 @@
                 e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
             3) Spaces are replaced with '_' to concatenate logic expressions
                 e.g. [FooGuard AND GooGuard] ==> [FooGuard_AND_GooGuard]
-                     This will allow for the creation of a hybrid guard function
-                     which will perform any required logical operations.
+                This will allow for the creation of a hybrid guard function
+                which will perform any required logical operations.
 
         @startuml
+
             [*] --> FindStartUML
 
             FindStartUML --> WrapUp : EOF
@@ -85,55 +88,54 @@ import modules.Singleton  # noqa 408
 
 class UML(modules.Singleton.Singleton):
     """
-        Overview:
+        **Overview**
+
         Locates UML in source code and parses for states, transitions
         events, guards, transfer functions producing the UML data
         structures containing all of the information required for the
         rest of the modules for code generation.
 
-        # =================================
-        # Regular expression string parsing
-        # =================================
-        This module is responsible for parsing UML.
-        There are two (2) basic tasks related to parsing the UML :
-        1) Parse State transitions (e.g. State1 --> State2)
-        2) Parse State functions (enter/do/exit)
+        **Regular expression string parsing**
 
-        # ================================
-        # Fully specified state transition
-        # ================================
+        This module is responsible for parsing UML.
+        There are two (2) basic tasks related to parsing the UML:
+
+            1) Parse State transitions (e.g. State1 --> State2)
+            2) Parse State functions (enter/do/exit)
+
+        **Fully specified state transition**::
+
         State1 --> State2 : Event [Guard] / Function()
 
-        Not all parts are necessary
+        Not all parts are necessary::
+
             State1 --> State2 : Event  # all state and event parts must be present
             [Guard]                    # optional, guards
             [Guard()]                  # optional, guards, ()'s may be present
             / Function                 # optional, transition function
             / Function()               # optional, transition function, ()'s may be present
 
-        Regular expressions required to support all contingencies
+        Regular expressions required to support all contingencies::
+
             [0] State1
             [1] -->
             [2] State2
             [3] :
             [4] Event
-
             [5] [Guard]
             [6] /
             [7] Function
-
             [5] [Guard]
-
             [5] /
             [6] Function
 
-        # ===========================================
-        # Fully specified Enter/Do/Exit functions
-        # Note: enter/do/exit functions are optional
-        # ===========================================
-        State1 : enter : Enter()
-        State1 : do    : Do()
-        State1 : exit  : Exit()
+        **Fully specified Enter/Do/Exit functions**
+
+        *Note: enter/do/exit functions are optional*::
+
+            State1 : enter : Enter()
+            State1 : do    : Do()
+            State1 : exit  : Exit()
     """
 
     # Some string constants we either look for or use

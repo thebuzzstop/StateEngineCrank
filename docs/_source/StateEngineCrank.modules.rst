@@ -1,12 +1,8 @@
-StateEngineCrank.modules package
-================================
-
-Submodules
-----------
+StateEngineCrank.modules
+========================
 
 StateEngineCrank.modules.Config module
 --------------------------------------
-
 .. automodule:: StateEngineCrank.modules.Config
     :members:
     :undoc-members:
@@ -14,7 +10,6 @@ StateEngineCrank.modules.Config module
 
 StateEngineCrank.modules.Defines module
 ---------------------------------------
-
 .. automodule:: StateEngineCrank.modules.Defines
     :members:
     :undoc-members:
@@ -22,7 +17,6 @@ StateEngineCrank.modules.Defines module
 
 StateEngineCrank.modules.ErrorHandling module
 ---------------------------------------------
-
 .. automodule:: StateEngineCrank.modules.ErrorHandling
     :members:
     :undoc-members:
@@ -30,7 +24,6 @@ StateEngineCrank.modules.ErrorHandling module
 
 StateEngineCrank.modules.FileSupport module
 -------------------------------------------
-
 .. automodule:: StateEngineCrank.modules.FileSupport
     :members:
     :undoc-members:
@@ -38,7 +31,6 @@ StateEngineCrank.modules.FileSupport module
 
 StateEngineCrank.modules.PyState module
 ---------------------------------------
-
 .. automodule:: StateEngineCrank.modules.PyState
     :members:
     :undoc-members:
@@ -46,7 +38,6 @@ StateEngineCrank.modules.PyState module
 
 StateEngineCrank.modules.Singleton module
 -----------------------------------------
-
 .. automodule:: StateEngineCrank.modules.Singleton
     :members:
     :undoc-members:
@@ -54,17 +45,7 @@ StateEngineCrank.modules.Singleton module
 
 StateEngineCrank.modules.UMLParse module
 ----------------------------------------
-
 .. automodule:: StateEngineCrank.modules.UMLParse
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: StateEngineCrank.modules
     :members:
     :undoc-members:
     :show-inheritance:
