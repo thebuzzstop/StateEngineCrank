@@ -17,6 +17,14 @@ class StateFunction(object):
     """ StateMachine function definitions """
 
     def __init__(self, state=None, enter=None, do=None, exit_=None):
+        """ Constructor
+
+            Parameters:
+                state : state to create
+                enter : enter function for the state
+                do : do function for the state
+                exit_ : exit function for the state
+        """
         self.state = state
         self.enter = enter
         self.do = do
@@ -27,10 +35,18 @@ class StateTransition(object):
     """ StateMachine state transition definitions """
 
     def __init__(self, event=None, state2=None, guard=None, transition=None):
-        self.event = event
-        self.state2 = state2
-        self.guard = guard
-        self.transition = transition
+        """ Constructor
+
+            Parameters:
+                event : transition event trigger
+                state2 : transition destination state
+                guard : function to test if transition can be taken
+                transition : function to be executed when the transition is taken
+        """
+        self.event = event              #: transition event trigger
+        self.state2 = state2            #: transition destination state
+        self.guard = guard              #: transition guard function
+        self.transition = transition    #: transition function
 
 
 class StateMachine(Thread):
@@ -38,6 +54,16 @@ class StateMachine(Thread):
 
     def __init__(self, sm_id=None, name=None, running=None, startup_state=None,
                  function_table=None, transition_table=None):
+        """ Constructor
+
+            Parameters:
+                sm_id : state machine ID
+                name : state machine name
+                running : flag indicates state machine is running
+                startup_state : state machine starting state
+                function_table : state machine function table
+                transition_table : state machine transition table
+        """
         Thread.__init__(self, target=self.run)
         self.id = sm_id
         self.name = name
@@ -53,6 +79,11 @@ class StateMachine(Thread):
         self.start()
 
     def run(self):
+        """ Function to run the state machine.
+
+            * Starts running when the **running** boolean is True
+            * Stops running when the **running** boolean is False
+        """
         # wait until our state machine has been activated
         logging.debug('%s-SM StateMachine activating [%s]' % (self.name, self.current_state))
         while not self.running:
@@ -74,15 +105,33 @@ class StateMachine(Thread):
         logging.debug('%s-SM StateMachine exiting [%s]' % (self.name, self.current_state))
 
     def do(self):
-        # execute current state 'do' function if it exists
+        """ Execute current state **do** function if it exists """
         if self.do_func is not None:
             self.do_func(self)
         time.sleep(0)
 
     def post_event(self, event):
+        """ Posts **event** to the state machine event queue
+
+            Parameters:
+                event : event to post
+        """
         self.event_queue.put_nowait(event)
 
     def event(self, event):
+        """ Perform state machine **event** processing
+
+            Handles:
+                * execution of state transitions
+                * transition guard function tests
+                * transition function execution
+                * state exit function execution
+                * state enter function execution
+                * sets up do function for next state
+
+            Parameters:
+                  event : event to process
+        """
         if event is None:
             return
         logging.debug('%s-SM Event %s [%s]' % (self.name, event, self.current_state))

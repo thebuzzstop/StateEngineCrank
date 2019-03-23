@@ -1,7 +1,33 @@
-""" SleepingBarber.Customer
-
+"""
 * State machine UML, tables and user state functions.
 * Contains auto-generated and user created custom code.
+
+**SleepingBarber Customer UML**::
+
+    @startuml
+
+    [*] --> StartUp
+
+    StartUp --> HairCut : EvStart [BarberSleeping]
+    StartUp --> Waiting : EvStart [BarberCutting && WaitingRoomChair] / GetChair()
+    StartUp --> Finish : EvStart [BarberCutting && !WaitingRoomChair] / NoHairCut()
+    StartUp --> Finish : EvStop
+    StartUp : enter : CustomerStart
+
+    HairCut --> Finish : EvFinishCutting
+    HairCut : enter : StartHairCut
+    HairCut : do    : GetHairCut
+    HairCut : exit  : StopHairCut
+
+    Waiting --> HairCut : EvBarberReady
+    Waiting --> Finish : EvStop
+    Waiting : enter : StartWaiting
+    Waiting : do    : Wait
+    Waiting : exit  : StopWaiting
+
+    Finish : enter : CustomerDone
+
+    @enduml
 """
 
 # System imports
@@ -19,33 +45,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
-
-"""
-    @startuml
-
-    [*] --> StartUp
-    
-    StartUp --> HairCut : EvStart [BarberSleeping]
-    StartUp --> Waiting : EvStart [BarberCutting && WaitingRoomChair] / GetChair()
-    StartUp --> Finish : EvStart [BarberCutting && !WaitingRoomChair] / NoHairCut()
-    StartUp --> Finish : EvStop
-    StartUp : enter : CustomerStart
-
-    HairCut --> Finish : EvFinishCutting
-    HairCut : enter : StartHairCut
-    HairCut : do    : GetHairCut
-    HairCut : exit  : StopHairCut
-    
-    Waiting --> HairCut : EvBarberReady
-    Waiting --> Finish : EvStop
-    Waiting : enter : StartWaiting
-    Waiting : do    : Wait
-    Waiting : exit  : StopWaiting
-    
-    Finish : enter : CustomerDone
-
-    @enduml
-"""
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -85,14 +84,14 @@ class UserCode(StateMachine):
     def __init__(self, id=None, barbers=None):
         """ Customer class constructor
 
-            Parameters:
-                id - customer ID, unique to this customer
-                barbers[] - list of barbers in the simulation
+            :param id: customer ID, unique to this customer
+            :param barbers[]: list of barbers in the simulation
         """
         StateMachine.__init__(self, sm_id=id, name='Customer%03d' % id,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
+
         logging.debug('Customer[%d] INIT' % id)
         self.barbers = barbers  #: list of barbers in this simulation
         self.id = id            #: our customer ID
@@ -116,9 +115,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Finish_CustomerDone(self):
-        """ *Enter* function processing for *Finish* state.
+        """ State machine *enter* function processing for the *Finish* state.
 
-            State machine *enter* function processing for the *Finish* state.
             This function is called when the *Finish* state is entered.
         """
         self.finish_time = time.time()
@@ -134,10 +132,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def HairCut_GetHairCut(self):
-        """
-            *Do* function processing for the *HairCut* state
+        """ State machine *do* function processing for the *HairCut* state.
 
-            State machine *do* function processing for the *HairCut* state.
             This function is called once every state machine iteration to perform processing
             for the *HairCut* state.
         """
@@ -146,10 +142,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def HairCut_StartHairCut(self):
-        """
-            *Enter* function processing for *HairCut* state.
+        """ State machine *enter* function processing for the *HairCut* state.
 
-            State machine enter function processing for the *HairCut* state.
             This function is called when the *HairCut* state is entered.
         """
         logging.debug('Customer[%s] StartHairCut' % self.id)
@@ -157,10 +151,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def HairCut_StopHairCut(self):
-        """
-            *Exit* function processing for the *HairCut* state.
+        """ State machine *exit* function processing for the *HairCut* state.
 
-            State machine exit function processing for the *HairCut* state.
             This function is called when the *HairCut* state is exited.
         """
         logging.debug('Customer[%s] StopHairCut (%s)' % (self.id, self.cutting_time))
@@ -169,11 +161,9 @@ class UserCode(StateMachine):
 
     # =========================================================
     def NoHairCut(self):
-        """
-            State transition processing for NoHairCut
+        """ State machine state *transition* processing for *NoHairCut* transition.
 
-            State machine state transition processing for NoHairCut.
-            This function is called whenever the state transition NoHairCut is taken.
+            This function is called whenever the state transition *NoHairCut* is taken.
         """
         logging.debug('Customer[%s] NoHairCut.' % self.id)
         stats = Statistics()
@@ -182,10 +172,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def StartUp_CustomerStart(self):
-        """
-            *Enter* function processing for *StartUp* state.
+        """ State machine *enter* function processing for the *StartUp* state.
 
-            State machine enter function processing for the *StartUp* state.
             This function is called when the *StartUp* state is entered.
         """
         logging.debug('Customer[%s] CustomerStart' % self.id)
@@ -205,10 +193,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Waiting_StartWaiting(self):
-        """
-            *Enter* function processing for *Waiting* state.
+        """ State machine *enter* function processing for the *Waiting* state.
 
-            State machine enter function processing for the *Waiting* state.
             This function is called when the *Waiting* state is entered.
         """
         logging.info('Customer[%s] StartWaiting' % self.id)
@@ -216,10 +202,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Waiting_StopWaiting(self):
-        """
-            *Exit* function processing for the *Waiting* state.
+        """ State machine *exit* function processing for the *Waiting* state.
 
-            State machine exit function processing for the *Waiting* state.
             This function is called when the *Waiting* state is exited.
         """
         logging.info('Customer[%s] StopWaiting' % self.id)
@@ -228,26 +212,24 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Waiting_Wait(self):
-        """
-            *Do* function processing for the *Waiting* state
+        """ State machine *do* function processing for the *Waiting* state.
 
-            State machine do function processing for the *Waiting* state.
-            This function is called once every state machine iteration to perform processing
-            for the *Waiting* state.
+            This function is called once every state machine iteration to perform
+            processing for the *Waiting* state.
         """
         time.sleep(1)
         self.waiting_time += 1
 
     # =========================================================
     def BarberSleeping(self):
-        """ Guard processing for BarberSleeping
+        """ State machine *guard* processing for *BarberSleeping*.
 
-            State machine guard processing for BarberSleeping.
-            This function is called whenever the guard BarberSleeping is tested.
+            This function is called whenever the *guard* *BarberSleeping* is
+            tested.
 
-            Returns:
-                True - Guard is active/valid
-                False - Guard is inactive/invalid
+            :rtype: boolean
+            :returns: True : Guard is active/valid (Barber *is* sleeping)
+            :returns: False : Guard is inactive/invalid (Barber *is not* sleeping)
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
@@ -257,14 +239,13 @@ class UserCode(StateMachine):
 
     # =========================================================
     def BarberCutting_AND_NOT_WaitingRoomChair(self):
-        """ Guard processing for BarberCutting_AND_NOT_WaitingRoomChair
+        """ State machine guard processing for *BarberCutting_AND_NOT_WaitingRoomChair*.
 
-            State machine guard processing for BarberCutting_AND_NOT_WaitingRoomChair.
-            This function is called whenever the guard BarberCutting_AND_NOT_WaitingRoomChair is tested.
+            This function is called whenever the guard *BarberCutting_AND_NOT_WaitingRoomChair* is tested.
 
-            Returns:
-                True - Guard is active/valid. All barbers are cutting and there are no waiting room chairs free.
-                False - Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
+            :rtype: boolean
+            :returns: True : Guard is active/valid. All barbers are cutting and there are no waiting room chairs free.
+            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
@@ -274,14 +255,13 @@ class UserCode(StateMachine):
 
     # =========================================================
     def BarberCutting_AND_WaitingRoomChair(self):
-        """ Guard processing for BarberCutting_AND_WaitingRoomChair
+        """ State machine guard processing for *BarberCutting_AND_WaitingRoomChair*.
 
-            State machine guard processing for BarberCutting_AND_WaitingRoomChair.
-            This function is called whenever the guard BarberCutting_AND_WaitingRoomChair is tested.
+            This function is called whenever the guard *BarberCutting_AND_WaitingRoomChair* is tested.
 
-            Returns:
-                True - Guard is active/valid. All barbers are cutting and there are waiting room chairs free.
-                False - Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
+            :rtype: boolean
+            :returns: True : Guard is active/valid. All barbers are cutting and there are waiting room chairs free.
+            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
@@ -291,9 +271,8 @@ class UserCode(StateMachine):
 
     # =========================================================
     def GetChair(self):
-        """ State transition processing for *GetChair*
+        """ State machine state transition processing for *GetChair*.
 
-            State machine state transition processing for *GetChair*.
             This function is called whenever the state transition *GetChair* is taken.
         """
         with self.waiting_room.lock:

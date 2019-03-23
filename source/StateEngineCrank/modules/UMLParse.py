@@ -1,4 +1,4 @@
-""" StateEngineCrank.UMLParse
+""" StateEngineCrank UML Parsing Module
 
     Locates UML in source code and parses for states, transitions
     events, guards, transfer functions producing the UML data
@@ -105,7 +105,7 @@ class UML(modules.Singleton.Singleton):
 
         **Fully specified state transition**::
 
-        State1 --> State2 : Event [Guard] / Function()
+            State1 --> State2 : Event [Guard] / Function()
 
         Not all parts are necessary::
 
@@ -153,9 +153,10 @@ class UML(modules.Singleton.Singleton):
 
     # =========================================================================
     def __init__(self):
-        self.error = modules.ErrorHandling.Error()
-        self.warn = modules.ErrorHandling.Warn()
-        self.file = modules.FileSupport.File()
+        self.error = modules.ErrorHandling.Error()  #: establish error handling (errors)
+        self.warn = modules.ErrorHandling.Warn()    #: establish error handling (warnings)
+        self.file = modules.FileSupport.File()      #: establish file handling
+
         self.seqid = -1             #: used during debug as a sequence ID for UML lines read
         self.uml_start_index = -1   #: source file index of uml start
         self.uml_end_index = -1     #: source file index of uml end
@@ -235,27 +236,62 @@ class UML(modules.Singleton.Singleton):
 
     # =========================================================================
     def is_guard_func(self, func):
-        """ Return True if 'func' is a Guard function. """
+        """ **Guard** function test
+
+            Parameters:
+                func : text to test
+
+            Returns:
+                True : 'func' is a Guard function
+        """
         return func in self.guard_funcs
 
     # =========================================================================
     def is_enter_func(self, func):
-        """ Return True if 'func' is an Enter function. """
+        """ **Enter** function test
+
+            Parameters:
+                func : text to test
+
+            Returns:
+                True : 'func' is an Enter function
+        """
         return func in self.enter_funcs
 
     # =========================================================================
     def is_do_func(self, func):
-        """ Return True if 'func' is a Do function. """
+        """ **Do** function test
+
+            Parameters:
+                func : text to test
+
+            Returns
+                True : 'func' is a **Do** function
+        """
         return func in self.do_funcs
 
     # =========================================================================
     def is_exit_func(self, func):
-        """ Return True if 'func' is an Exit function. """
+        """ **Exit** function test
+
+            Parameters:
+                func : text to test
+
+            Returns:
+                True : 'func' is an **Exit** function
+        """
         return func in self.exit_funcs
 
     # =========================================================================
     def is_trans_func(self, func):
-        """ Return True if 'func' is a Transition function. """
+        """ **Transition** function test
+
+            Parameters:
+                func : text to test
+
+            Returns:
+                True : 'func' is a **Transition** function
+        """
         return func in self.trans_funcs
 
     # =========================================================================
@@ -273,59 +309,75 @@ class UML(modules.Singleton.Singleton):
 
     # =========================================================================
     def add_state1(self, state):
-        """ Add 'state' to list of known origination states (ie. state1). """
-        for _state in self.states1:
-            if state == _state:
-                return
-        self.states1.append(state)
-        # add it to the master list
-        self.add_state(state)
+        """ Add **state** to list of known origination states
+
+            Parameters:
+                 state : **state** to add to **state1[]**
+        """
+        if state not in self.states1:
+            self.states1.append(state)
+            self.add_state(state)
 
     # =========================================================================
     def add_state2(self, state):
-        """ Add 'state' to list of known destination states (ie. state2). """
-        for _state in self.states2:
-            if state == _state:
-                return
-        self.states2.append(state)
-        # add it to the master list
-        self.add_state(state)
+        """ Add **state** to list of known destination states
+
+            Parameters:
+                state : **state** to add to **state2[]**
+        """
+        if state not in self.states2:
+            self.states2.append(state)
+            self.add_state(state)
 
     # =========================================================================
-    def add_event(self, event_func):
-        """ Add 'event_func' to list of known events. """
-        for _event in self.events:
-            if event_func == _event:
-                return
-        self.events.append(event_func)
+    def add_event(self, func):
+        """ Add **func** to list of known **events**
+
+            Parameters:
+                func : **event** function to add to **events[]**
+        """
+        if func not in self.events:
+            self.events.append(func)
 
     # =========================================================================
-    def add_guard(self, state1, state2, event, guard_func):
-        """ Add 'guard_func' to list of known guards. """
-        self.guards.append({"state1": state1, "state2": state2, "event": event, "guard": guard_func})
-        for _guard in self.guard_funcs:
-            if _guard == guard_func:
-                return
-        self.guard_funcs.append(guard_func)
+    def add_guard(self, state1, state2, event, func):
+        """ Add **func** to list of known **guards**
+
+            Parameters:
+                state1 : starting state
+                state2 : destination state
+                event : trigger event
+                func : **guard** function
+        """
+        self.guards.append({"state1": state1, "state2": state2, "event": event, "guard": func})
+        if func not in self.guard_funcs:
+            self.guard_funcs.append(func)
 
     # =========================================================================
-    def add_trans(self, state1, state2, event, trans_func):
-        """ Add 'trans_func' to list of known transitions. """
-        self.trans.append({"state1": state1, "state2": state2, "event": event, "tfunc": trans_func})
-        for _tfunc in self.trans_funcs:
-            if _tfunc == trans_func:
-                return
-        self.trans_funcs.append(trans_func)
+    def add_trans(self, state1, state2, event, func):
+        """ Add **func** to list of known **transitions**
+
+            Parameters:
+                state1 : starting state
+                state2 : destination state
+                event : trigger event
+                func : **transition** function
+        """
+        self.trans.append({"state1": state1, "state2": state2, "event": event, "tfunc": func})
+        if func not in self.trans_funcs:
+            self.trans_funcs.append(func)
 
     # =========================================================================
     def add_state(self, state):
-        """ Add 'state' to list of known states. """
-        if state == self.INITIAL_STATE or state == self.FINAL_STATE:
-            return
-        for _state in self.states:
-            if state == _state:
-                return
-        self.states.append(state)
+        """ Add **state** to list of known **states**
+
+            Parameters:
+                state : state to add
+        """
+        # don't add default state engine states
+        if not (state == self.INITIAL_STATE or state == self.FINAL_STATE):
+            if state not in self.states:
+                self.states.append(state)
 
     # ==============================
     # state enter/do/exit functions
@@ -345,8 +397,8 @@ class UML(modules.Singleton.Singleton):
         """ Mangle a guard string according to our rules.
             Dictionary replacement of text.
 
-            Arguments:
-                  text - guard text string to be processed
+            Parameters:
+                  text : guard text string to be processed
             Returns:
                   mangled guard text
         """
@@ -359,9 +411,9 @@ class UML(modules.Singleton.Singleton):
     def mangle(string1, string2):
         """ Mangle two strings into a single string.
 
-            Arguments:
-                string1 - first string to be mangled
-                string2 - second string to be mangled
+            Parameters:
+                string1 : first string to be mangled
+                string2 : second string to be mangled
             Returns:
                 string1_string2
         """
@@ -369,54 +421,48 @@ class UML(modules.Singleton.Singleton):
 
     # =========================================================================
     def add_enter(self, state, func):
-        """ Add state 'enter' function to list.
+        """ Add state **enter** function to list.
 
-            Arguments:
-                state - current state being processed
-                func - current function being processed
+            Parameters:
+                state : current state being processed
+                func : current function being processed
         """
         _mangle = self.mangle(state, func)
-        for _enter in self.enters:
-            if _mangle == _enter:
-                return
-        self.enters.update({state: _mangle})
-        self.enter_funcs.append(_mangle)
-        self.enter_func_states[_mangle] = state
+        if _mangle not in self.enters:
+            self.enters.update({state: _mangle})
+            self.enter_funcs.append(_mangle)
+            self.enter_func_states[_mangle] = state
 
     # =========================================================================
     def add_do(self, state, func):
-        """ Add state 'do' function to list.
+        """ Add state **do** function to list.
 
-            Arguments:
-                state - current state being processed
-                func - current function being processed
+            Parameters:
+                state : current state being processed
+                func : current function being processed
         """
         _mangle = self.mangle(state, func)
-        for _do in self.dos:
-            if _mangle == _do:
-                return
-        self.dos.update({state: _mangle})
-        self.do_funcs.append(_mangle)
-        self.do_func_states[_mangle] = state
+        if _mangle not in self.dos:
+            self.dos.update({state: _mangle})
+            self.do_funcs.append(_mangle)
+            self.do_func_states[_mangle] = state
 
     # =========================================================================
     def add_exit(self, state, func):
-        """ Add state 'exit' function to list.
+        """ Add state **exit** function to list.
 
-            Arguments:
-                state - current state being processed
-                func - current function being processed
+            Parameters:
+                state : current state being processed
+                func : current function being processed
         """
         _mangle = self.mangle(state, func)
-        for _exit in self.exits:
-            if _mangle == _exit:
-                return
-        self.exits.update({state: _mangle})
-        self.exit_funcs.append(_mangle)
-        self.exit_func_states[_mangle] = state
+        if _mangle not in self.exits:
+            self.exits.update({state: _mangle})
+            self.exit_funcs.append(_mangle)
+            self.exit_func_states[_mangle] = state
 
     # =========================================================================
-    # Dictionary of strings used to invoke UML handlers while parsing
+    #: Dictionary of strings used to invoke UML handlers while parsing
     UML_PARSE = {
         'isuml':    add_isuml,
         'lineno':   add_lineno,
@@ -436,7 +482,11 @@ class UML(modules.Singleton.Singleton):
     def find_start_plant_uml(self):
         """ Find Plant UML start in source file.
             Note that not finding the UML start is not an error.
-            A warning will be issued if enabled (verbosity). """
+            A warning will be issued if enabled (verbosity).
+
+            Returns:
+                True - start plant-uml found
+        """
         lineno = 0
         found_status = False
         while True:
@@ -456,7 +506,11 @@ class UML(modules.Singleton.Singleton):
         """ Find Plant UML end in source file.
             It is ASSuMEd that if we are searching for the UML END then
             we must have found the UML START.
-            Unlike UML START, no UML END is therefore an ERROR. """
+            Unlike UML START, no UML END is therefore an ERROR.
+
+            Returns:
+                True - end plant-uml found
+        """
         lineno = 0
         found_status = False
         while True:
@@ -651,12 +705,12 @@ class UML(modules.Singleton.Singleton):
     def is_uml(self, text):
         """ Verify text is valid UML.
 
-            Arguments:
-                text - text to be tested for valid UML
+            Parameters:
+                text : text to be tested for valid UML
 
             Returns:
-                True - text is valid UML
-                False - text is not valid UML
+                True : text is valid UML
+                False : text is not valid UML
         """
         # bump / display sequence id
         self.seqid += 1

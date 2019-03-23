@@ -1,4 +1,4 @@
-""" StateEngineCrank.Config
+""" StateEngineCrank Configuration Module
 
 Implements TheConfig Class - pulls together options specified on the command line and in the configuration file.
 """
@@ -18,6 +18,7 @@ import modules.ErrorHandling as Error   # noqa 408
 
 class TheConfig(Singleton.Singleton):
     """ Implements TheConfig Class
+
         Pulls together options specified on the command line and
         and in the optional configuration file.
     """
@@ -50,6 +51,7 @@ class ArgParser(argparse.ArgumentParser):
 
     # =========================================================================
     def __init__(self):
+        """ Constructor """
         super().__init__()
         parser = argparse.ArgumentParser(description=Defines.MY_DESCRIPTION)
 
@@ -93,6 +95,11 @@ class CfgParser(configparser.ConfigParser):
 
     # =========================================================================
     def __init__(self):
+        """ Constructor
+
+            Raises:
+                ConfigFileError
+        """
         super().__init__()
         self.error = Error.Error()
         self.config_file = TheConfig.config_file
@@ -126,6 +133,18 @@ class CfgParser(configparser.ConfigParser):
                     self.files.append(self.config['files'][fkey])
 
     def make_boolean(self, value):
+        """ Makes a value into a boolean
+
+            Parameters:
+                value - text to convert to boolean
+
+            Returns:
+                True - value is 'true'
+                False - value is 'false'
+
+            Raises:
+                ConfigFileError
+        """
         if str(value).lower() == 'true':
             return True
         if str(value).lower() == 'false':

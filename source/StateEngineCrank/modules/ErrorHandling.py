@@ -1,4 +1,4 @@
-""" StateEngineCrank.ErrorHandling """
+""" StateEngineCrank Error Handling Exceptions"""
 
 # System imports
 import inspect
@@ -79,133 +79,265 @@ class Error(modules.Singleton.Singleton):
     # =========================================================================
     @staticmethod
     def config_file_open_error(filename):
-        """ Config File Open Error - display message and raise source file error."""
+        """ Config File Open Error - display message and raise source file error
+
+            Parameters:
+                filename :
+
+            Raises:
+                ConfigFileError(filename)
+        """
         logging.fatal('ERROR: Configuration File Open Error: %s' % filename)
         raise ConfigFileError(filename)
 
     # =========================================================================
     @staticmethod
     def config_file_parse_error(filename):
-        """ Config File Parse Error - display message and raise source file error."""
+        """ Config File Parse Error - display message and raise source file error
+
+            Parameters:
+                filename :
+
+            Raises:
+                ConfigFileError(filename)
+        """
         logging.fatal('ERROR: Configuration File Parse Error: %s' % filename)
         raise ConfigFileError(filename)
 
     # =========================================================================
     @staticmethod
     def config_file_missing_error(filename):
-        """ Config File Parse Error - display message and raise source file error."""
+        """ Config File Parse Error - display message and raise source file error
+
+            Parameters:
+                filename :
+
+            Raises:
+                ConfigFileError(filename)
+        """
         logging.fatal('ERROR: Configuration File Missing Error: %s' % filename)
         raise ConfigFileError(filename)
 
     # =========================================================================
     @staticmethod
     def input_file_open_error(filename):
-        """ Input File Open Error - display message and raise source file error."""
+        """ Input File Open Error - display message and raise source file error
+
+            Parameters:
+                filename :
+
+            Raises:
+                SourceFileError(filename)
+        """
         logging.fatal('ERROR: File Open Error: %s' % filename)
         raise SourceFileError(filename)
 
     # =========================================================================
     @staticmethod
     def input_file_read_error(filename):
-        """ Input File Read Error - display message and raise file read error."""
+        """ Input File Read Error - display message and raise file read error
+
+            Parameters:
+                filename :
+
+            Raises:
+                SourceFileError(filename)
+        """
         logging.fatal('ERROR: File Read Error: %s' % filename)
         raise SourceFileError(filename)
 
     # =========================================================================
     @staticmethod
     def input_file_close_error(filename):
-        """ Input File Close Error - display message and raise file close error. """
+        """ Input File Close Error - display message and raise file close error
+
+            Parameters:
+                filename :
+
+            Raises:
+                SourceFileError(filename)
+        """
         logging.fatal('ERROR: File Close Error: %s' % filename)
         raise SourceFileError(filename)
 
     # =========================================================================
     @staticmethod
     def output_file_open_error(filename):
-        """ Output File Open Error - display message and raise IOError. """
+        """ Output File Open Error - display message and raise IOError
+
+            Parameters:
+                filename :
+
+            Raises:
+                IOError
+        """
         logging.fatal('ERROR: File Open Error: %s' % filename)
         raise IOError
 
     # =========================================================================
     @staticmethod
     def output_file_write_error(filename):
-        """ Output File Write Error - display message and raise IOError. """
+        """ Output File Write Error - display message and raise IOError
+
+            Parameters:
+                filename :
+
+            Raises:
+                IOError
+        """
         logging.fatal('ERROR: File Write Error: %s' % filename)
         raise IOError
 
     # =========================================================================
     @staticmethod
     def output_file_close_error(filename):
-        """ Output File Close Error - display message and raise IOError. """
+        """ Output File Close Error - display message and raise IOError
+
+            Parameters:
+                filename :
+
+            Raises:
+                IOError
+        """
         logging.fatal('ERROR: File Close Error: %s' % filename)
         raise IOError
 
     # =========================================================================
     @staticmethod
     def uml_not_found(error_string):
-        """ UML Not Found - display message and punt. """
+        """ UML Not Found - display message and punt
+
+            Parameters:
+                error_string : error message to display
+
+            Raises:
+                UMLParseError
+        """
         logging.fatal('ERROR: UML_NotFound: %s' % error_string)
         raise UMLParseError
 
     # =========================================================================
     @staticmethod
     def uml_statemachine_not_found():
-        """ UML State Machine Not Found - display message and punt. """
+        """ UML State Machine Not Found - display message and punt
+
+            Raises:
+                UMLParseError
+        """
         logging.fatal('ERROR: UML State Machine Not Found')
         raise UMLParseError
 
     # =========================================================================
     @staticmethod
     def invalid_start_end(start, end):
-        """ Invalid UML start and/or end - display message and punt. """
+        """ Invalid UML start and/or end - display message and punt
+
+            Parameters:
+                start : UML start
+                end : UML end
+
+            Raises:
+                UMLParseError
+        """
         logging.fatal('ERROR: Invalid UML: start=%s end=%s' % (start, end))
         raise UMLParseError
 
     # =========================================================================
     @staticmethod
     def file_index_error(index):
-        """ Bad file index encountered - display message and punt. """
+        """ Bad file index encountered - display message and punt
+
+            Parameters:
+                index : bad file index
+
+            Raises:
+                Exception
+        """
         logging.fatal('ERROR: Bad file index: %s' % index)
         raise Exception
 
     # =========================================================================
     @staticmethod
     def signature_scan_error(filename):
-        """ Error scanning signature - display message and punt. """
+        """ Error scanning signature - display message and punt
+
+            Parameters:
+                filename : name of file being scanned
+
+            Raises:
+                SourceFileError(filename)
+        """
         logging.fatal('ERROR: Signature scanning error.')
         raise SourceFileError(filename)
 
     # =========================================================================
     @staticmethod
     def signature_not_found(signature):
-        """ Signature not found - display message and punt. """
+        """ Signature not found - display message and punt
+
+            Parameters:
+                signature : text of signature not found
+
+            Raises:
+                SignatureError(signature)
+        """
         logging.fatal('ERROR: Signature %s not found error.' % signature)
         raise SignatureError(signature)
 
     # =========================================================================
     @staticmethod
     def function_type_not_found(func):
-        """ Function type not found - display message and punt. """
+        """ Function type not found - display message and punt
+
+            Parameters:
+                func : function type not found
+
+            Raises:
+                FunctionTypeError(func)
+        """
         logging.fatal('ERROR: Function %s not found error.' % func)
         raise FunctionTypeError(func)
 
     # =========================================================================
     @staticmethod
     def bad_file_index(index):
-        """ Bad file index encountered - display message and punt. """
+        """ Bad file index encountered - display message and punt
+
+            Parameters:
+                index : index encountered
+
+            Raises:
+                Exception
+        """
         logging.fatal('ERROR: Bad File Index: %s' % index)
         raise Exception
 
     # =========================================================================
     @staticmethod
     def file_type_error(file_type):
-        """ Unknown file type encountered - display message and punt. """
+        """ Unknown file type encountered - display message and punt
+
+            Parameters:
+                file_type : file type encountered
+
+            Raises:
+                Exception
+        """
         logging.fatal('ERROR: Unknown file type: %s' % file_type)
         raise Exception
 
     # =========================================================================
     @staticmethod
     def unimplemented(msg, line):
-        """ Unimplemented code - display message and punt. """
+        """ Unimplemented code - display message and punt
+
+            Parameters:
+                msg : text message to display
+                line : line number error was encountered
+
+            Raises:
+                UnimplementedCodeError
+        """
         logging.fatal('ERROR: Unimplemented code: %s @ line #%s' % (msg, line))
         raise UnimplementedCodeError
 
@@ -220,5 +352,9 @@ class Warn(modules.Singleton.Singleton):
     # =========================================================================
     @staticmethod
     def uml_not_found(warning_string):
-        """ UML Not Found - display message and punt. """
+        """ UML Not Found - display message and punt
+
+            Parameters:
+                warning_string : string to enter into logfile
+        """
         logging.warning('WARNING: UML_NotFound: %s' % warning_string)

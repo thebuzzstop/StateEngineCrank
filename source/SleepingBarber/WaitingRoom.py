@@ -1,7 +1,6 @@
-""" SleepingBarber.WaitingRoom
-
-* Customer waiting room support for SleepingBarber(s) simulation
-* Provides synchronized access to waiting room for barber(s) and customer(s)
+"""
+    * Customer waiting room support for SleepingBarber(s) simulation
+    * Provides synchronized access to waiting room for barber(s) and customer(s)
 """
 
 # System imports
@@ -28,14 +27,15 @@ class Borg(object):
     """ The Borg class ensures that all instantiations refer to the same
         state and behavior.
 
-        Taken from "Python Cookbook" by David Ascher, Alex Martelli
-        https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html
+        Taken from `The Python Cookbook
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`_
+        by David Ascher, Alex Martelli
     """
     _shared_state = {}
 
     def __init__(self):
         """ Class constructor """
-        self.__dict__ = self._shared_state
+        self.__dict__ = self._shared_state  #: Borg class shared state
 
 
 class WaitingRoom(Borg, Queue):
@@ -51,8 +51,7 @@ class WaitingRoom(Borg, Queue):
     def __init__(self, chairs=None):
         """ Class constructor
 
-            Parameters:
-                chairs - number of chairs in the waiting room
+            :param chairs: number of chairs in the waiting room
         """
         Borg.__init__(self)
         if len(self._shared_state) is 0:
@@ -63,15 +62,14 @@ class WaitingRoom(Borg, Queue):
             self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
 
     def get_chair(self, customer):
-        """ Function called by a customer to get a chair in the waiting room
+        """ Function called by a customer to get a chair in the waiting room.
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            Parameters:
-                customer: Customer class object of the customer needing a chair
+            :param customer: Customer class object of the customer needing a chair
 
-            Returns:
-                True - Chair available, customer added to the waiting queue
-                False - No chair available
+            :rtype: boolean
+            :returns: True : Chair available, customer added to the waiting queue
+            :returns: False : No chair available
         """
         if self.full():
             chair = False
@@ -84,14 +82,12 @@ class WaitingRoom(Borg, Queue):
         return chair
 
     def get_customer(self):
-        """ Function called by a barber to get a customer from the waiting room
+        """ Function called by a barber to get a customer from the waiting room.
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            Returns:
-                Customer object of the next waiting customer from the queue.
+            :returns: Customer object of the next waiting customer from the queue.
 
-            Raises:
-                CustomerWaitingError if there is no customer waiting.
+            :raises: CustomerWaitingError : no customer waiting.
         """
         if self.empty():
             raise CustomerWaitingError
@@ -101,12 +97,12 @@ class WaitingRoom(Borg, Queue):
         return customer
 
     def customer_waiting(self):
-        """ Function to test if a customer is waiting
+        """ Function to test if a customer is waiting.
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            Returns:
-                True - Customer is waiting
-                False - No customer is waiting
+            :rtype: boolean
+            :returns: True : Customer is waiting
+            :returns: False : No customer is waiting
         """
         if not self.empty():
             logging.debug('WR: customer_waiting [TRUE]')

@@ -1,6 +1,5 @@
-""" SleepingBarber.Common
-
-Shared code and configuration definitions
+"""
+* Shared code and configuration definitions
 """
 
 # System imports
@@ -27,6 +26,10 @@ class Config(object):
 
             * Used as the number of seconds for a haircut.
             * Used as the number of seconds between new customers.
+
+            :param minimum: range minimum value
+            :param maximum: range maximum value
+            :returns: Random number between minimum and maximum
         """
         return random.randint(minimum, maximum)
 
@@ -34,6 +37,8 @@ class Config(object):
     def cutting_time():
         """ Utility function to return a random time between minimum and maximum
             time specified in the configuration class
+
+            :returns: Random cutting time
         """
         return Config.seconds(Config.HairCut_Min, Config.HairCut_Max)
 
@@ -42,27 +47,30 @@ class Borg(object):
     """ The Borg class ensures that all instantiations refer to the same
         state and behavior.
 
-        Taken from "Python Cookbook" by David Ascher, Alex Martelli
-        https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html
+        Taken from `The Python Cookbook
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`_
+        by David Ascher, Alex Martelli
     """
     _shared_state = {}
 
     def __init__(self):
         """ Class constructor """
-        self.__dict__ = self._shared_state
+        self.__dict__ = self._shared_state  #: Borg class shared state
 
 
 class Statistics(Borg):
-    """ Gather statistics for SleepingBarber simulation """
+    """ This class is used by both barbers and customers to collect statistics.
+
+        Implemented as a Borg, it can be instantiated as many times as necessary.
+    """
 
     def __init__(self):
-        """ Class constructor """
         Borg.__init__(self)
         if len(self._shared_state) is 0:
-            self.lock = Lock()  #: obtained by callers to ensure sole access
-            self.customers = [] #: list of customers instantiated in the simulation
-            self.barbers = []   #: list of barbers instantiated in the simulation
-            self.max_waiters = 0    #: maximum number of waiters at encountered during the simulation
+            self.lock = Lock()      #: obtained by callers to ensure sole access
+            self.customers = []     #: list of customers instantiated in the simulation
+            self.barbers = []       #: list of barbers instantiated in the simulation
+            self.max_waiters = 0    #: maximum number of waiters encountered during the simulation
             self.barber_sleeping_time = 0       #: total sleeping time for all barbers
             self.barber_cutting_time = 0        #: total cutting time for all barbers
             self.barber_total_customers = 0     #: total number of customers served
@@ -76,7 +84,18 @@ class Statistics(Borg):
             self.simulation_start_time = time.time()
 
     def print_customer_stats(self):
-        """ print customer statistics """
+        """ Calculates and prints customer statistics
+
+        Calculates:
+            * total customers elapsed time
+            * total customers cutting time
+            * total customers waiting time
+            * total customers simulation time
+
+        Prints:
+            * individual customer statistics
+            * cumulative statistics for all customers
+        """
 
         # sort customers by ID
         customers = sorted(self.customers, key=lambda customer: customer.id)
@@ -104,7 +123,12 @@ class Statistics(Borg):
                self.customers_waiting_time, self.customers_simulation_time))
 
     def print_barber_stats(self):
-        """ print barber statistics """
+        """ Prints statistics for all barbers
+
+            * total barber sleeping time
+            * total barber cutting time
+            * total barber customers
+        """
 
         # Sort barber array by ID
         barbers = sorted(self.barbers, key=lambda barber: barber.id)
@@ -119,7 +143,15 @@ class Statistics(Borg):
                   (barber.id, barber.customers, barber.cutting_time, barber.sleeping_time))
 
     def print_summary_stats(self):
-        """ print summary statistics for barbers and customers """
+        """ Prints summary statistics for barbers and customers
+
+            * total barber customers
+            * total barber sleeping time
+            * total barber cutting time
+            * total customer waiting time
+            * number of lost customers (no chairs)
+            * maximum number of customer waiting
+        """
         print('Customers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' %
               (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
                self.customers_waiting_time, self.lost_customers, self.max_waiters))

@@ -9,8 +9,8 @@ import os               # noqa 408
 import re               # noqa 408
 import shutil           # noqa 408
 
-import modules.ErrorHandling  # noqa 408
-import modules.Singleton  # noqa 408
+import modules.ErrorHandling    # noqa 408
+import modules.Singleton        # noqa 408
 
 
 class File(modules.Singleton.Singleton):
@@ -18,7 +18,7 @@ class File(modules.Singleton.Singleton):
         (open, read, write, close, etc...)
     """
 
-    EOF = -1    # end of file reached
+    EOF = -1    #: end of file reached
 
     class FileType(Enum):
         c = 1
@@ -27,21 +27,31 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def __init__(self):
+        """ Constructor """
         self.error = modules.ErrorHandling.Error()
         self.file_object = None
         self.file_name = None
-        self.file_original = []     # input file - original version
-        self.file_content = []      # input file - updated content
+        self.file_original = []     #: input file - original version
+        self.file_content = []      #: input file - updated content
         self.file_line = None
         self.file_index = 0
         self.file_lines = 0
-        self.file_temp = 0          # used for comparing before and after
+        self.file_temp = 0          #: used for comparing before and after
         logging.debug('FileSupport ID: %s' % id(self))
 
     # =========================================================================
     @staticmethod
     def file_type(filename):
-        """ Return enum for filetype (based on extension) """
+        """ Return enum for filetype (based on extension)
+
+            Parameters:
+                filename : name of file to test
+
+            Returns:
+                File.FileType.c : filename ends with '.c'
+                File.FileType.py : filename ends with '.py'
+                File.FileType.unknown : file type is unknown
+        """
         if filename.endswith('.c'):
             return File.FileType.c
         elif filename.endswith('.py'):
@@ -51,7 +61,14 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def open(self, filename):
-        """ Open requested file for reading. """
+        """ Open requested file for reading
+
+            Parameters:
+                filename : name of file to open
+
+            Raises:
+                IOError(filename)
+        """
         self.file_name = filename
         logging.debug('[File_Open] %s' % self.file_name)
         try:
@@ -62,7 +79,11 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def read(self):
-        """ Read file contents into array. """
+        """ Read file contents into array
+
+            Raises:
+                IOError(filename)
+        """
         logging.debug('[File_Read] %s' % self.file_name)
         try:
             # read input file
@@ -80,7 +101,17 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def get_line(self, index):
-        """ Get requested line from file array. """
+        """ Get requested line from file array
+
+            Returns a list of the line number and text
+
+            Parameters:
+                index : index of line to return from file
+
+            Returns:
+                file_index : line number
+                file_line : line text
+        """
         self.file_index = index
         if self.file_index >= self.file_lines:
             logging.info(self.file_index, self.file_lines, self.file_line)
@@ -98,14 +129,25 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def append_line(self, text):
-        """ Append text to end of file in memory. """
+        """ Append text to end of file in memory
+
+            Parameters:
+                text : text to append to end of file in memory
+        """
         logging.debug('Append:  %s' % text)
         self.file_content.append(text)
         self.file_lines = self.file_lines + 1
 
     # =========================================================================
     def delete_line(self, index):
-        """ Delete line of text specified by 'index' from file in memory. """
+        """ Delete line of text specified by 'index' from file in memory
+
+            Parameters:
+                index : index of line to be deleted from memory
+
+            Raises:
+                Exception
+        """
         if (index < 1) or (index > self.file_lines):
             self.error.bad_file_index(index)
 
@@ -119,29 +161,50 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def get_line_text(self, index):
-        """ Get specified line of text from file in memory. """
+        """ Get specified line of text from file in memory
+
+            Parameters:
+                index : index of line to be retrieved from memory
+
+            Returns:
+                text for requested line
+        """
         return self.get_line(index)[1]
 
     # =========================================================================
     def insert_line_text(self, index, text):
-        """ Insert a line of text into file in memory. """
+        """ Insert a line of text into file in memory
+
+            Parameters:
+                index : index of line to be inserted into memory
+                text : text of line to insert
+        """
         self.file_content.insert(index, text)
         self.file_lines = self.file_lines + 1
 
     # =========================================================================
     def number_of_lines(self):
-        """ Return number of lines in file in memory. """
+        """ Return number of lines in file in memory
+
+            Returns:
+                Number of lines in file
+        """
         return self.file_lines
 
     # =========================================================================
     def close(self):
-        """ Close file. """
+        """ Close file """
         logging.debug('[File_Close] %s' % self.file_name)
         self.file_object.close()
 
     # =========================================================================
     def compare_files(self):
-        """ Compare original file to most recent file after all processing. """
+        """ Compare original file to most recent file after all processing
+
+            Returns:
+                 True : files are identical
+                 False : files are different
+        """
         logging.debug('[File_CompareFiles] %s' % self.file_name)
         # files must be of the same length
         if len(self.file_content) != len(self.file_original):
@@ -155,7 +218,14 @@ class File(modules.Singleton.Singleton):
     # =========================================================================
     @staticmethod
     def mk_suffix_string(suffix):
-        """ Create a suffix string to add as a sequence number to a filename. """
+        """ Create a suffix string to add as a sequence number to a filename
+
+            Parameters:
+                suffix : string to use as a basis for the sequence number
+
+            Returns:
+                Completed suffix string
+        """
         i = str(suffix)
         while len(i) < 3:
             i = '0' + i
@@ -163,7 +233,11 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def backup(self, filename):
-        """ Make a backup copy of the requested file. """
+        """ Make a backup copy of the requested file
+
+            Parameters:
+                filename : name of file to backup
+        """
         looking = True
         suffix_number = 0
         backup_filename = filename
@@ -181,7 +255,11 @@ class File(modules.Singleton.Singleton):
 
     # =========================================================================
     def update(self, filename):
-        """ Update the requested file with the latest contents. """
+        """ Update the requested file with the latest contents
+
+            Parameters:
+                filename : name of file to update
+        """
         logging.debug('[Write File] %s' % filename)
         filehandle = open(self.file_name, 'w')
         for line in self.file_content:

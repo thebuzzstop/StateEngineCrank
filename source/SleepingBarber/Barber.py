@@ -1,6 +1,35 @@
-""" SleepingBarber.Barber
-
+"""
 * State machine UML, tables and user state functions.
+
+**SleepingBarber Barber UML**::
+
+    @startuml
+
+    [*] --> StartUp
+
+    StartUp --> Finish : EvStop
+    StartUp --> Cutting : EvStart [WaitingCustomer] / GetCustomer()
+    StartUp --> Sleeping : EvStart [!WaitingCustomer]
+    StartUp : enter : BarberStart
+
+    Sleeping --> Cutting : EvCustomerEnter
+    Sleeping --> Finish : EvStop
+    Sleeping : enter : StartSleeping
+    Sleeping : do    : Sleep
+    Sleeping : exit  : StopSleeping
+
+    Cutting --> Cutting : EvFinishCutting [WaitingCustomer] / GetCustomer()
+    Cutting --> Sleeping : EvFinishCutting [!WaitingCustomer]
+    Cutting --> Stopping : EvStop
+    Cutting : enter : StartCutting
+    Cutting : do    : Cut
+
+    Stopping --> Finish : EvFinishCutting
+    Stopping : do : Cut
+
+    Finish : enter : BarberDone
+
+    @enduml
 """
 # System imports
 import sys
@@ -18,36 +47,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
-
-"""
-    @startuml
-
-    [*] --> StartUp
-    
-    StartUp --> Finish : EvStop
-    StartUp --> Cutting : EvStart [WaitingCustomer] / GetCustomer()
-    StartUp --> Sleeping : EvStart [!WaitingCustomer]
-    StartUp : enter : BarberStart
-
-    Sleeping --> Cutting : EvCustomerEnter
-    Sleeping --> Finish : EvStop
-    Sleeping : enter : StartSleeping
-    Sleeping : do    : Sleep
-    Sleeping : exit  : StopSleeping
-    
-    Cutting --> Cutting : EvFinishCutting [WaitingCustomer] / GetCustomer()
-    Cutting --> Sleeping : EvFinishCutting [!WaitingCustomer]
-    Cutting --> Stopping : EvStop
-    Cutting : enter : StartCutting
-    Cutting : do    : Cut
-
-    Stopping --> Finish : EvFinishCutting
-    Stopping : do : Cut
-
-    Finish : enter : BarberDone
-        
-    @enduml
-"""
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -88,8 +87,7 @@ class UserCode(StateMachine):
     def __init__(self, id=None):
         """ Barber class constructor
 
-            Parameters:
-                id - barber ID unique to this barber
+            :param id: barber ID unique to this barber
         """
         StateMachine.__init__(self, sm_id=id, name='Barber%d' % id,
                               startup_state=States.StartUp,
@@ -106,11 +104,10 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Cutting_Cut(self):
-        """ *Do* function processing for the *Cutting* state
+        """ State machine *do* function processing for the *Cutting* state.
 
-            State machine *do* function processing for the *Cutting* state.
-            This function is called once every state machine iteration to perform processing
-            for the *Cutting* state.
+            This function is called once every state machine iteration to perform
+            processing for the *Cutting* state.
         """
         time.sleep(1)
         # track total time cutting hair
@@ -126,9 +123,8 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Cutting_StartCutting(self):
-        """ Enter function processing for *Cutting* state.
+        """ State machine *enter* function processing for the *Cutting* state.
 
-            State machine enter function processing for the *Cutting* state.
             This function is called when the *Cutting* state is entered.
         """
         # track total customers
@@ -139,11 +135,10 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Finish_BarberDone(self):
-        """ Enter function processing for *Finish* state.
+        """ State machine *enter* function processing for the *Finish* state.
 
-            State machine enter function processing for the *Finish* state.
             This function is called when the *Finish* state is entered at the
-            end of the SleepinBarber simulation.
+            end of the SleepingBarber simulation.
         """
         logging.debug('Barber[%s] BarberDone' % self.id)
         stats = Statistics()
@@ -153,48 +148,44 @@ class UserCode(StateMachine):
 
     # ===========================================================================
     def Sleeping_Sleep(self):
-        """ *Do* function processing for the *Sleeping* state
+        """ State machine *do* function processing for the *Sleeping* state.
 
-            State machine *do* function processing for the *Sleeping* state.
-            This function is called once every state machine iteration to perform processing
-            for the *Sleeping* state.
+            This function is called once every state machine iteration to perform
+            processing for the *Sleeping* state.
         """
         time.sleep(1)
         self.sleeping_time += 1
 
     # ===========================================================================
     def Sleeping_StartSleeping(self):
-        """ Enter function processing for *Sleeping* state.
+        """ State machine *enter* function processing for the *Sleeping* state.
 
-            State machine enter function processing for the *Sleeping* state.
             This function is called when the *Sleeping* state is entered.
         """
         logging.debug('Barber[%s] StartSleeping' % self.id)
 
     # ===========================================================================
     def Sleeping_StopSleeping(self):
-        """ *Exit* function processing for the *Sleeping* state.
+        """ State machine *exit* function processing for the *Sleeping* state.
 
-            State machine *exit* function processing for the *Sleeping* state.
             This function is called when the *Sleeping* state is exited.
         """
         logging.debug('Barber[%s] StopSleeping' % self.id)
 
     # ===========================================================================
     def StartUp_BarberStart(self):
-        """ Enter function processing for *StartUp* state.
+        """ State machine *enter* function processing for the *StartUp* state.
 
-            State machine enter function processing for the *StartUp* state.
             This function is called when the *StartUp* state is entered.
         """
         logging.debug('Barber[%s] Starting' % self.id)
 
     # =========================================================
     def GetCustomer(self):
-        """ State transition processing for *GetCustomer*
+        """ State machine state transition processing for *GetCustomer*.
 
-            State machine state transition processing for *GetCustomer*.
-            This function is called whenever the state transition *GetCustomer* is taken.
+            This function is called whenever the state transition *GetCustomer*
+            is taken.
 
             A customer is obtained from the waiting room and the customer
             event EvBarberReady is delivered.
@@ -205,44 +196,43 @@ class UserCode(StateMachine):
 
     # =========================================================
     def NOT_WaitingCustomer(self):
-        """ Guard processing for *NOT_WaitingCustomer*
+        """ State machine guard processing for *NOT_WaitingCustomer*.
 
-            State machine guard processing for *NOT_WaitingCustomer*.
-            This function is called whenever the guard *NOT_WaitingCustomer* is tested.
+            This function is called whenever the guard *NOT_WaitingCustomer*
+            is tested.
 
-            Returns:
-                True - Guard is active/valid
-                False - Guard is inactive/invalid
+            :rtype: boolean
+            :returns: True : Guard is active/valid
+            :returns: False : Guard is inactive/invalid
         """
         with self.waiting_room.lock:
             return not self.waiting_room.customer_waiting()
 
     # =========================================================
     def WaitingCustomer(self):
-        """ Guard processing for *GetWaitingCustomer*
+        """ State machine guard processing for *GetWaitingCustomer*.
 
-            State machine guard processing for *GetWaitingCustomer*.
-            This function is called whenever the guard *GetWaitingCustomer* is tested.
+            This function is called whenever the guard *GetWaitingCustomer*
+            is tested.
 
-            Returns:
-                True - Customer waiting [Guard is active/valid]
-                False - Customer NOT waiting [Guard is inactive/invalid]
+            :rtype: boolean
+            :returns: True : Customer waiting [Guard is active/valid]
+            :returns: False : Customer NOT waiting [Guard is inactive/invalid]
         """
         with self.waiting_room.lock:
             return self.waiting_room.customer_waiting()
 
     # ===========================================================================
     def Stopping_Cut(self):
-        """ *Do* function processing for the *Stopping* state
+        """ State machine *do* function processing for the *Stopping* state.
 
-            State machine *do* function processing for the *Stopping* state.
-            This function is called once every state machine iteration to perform processing
-            for the *Stopping* state.
+            This function is called once every state machine iteration to perform
+            processing for the *Stopping* state.
 
-            Basically we are performing the same function as the *Cutting_Cut* function
-            since we are still cutting a customers hair. The main difference is that when we
-            are in this state and the *EvFinishCutting* event is thrown we will transition
-            to the *Finish* state.
+            Basically we are performing the same function as the *Cutting_Cut*
+            function since we are still cutting a customers hair. The main
+            difference is that when we are in this state and the *EvFinishCutting*
+            event is thrown we will transition to the *Finish* state.
         """
         self.Cutting_Cut()
 
@@ -253,6 +243,7 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},

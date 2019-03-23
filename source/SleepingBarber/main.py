@@ -37,6 +37,11 @@ class CustomerGenerator(Thread):
     """ Class for generating customers based on configurable criteria. """
 
     def __init__(self, customer_rate, customer_variance):
+        """ Constructor
+
+            :param customer_rate: rate at which customers will be generated
+            :param customer_variance: used to introduce variation in customer rate
+        """
         Thread.__init__(self, target=self.run)
         self.customer_rate = customer_rate          #: rate at which customers will be generated
         self.customer_variance = customer_variance  #: variance in rate, used by random number generator
