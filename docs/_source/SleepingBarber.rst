@@ -1,44 +1,64 @@
 SleepingBarber
 ==============
 
-SleepingBarber.Barber module
-----------------------------
-.. automodule:: SleepingBarber.Barber
+Barber State Diagram
+--------------------
+.. figure:: Barber.png
+	:alt: SleepingBarber state diagram (Barber)
+
+	SleepingBarber simulation Barber state diagram.
+
+	This image was created using PlantUML with the UML
+	contained in the Barber.py docstring.
+
+Barber
+------
+.. automodule:: Barber
     :members:
     :undoc-members:
     :show-inheritance:
 
-SleepingBarber.Common module
-----------------------------
-.. automodule:: SleepingBarber.Common
+Customer State Diagram
+----------------------
+.. figure:: Customer.png
+	:alt: SleepingBarber state diagram (Customer)
+
+	SleepingBarber simulation Customer state diagram.
+
+	This image was created using PlantUML with the UML
+	contained in the Customer.py docstring.
+
+Customer
+--------
+.. automodule:: Customer
     :members:
     :undoc-members:
     :show-inheritance:
 
-SleepingBarber.Customer module
-------------------------------
-.. automodule:: SleepingBarber.Customer
+SleepingBarber Main
+-------------------
+.. automodule:: main
     :members:
     :undoc-members:
     :show-inheritance:
 
-SleepingBarber.main module
---------------------------
-.. automodule:: SleepingBarber.main
+WaitingRoom
+-----------
+.. automodule:: WaitingRoom
     :members:
     :undoc-members:
     :show-inheritance:
 
-SleepingBarber.WaitingRoom module
----------------------------------
-.. automodule:: SleepingBarber.WaitingRoom
+Common
+------
+.. automodule:: Common
     :members:
     :undoc-members:
     :show-inheritance:
 
-SleepingBarber.exceptions module
---------------------------------
-.. automodule:: SleepingBarber.exceptions
+Exceptions
+----------
+.. automodule:: exceptions
     :members:
     :undoc-members:
     :show-inheritance:

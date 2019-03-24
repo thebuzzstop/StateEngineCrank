@@ -7,12 +7,12 @@ Welcome to State Engine Crank's documentation!
 ==============================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
    StateEngineCrank
-   SleepingBarber
    DiningPhilosophers
+   SleepingBarber
 
 Indices and tables
 ==================
