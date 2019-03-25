@@ -37,7 +37,7 @@ Customer
 
 SleepingBarber Main
 -------------------
-.. automodule:: main
+.. automodule:: SleepingBarber.main
     :members:
     :undoc-members:
     :show-inheritance:

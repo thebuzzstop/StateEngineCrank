@@ -1,12 +1,13 @@
-""" StateEngineCrank.Main
+""" StateEngineCrank Main
 
 Main module for StateEngineCrank
 
-@todo Need to handle the case where there is a [guard] / Transition
-      but no Event to trigger the transition. This case will occur
-      if there is a state where it is desirable to always transition
-      if the [guard] condition is met. Not sure if this is actually
-      valid UML but it came up during debugging of the Philosophers.
+.. todo::
+    Need to handle the case where there is a [guard] / Transition
+    but no Event to trigger the transition. This case will occur
+    if there is a state where it is desirable to always transition
+    if the [guard] condition is met. Not sure if this is actually
+    valid UML but it came up during debugging of the Philosophers.
 """
 # System imports
 import logging

@@ -67,7 +67,6 @@ class WaitingRoom(Borg, Queue):
 
             :param customer: Customer class object of the customer needing a chair
 
-            :rtype: boolean
             :returns: True : Chair available, customer added to the waiting queue
             :returns: False : No chair available
         """
@@ -100,7 +99,6 @@ class WaitingRoom(Borg, Queue):
         """ Function to test if a customer is waiting.
             It is assumed that the caller has obtained the WaitingRoom lock.
 
-            :rtype: boolean
             :returns: True : Customer is waiting
             :returns: False : No customer is waiting
         """

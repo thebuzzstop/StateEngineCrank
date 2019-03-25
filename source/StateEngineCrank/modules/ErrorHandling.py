@@ -64,12 +64,26 @@ class UpdateCodeError(Exception):
     pass
 
 
-class Error(modules.Singleton.Singleton):
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same
+        state and behavior.
+
+        Taken from `Python Cookbook
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`
+        by David Ascher, Alex Martelli
+    """
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class Error(Borg):
     """ Error Handling for StateEngineCrank. """
 
     # =========================================================================
     def __init__(self):
-        pass
+        Borg.__init__(self)
 
     # =========================================================================
     @staticmethod
@@ -81,11 +95,8 @@ class Error(modules.Singleton.Singleton):
     def config_file_open_error(filename):
         """ Config File Open Error - display message and raise source file error
 
-            Parameters:
-                filename :
-
-            Raises:
-                ConfigFileError(filename)
+            :param filename: Configuration file in error
+            :raises: ConfigFileError(filename)
         """
         logging.fatal('ERROR: Configuration File Open Error: %s' % filename)
         raise ConfigFileError(filename)
@@ -95,11 +106,8 @@ class Error(modules.Singleton.Singleton):
     def config_file_parse_error(filename):
         """ Config File Parse Error - display message and raise source file error
 
-            Parameters:
-                filename :
-
-            Raises:
-                ConfigFileError(filename)
+            :param filename: Configuration file in error
+            :raises: ConfigFileError(filename)
         """
         logging.fatal('ERROR: Configuration File Parse Error: %s' % filename)
         raise ConfigFileError(filename)
@@ -109,11 +117,8 @@ class Error(modules.Singleton.Singleton):
     def config_file_missing_error(filename):
         """ Config File Parse Error - display message and raise source file error
 
-            Parameters:
-                filename :
-
-            Raises:
-                ConfigFileError(filename)
+            :param filename: Configuration file in error
+            :raises: ConfigFileError(filename)
         """
         logging.fatal('ERROR: Configuration File Missing Error: %s' % filename)
         raise ConfigFileError(filename)
@@ -123,11 +128,8 @@ class Error(modules.Singleton.Singleton):
     def input_file_open_error(filename):
         """ Input File Open Error - display message and raise source file error
 
-            Parameters:
-                filename :
-
-            Raises:
-                SourceFileError(filename)
+            :param filename: Source file in error
+            :raises: SourceFileError(filename)
         """
         logging.fatal('ERROR: File Open Error: %s' % filename)
         raise SourceFileError(filename)
@@ -137,11 +139,8 @@ class Error(modules.Singleton.Singleton):
     def input_file_read_error(filename):
         """ Input File Read Error - display message and raise file read error
 
-            Parameters:
-                filename :
-
-            Raises:
-                SourceFileError(filename)
+            :param filename: Source file in error
+            :raises: SourceFileError(filename)
         """
         logging.fatal('ERROR: File Read Error: %s' % filename)
         raise SourceFileError(filename)
@@ -151,11 +150,8 @@ class Error(modules.Singleton.Singleton):
     def input_file_close_error(filename):
         """ Input File Close Error - display message and raise file close error
 
-            Parameters:
-                filename :
-
-            Raises:
-                SourceFileError(filename)
+            :param filename: Source file in error
+            :raises: SourceFileError(filename)
         """
         logging.fatal('ERROR: File Close Error: %s' % filename)
         raise SourceFileError(filename)
@@ -165,11 +161,8 @@ class Error(modules.Singleton.Singleton):
     def output_file_open_error(filename):
         """ Output File Open Error - display message and raise IOError
 
-            Parameters:
-                filename :
-
-            Raises:
-                IOError
+            :param filename: output file in error
+            :raises: IOError
         """
         logging.fatal('ERROR: File Open Error: %s' % filename)
         raise IOError
@@ -179,11 +172,8 @@ class Error(modules.Singleton.Singleton):
     def output_file_write_error(filename):
         """ Output File Write Error - display message and raise IOError
 
-            Parameters:
-                filename :
-
-            Raises:
-                IOError
+            :param filename: output file in error
+            :raises: IOError
         """
         logging.fatal('ERROR: File Write Error: %s' % filename)
         raise IOError
@@ -193,11 +183,8 @@ class Error(modules.Singleton.Singleton):
     def output_file_close_error(filename):
         """ Output File Close Error - display message and raise IOError
 
-            Parameters:
-                filename :
-
-            Raises:
-                IOError
+            :param filename: output file in error
+            :raises: IOError
         """
         logging.fatal('ERROR: File Close Error: %s' % filename)
         raise IOError
@@ -207,11 +194,8 @@ class Error(modules.Singleton.Singleton):
     def uml_not_found(error_string):
         """ UML Not Found - display message and punt
 
-            Parameters:
-                error_string : error message to display
-
-            Raises:
-                UMLParseError
+            :param error_string: error message to display
+            :raises: UMLParseError
         """
         logging.fatal('ERROR: UML_NotFound: %s' % error_string)
         raise UMLParseError
@@ -221,8 +205,7 @@ class Error(modules.Singleton.Singleton):
     def uml_statemachine_not_found():
         """ UML State Machine Not Found - display message and punt
 
-            Raises:
-                UMLParseError
+            :raises: UMLParseError
         """
         logging.fatal('ERROR: UML State Machine Not Found')
         raise UMLParseError
@@ -232,12 +215,9 @@ class Error(modules.Singleton.Singleton):
     def invalid_start_end(start, end):
         """ Invalid UML start and/or end - display message and punt
 
-            Parameters:
-                start : UML start
-                end : UML end
-
-            Raises:
-                UMLParseError
+            :param start: UML start
+            :param start: UML end
+            :raises: UMLParseError
         """
         logging.fatal('ERROR: Invalid UML: start=%s end=%s' % (start, end))
         raise UMLParseError
@@ -247,11 +227,8 @@ class Error(modules.Singleton.Singleton):
     def file_index_error(index):
         """ Bad file index encountered - display message and punt
 
-            Parameters:
-                index : bad file index
-
-            Raises:
-                Exception
+            :param index: bad file index
+            :raises: Exception
         """
         logging.fatal('ERROR: Bad file index: %s' % index)
         raise Exception
@@ -261,11 +238,8 @@ class Error(modules.Singleton.Singleton):
     def signature_scan_error(filename):
         """ Error scanning signature - display message and punt
 
-            Parameters:
-                filename : name of file being scanned
-
-            Raises:
-                SourceFileError(filename)
+            :param filename: name of file being scanned
+            :raises: SourceFileError(filename)
         """
         logging.fatal('ERROR: Signature scanning error.')
         raise SourceFileError(filename)
@@ -275,11 +249,8 @@ class Error(modules.Singleton.Singleton):
     def signature_not_found(signature):
         """ Signature not found - display message and punt
 
-            Parameters:
-                signature : text of signature not found
-
-            Raises:
-                SignatureError(signature)
+            :param signature: text of signature not found
+            :raises: SignatureError(signature)
         """
         logging.fatal('ERROR: Signature %s not found error.' % signature)
         raise SignatureError(signature)
@@ -289,11 +260,8 @@ class Error(modules.Singleton.Singleton):
     def function_type_not_found(func):
         """ Function type not found - display message and punt
 
-            Parameters:
-                func : function type not found
-
-            Raises:
-                FunctionTypeError(func)
+            :param func: function type not found
+            :raises: FunctionTypeError(func)
         """
         logging.fatal('ERROR: Function %s not found error.' % func)
         raise FunctionTypeError(func)
@@ -303,11 +271,8 @@ class Error(modules.Singleton.Singleton):
     def bad_file_index(index):
         """ Bad file index encountered - display message and punt
 
-            Parameters:
-                index : index encountered
-
-            Raises:
-                Exception
+            :param index: index encountered
+            :raises: Exception
         """
         logging.fatal('ERROR: Bad File Index: %s' % index)
         raise Exception
@@ -317,11 +282,8 @@ class Error(modules.Singleton.Singleton):
     def file_type_error(file_type):
         """ Unknown file type encountered - display message and punt
 
-            Parameters:
-                file_type : file type encountered
-
-            Raises:
-                Exception
+            :param file_type: file type encountered
+            :raises: Exception
         """
         logging.fatal('ERROR: Unknown file type: %s' % file_type)
         raise Exception
@@ -331,30 +293,26 @@ class Error(modules.Singleton.Singleton):
     def unimplemented(msg, line):
         """ Unimplemented code - display message and punt
 
-            Parameters:
-                msg : text message to display
-                line : line number error was encountered
-
-            Raises:
-                UnimplementedCodeError
+            :param msg: text message to display
+            :param line: line number error was encountered
+            :raises: UnimplementedCodeError
         """
         logging.fatal('ERROR: Unimplemented code: %s @ line #%s' % (msg, line))
         raise UnimplementedCodeError
 
 
-class Warn(modules.Singleton.Singleton):
+class Warn(Borg):
     """ Warning for StateEngineCrank. """
 
     # =========================================================================
     def __init__(self):
-        pass
+        Borg.__init__(self)
 
     # =========================================================================
     @staticmethod
     def uml_not_found(warning_string):
         """ UML Not Found - display message and punt
 
-            Parameters:
-                warning_string : string to enter into logfile
+            :param warning_string: string to enter into logfile
         """
         logging.warning('WARNING: UML_NotFound: %s' % warning_string)

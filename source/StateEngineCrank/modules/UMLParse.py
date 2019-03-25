@@ -238,11 +238,8 @@ class UML(modules.Singleton.Singleton):
     def is_guard_func(self, func):
         """ **Guard** function test
 
-            Parameters:
-                func : text to test
-
-            Returns:
-                True : 'func' is a Guard function
+            :param func: text to test
+            :returns: True : 'func' is a Guard function
         """
         return func in self.guard_funcs
 
@@ -250,11 +247,8 @@ class UML(modules.Singleton.Singleton):
     def is_enter_func(self, func):
         """ **Enter** function test
 
-            Parameters:
-                func : text to test
-
-            Returns:
-                True : 'func' is an Enter function
+            :param func: text to test
+            :returns: True : 'func' is an Enter function
         """
         return func in self.enter_funcs
 
@@ -262,11 +256,8 @@ class UML(modules.Singleton.Singleton):
     def is_do_func(self, func):
         """ **Do** function test
 
-            Parameters:
-                func : text to test
-
-            Returns
-                True : 'func' is a **Do** function
+            :param func: text to test
+            :returns: True : 'func' is a **Do** function
         """
         return func in self.do_funcs
 
@@ -274,11 +265,8 @@ class UML(modules.Singleton.Singleton):
     def is_exit_func(self, func):
         """ **Exit** function test
 
-            Parameters:
-                func : text to test
-
-            Returns:
-                True : 'func' is an **Exit** function
+            :param func: text to test
+            :returns: True : 'func' is an **Exit** function
         """
         return func in self.exit_funcs
 
@@ -286,11 +274,8 @@ class UML(modules.Singleton.Singleton):
     def is_trans_func(self, func):
         """ **Transition** function test
 
-            Parameters:
-                func : text to test
-
-            Returns:
-                True : 'func' is a **Transition** function
+            :param func: text to test
+            :returns: True : 'func' is a **Transition** function
         """
         return func in self.trans_funcs
 
@@ -311,8 +296,7 @@ class UML(modules.Singleton.Singleton):
     def add_state1(self, state):
         """ Add **state** to list of known origination states
 
-            Parameters:
-                 state : **state** to add to **state1[]**
+            :param state: **state** to add to **state1[]**
         """
         if state not in self.states1:
             self.states1.append(state)
@@ -322,8 +306,7 @@ class UML(modules.Singleton.Singleton):
     def add_state2(self, state):
         """ Add **state** to list of known destination states
 
-            Parameters:
-                state : **state** to add to **state2[]**
+            :param state: **state** to add to **state2[]**
         """
         if state not in self.states2:
             self.states2.append(state)
@@ -333,8 +316,7 @@ class UML(modules.Singleton.Singleton):
     def add_event(self, func):
         """ Add **func** to list of known **events**
 
-            Parameters:
-                func : **event** function to add to **events[]**
+            :param func: **event** function to add to **events[]**
         """
         if func not in self.events:
             self.events.append(func)
@@ -343,11 +325,10 @@ class UML(modules.Singleton.Singleton):
     def add_guard(self, state1, state2, event, func):
         """ Add **func** to list of known **guards**
 
-            Parameters:
-                state1 : starting state
-                state2 : destination state
-                event : trigger event
-                func : **guard** function
+            :param state1: starting state
+            :param state2: destination state
+            :param event: trigger event
+            :param func: **guard** function
         """
         self.guards.append({"state1": state1, "state2": state2, "event": event, "guard": func})
         if func not in self.guard_funcs:
@@ -357,11 +338,10 @@ class UML(modules.Singleton.Singleton):
     def add_trans(self, state1, state2, event, func):
         """ Add **func** to list of known **transitions**
 
-            Parameters:
-                state1 : starting state
-                state2 : destination state
-                event : trigger event
-                func : **transition** function
+            :param state1: starting state
+            :param state2: destination state
+            :param event: trigger event
+            :param func: **transition** function
         """
         self.trans.append({"state1": state1, "state2": state2, "event": event, "tfunc": func})
         if func not in self.trans_funcs:
@@ -371,8 +351,7 @@ class UML(modules.Singleton.Singleton):
     def add_state(self, state):
         """ Add **state** to list of known **states**
 
-            Parameters:
-                state : state to add
+            :param state: state to add
         """
         # don't add default state engine states
         if not (state == self.INITIAL_STATE or state == self.FINAL_STATE):
@@ -397,10 +376,8 @@ class UML(modules.Singleton.Singleton):
         """ Mangle a guard string according to our rules.
             Dictionary replacement of text.
 
-            Parameters:
-                  text : guard text string to be processed
-            Returns:
-                  mangled guard text
+            :param text: guard text string to be processed
+            :returns: mangled guard text
         """
         for token in self.RE_SUBS_DICT:
             text = text.replace(token, self.RE_SUBS_DICT[token])
@@ -411,11 +388,9 @@ class UML(modules.Singleton.Singleton):
     def mangle(string1, string2):
         """ Mangle two strings into a single string.
 
-            Parameters:
-                string1 : first string to be mangled
-                string2 : second string to be mangled
-            Returns:
-                string1_string2
+            :param string1: first string to be mangled
+            :param string2: second string to be mangled
+            :returns: string1_string2
         """
         return string1 + '_' + string2
 
@@ -423,9 +398,8 @@ class UML(modules.Singleton.Singleton):
     def add_enter(self, state, func):
         """ Add state **enter** function to list.
 
-            Parameters:
-                state : current state being processed
-                func : current function being processed
+            :param state: current state being processed
+            :param func: current function being processed
         """
         _mangle = self.mangle(state, func)
         if _mangle not in self.enters:
@@ -437,9 +411,8 @@ class UML(modules.Singleton.Singleton):
     def add_do(self, state, func):
         """ Add state **do** function to list.
 
-            Parameters:
-                state : current state being processed
-                func : current function being processed
+            :param state: current state being processed
+            :param func: current function being processed
         """
         _mangle = self.mangle(state, func)
         if _mangle not in self.dos:
@@ -451,9 +424,8 @@ class UML(modules.Singleton.Singleton):
     def add_exit(self, state, func):
         """ Add state **exit** function to list.
 
-            Parameters:
-                state : current state being processed
-                func : current function being processed
+            :param state: current state being processed
+            :param func: current function being processed
         """
         _mangle = self.mangle(state, func)
         if _mangle not in self.exits:
@@ -481,11 +453,11 @@ class UML(modules.Singleton.Singleton):
     # =========================================================================
     def find_start_plant_uml(self):
         """ Find Plant UML start in source file.
+
             Note that not finding the UML start is not an error.
             A warning will be issued if enabled (verbosity).
 
-            Returns:
-                True - start plant-uml found
+            :returns: True : start plant-uml found
         """
         lineno = 0
         found_status = False
@@ -504,12 +476,12 @@ class UML(modules.Singleton.Singleton):
     # =========================================================================
     def find_end_plant_uml(self):
         """ Find Plant UML end in source file.
+
             It is ASSuMEd that if we are searching for the UML END then
             we must have found the UML START.
             Unlike UML START, no UML END is therefore an ERROR.
 
-            Returns:
-                True - end plant-uml found
+            :returns: True : end plant-uml found
         """
         lineno = 0
         found_status = False
@@ -705,12 +677,9 @@ class UML(modules.Singleton.Singleton):
     def is_uml(self, text):
         """ Verify text is valid UML.
 
-            Parameters:
-                text : text to be tested for valid UML
-
-            Returns:
-                True : text is valid UML
-                False : text is not valid UML
+            :param text: text to be tested for valid UML
+            :returns: True : text is valid UML
+            :returns: False : text is not valid UML
         """
         # bump / display sequence id
         self.seqid += 1

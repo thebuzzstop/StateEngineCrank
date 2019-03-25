@@ -1,5 +1,6 @@
 """
 * State machine UML, tables and user state functions.
+* Contains auto-generated and user created custom code.
 
 **SleepingBarber Barber UML**::
 
@@ -201,7 +202,6 @@ class UserCode(StateMachine):
             This function is called whenever the guard *NOT_WaitingCustomer*
             is tested.
 
-            :rtype: boolean
             :returns: True : Guard is active/valid
             :returns: False : Guard is inactive/invalid
         """
@@ -215,7 +215,6 @@ class UserCode(StateMachine):
             This function is called whenever the guard *GetWaitingCustomer*
             is tested.
 
-            :rtype: boolean
             :returns: True : Customer waiting [Guard is active/valid]
             :returns: False : Customer NOT waiting [Guard is inactive/invalid]
         """

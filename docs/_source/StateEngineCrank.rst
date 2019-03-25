@@ -7,8 +7,8 @@ StateEngineCrank
     StateEngineCrank.modules.ansi_c
     StateEngineCrank.modules.python
 
-StateEngineCrank.main module
-----------------------------
+Main module
+-----------
 .. automodule:: StateEngineCrank.main
     :members:
     :undoc-members:

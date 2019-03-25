@@ -13,7 +13,7 @@ State Diagram
 
 Main module
 -----------
-.. automodule:: main
+.. automodule:: DiningPhilosophers.main
 	:members:
 	:undoc-members:
 	:show-inheritance:

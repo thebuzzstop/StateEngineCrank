@@ -12,47 +12,71 @@ import configparser     # noqa 408
 
 # project specific imports
 import modules.Defines as Defines       # noqa 408
-import modules.Singleton as Singleton   # noqa 408
 import modules.ErrorHandling as Error   # noqa 408
 
 
-class TheConfig(Singleton.Singleton):
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same
+        state and behavior.
+
+        Taken from `Python Cookbook
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`
+        by David Ascher, Alex Martelli
+    """
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class TheConfig(Borg):
     """ Implements TheConfig Class
 
         Pulls together options specified on the command line and
         and in the optional configuration file.
     """
 
-    config_file = Defines.DEFAULT_CONFIG_FILE   #: default configuration file if not given
-    debug = False       #: True - enable debug information
-    verbose = False     #: True - enable verbose execution
-    quiet = False       #: True - enable quiet execution
-    version = False     #: True - display version information
-    files = []          #: List of files to process
-
     # =========================================================================
     def __init__(self):
-        """ Constructor """
-        super().__init__()
-        self.cmd = ArgParser()      #: parse command line first first, may override config file
-        self.cfg = CfgParser()      #: parse configuration file last
+        if len(self._shared_state) is 0:
+            Borg.__init__(self)
+            self.config_file = Defines.DEFAULT_CONFIG_FILE  #: default configuration file if not given
+            self.debug = False      #: True - enable debug information
+            self.verbose = False    #: True - enable verbose execution
+            self.quiet = False      #: True - enable quiet execution
+            self.version = False    #: True - display version information
+            self.files = []         #: List of files to process
 
-        self.debug = self.cfg.debug or self.cmd.debug
-        self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
-        self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
-        self.version = self.cmd.version or self.cfg.version
-        self.files.extend(self.cfg.files)
-        self.files.extend(self.cmd.files)
-        logging.debug('files: %s' % self.files)
+            self.cmd = ArgParser()  #: parse command line first first, may override config file
+            self.cfg = CfgParser()  #: parse configuration file last
+
+            # update configuration with any changes from command line or configuration file
+            self.debug = self.cfg.debug or self.cmd.debug
+            self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
+            self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
+            self.version = self.cmd.version or self.cfg.version
+            self.files.extend(self.cfg.files)
+            self.files.extend(self.cmd.files)
+            logging.debug('files: %s' % self.files)
 
 
 class ArgParser(argparse.ArgumentParser):
-    """ Implements the command line argument parser """
+    """ Implements the command line argument parser
+
+        **Command line switches**
+
+        * -q, --quiet : enables quiet mode
+        * -v, --verbose : enables maximum verbosity
+        * -d, --debug : enables debug output
+        * -V, --version : displays program version
+        * -c, --config : optional configuration file to process
+        * file1 [file2 ... filen] : list of files to process
+    """
 
     # =========================================================================
     def __init__(self):
-        """ Constructor """
         super().__init__()
+        cfg = TheConfig()
         parser = argparse.ArgumentParser(description=Defines.MY_DESCRIPTION)
 
         # parse quiet/verbose are mutually exclusive
@@ -87,22 +111,40 @@ class ArgParser(argparse.ArgumentParser):
         # if user specifies a configuration file then update
         # TheConfig.config_file for config file parsing
         if hasattr(self.args, 'config'):
-            TheConfig.config_file = self.args.config
+            cfg.config_file = self.args.config
 
 
 class CfgParser(configparser.ConfigParser):
-    """ Implements the configuration file parser """
+    """ Implements the configuration file parser
+
+        **Configuration File Options**
+
+        * [mode]
+
+            * verbose : True : Enables maximum verbosity
+            * debug : True : Enables additional debug output information
+            * quiet : True : Enables quiet mode (minimum information)
+
+        * [info]
+
+            * version : True : Display version information
+
+        * [files]
+
+            * file = file to process
+            * file2 = file to process
+            * file3 ...
+    """
 
     # =========================================================================
     def __init__(self):
-        """ Constructor
-
-            Raises:
-                ConfigFileError
+        """
+            :raises: ConfigFileError
         """
         super().__init__()
+        cfg = TheConfig()
         self.error = Error.Error()
-        self.config_file = TheConfig.config_file
+        self.config_file = cfg.config_file
         self.config = configparser.ConfigParser()
         if os.path.isfile(self.config_file):
             self.config.read(self.config_file)
@@ -118,32 +160,27 @@ class CfgParser(configparser.ConfigParser):
         # check configuration file for user configuration items
         if 'mode' in self.config:
             if 'verbose' in self.config['mode']:
-                self.verbose = self.make_boolean(self.config['mode']['verbose'])
+                self.verbose = self._make_boolean(self.config['mode']['verbose'])
             if 'debug' in self.config['mode']:
-                self.debug = self.make_boolean(self.config['mode']['debug'])
+                self.debug = self._make_boolean(self.config['mode']['debug'])
             if 'quiet' in self.config['mode']:
-                self.quiet = self.make_boolean(self.config['mode']['quiet'])
+                self.quiet = self._make_boolean(self.config['mode']['quiet'])
         if 'info' in self.config:
             if 'version' in self.config['info']:
-                self.version = self.make_boolean(self.config['info']['version'])
+                self.version = self._make_boolean(self.config['info']['version'])
         if 'files' in self.config:
             for fkey in self.config['files'].keys():
                 if fkey.startswith('file'):
                     # self.files = re.sub(r'\s+', '', self.config['files']['file']).split(',')
                     self.files.append(self.config['files'][fkey])
 
-    def make_boolean(self, value):
-        """ Makes a value into a boolean
+    def _make_boolean(self, value):
+        """ Makes a configuration value into a boolean
 
-            Parameters:
-                value - text to convert to boolean
-
-            Returns:
-                True - value is 'true'
-                False - value is 'false'
-
-            Raises:
-                ConfigFileError
+            :param value: text to convert to boolean
+            :returns: True : value is 'true'
+            :returns: False : value is 'false'
+            :raises: ConfigFileError
         """
         if str(value).lower() == 'true':
             return True

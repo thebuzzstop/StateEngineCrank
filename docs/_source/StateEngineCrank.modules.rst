@@ -1,51 +1,64 @@
-StateEngineCrank.modules
+StateEngineCrank modules
 ========================
 
-StateEngineCrank.modules.Config module
---------------------------------------
+Configuration
+-------------
 .. automodule:: StateEngineCrank.modules.Config
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.Defines module
----------------------------------------
+Defines
+-------
 .. automodule:: StateEngineCrank.modules.Defines
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.ErrorHandling module
----------------------------------------------
+ErrorHandling
+-------------
 .. automodule:: StateEngineCrank.modules.ErrorHandling
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.FileSupport module
--------------------------------------------
+FileSupport
+-----------
 .. automodule:: StateEngineCrank.modules.FileSupport
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.PyState module
----------------------------------------
+PyState module
+--------------
 .. automodule:: StateEngineCrank.modules.PyState
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.Singleton module
------------------------------------------
-.. automodule:: StateEngineCrank.modules.Singleton
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-StateEngineCrank.modules.UMLParse module
-----------------------------------------
+UML Parsing
+-----------
 .. automodule:: StateEngineCrank.modules.UMLParse
     :members:
     :undoc-members:
     :show-inheritance:
+
+UMLParse State Diagram
+----------------------
+.. figure:: UMLParse.png
+    :alt: StateEngineCrank UML Parse State Diagram
+
+    StateEngineCrank state diagram for the UML Parse module.
+    The purpose of the state diagram is to provide a representation
+    of the various state diagram elements:
+
+        * states
+        * state enter functions
+        * state do functions
+        * state exit functions
+        * state transitions
+        * state transition guard functions
+        * state transition functions
+
+    This image was created using PlantUML with the UML
+    contained in the UMLParse.py docstring.

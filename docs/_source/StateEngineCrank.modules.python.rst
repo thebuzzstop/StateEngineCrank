@@ -1,22 +1,22 @@
-StateEngineCrank.modules.python
+StateEngineCrank Python support
 ===============================
 
-StateEngineCrank.modules.python.CodeGeneration module
------------------------------------------------------
+Code Generation
+---------------
 .. automodule:: StateEngineCrank.modules.python.CodeGeneration
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.python.CodeScan module
------------------------------------------------
+Code Scanning
+-------------
 .. automodule:: StateEngineCrank.modules.python.CodeScan
     :members:
     :undoc-members:
     :show-inheritance:
 
-StateEngineCrank.modules.python.Signature module
-------------------------------------------------
+UML Signature Support
+---------------------
 .. automodule:: StateEngineCrank.modules.python.Signature
     :members:
     :undoc-members:

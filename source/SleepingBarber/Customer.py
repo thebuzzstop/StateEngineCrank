@@ -227,7 +227,6 @@ class UserCode(StateMachine):
             This function is called whenever the *guard* *BarberSleeping* is
             tested.
 
-            :rtype: boolean
             :returns: True : Guard is active/valid (Barber *is* sleeping)
             :returns: False : Guard is inactive/invalid (Barber *is not* sleeping)
         """
@@ -243,7 +242,6 @@ class UserCode(StateMachine):
 
             This function is called whenever the guard *BarberCutting_AND_NOT_WaitingRoomChair* is tested.
 
-            :rtype: boolean
             :returns: True : Guard is active/valid. All barbers are cutting and there are no waiting room chairs free.
             :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
         """
@@ -259,7 +257,6 @@ class UserCode(StateMachine):
 
             This function is called whenever the guard *BarberCutting_AND_WaitingRoomChair* is tested.
 
-            :rtype: boolean
             :returns: True : Guard is active/valid. All barbers are cutting and there are waiting room chairs free.
             :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
         """
