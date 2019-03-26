@@ -64,8 +64,8 @@ logging.debug('Back from modules.PyState')
 class States(Enum):
     StartUp = 1
     Thinking = 2
-    Finish = 3
-    Hungry = 4
+    Hungry = 3
+    Finish = 4
     Eating = 5
 
 
@@ -162,6 +162,11 @@ def seconds(minimum, maximum):
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
 
+
+    def __init__(self, id=None):
+        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
+                              function_table=StateTables.state_function_table,
+                              transition_table=StateTables.state_transition_table)
 
 class UserCode(StateMachine):
 
@@ -332,12 +337,12 @@ StateTables.state_transition_table[States.Thinking] = {
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }
 
-StateTables.state_transition_table[States.Finish] = {
-}
-
 StateTables.state_transition_table[States.Hungry] = {
     Events.EvHavePermission: {'state2': States.Eating, 'guard': None, 'transition': UserCode.PickUpForks},
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': UserCode.ThankWaiter},
+}
+
+StateTables.state_transition_table[States.Finish] = {
 }
 
 StateTables.state_transition_table[States.Eating] = {
@@ -351,11 +356,11 @@ StateTables.state_function_table[States.StartUp] = \
 StateTables.state_function_table[States.Thinking] = \
     {'enter': UserCode.Thinking_StartThinkingTimer, 'do': UserCode.Thinking_Think, 'exit': None}
 
-StateTables.state_function_table[States.Finish] = \
-    {'enter': None, 'do': UserCode.Finish_Finish, 'exit': None}
-
 StateTables.state_function_table[States.Hungry] = \
     {'enter': UserCode.Hungry_AskPermission, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.Finish] = \
+    {'enter': None, 'do': UserCode.Finish_Finish, 'exit': None}
 
 StateTables.state_function_table[States.Eating] = \
     {'enter': UserCode.Eating_StartEatingTimer, 'do': UserCode.Eating_Eat, 'exit': UserCode.Eating_PutDownForks}

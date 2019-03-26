@@ -20,7 +20,7 @@ class Borg(object):
         state and behavior.
 
         Taken from `Python Cookbook
-        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`_
         by David Ascher, Alex Martelli
     """
     _shared_state = {}
@@ -35,7 +35,6 @@ class TheConfig(Borg):
         Pulls together options specified on the command line and
         and in the optional configuration file.
     """
-
     # =========================================================================
     def __init__(self):
         if len(self._shared_state) is 0:
@@ -76,7 +75,6 @@ class ArgParser(argparse.ArgumentParser):
     # =========================================================================
     def __init__(self):
         super().__init__()
-        cfg = TheConfig()
         parser = argparse.ArgumentParser(description=Defines.MY_DESCRIPTION)
 
         # parse quiet/verbose are mutually exclusive
@@ -111,7 +109,8 @@ class ArgParser(argparse.ArgumentParser):
         # if user specifies a configuration file then update
         # TheConfig.config_file for config file parsing
         if hasattr(self.args, 'config'):
-            cfg.config_file = self.args.config
+            # cfg = TheConfig()
+            TheConfig.config_file = self.args.config
 
 
 class CfgParser(configparser.ConfigParser):
@@ -135,16 +134,15 @@ class CfgParser(configparser.ConfigParser):
             * file2 = file to process
             * file3 ...
     """
-
     # =========================================================================
     def __init__(self):
         """
             :raises: ConfigFileError
         """
         super().__init__()
-        cfg = TheConfig()
+        # cfg = TheConfig()
         self.error = Error.Error()
-        self.config_file = cfg.config_file
+        self.config_file = TheConfig.config_file
         self.config = configparser.ConfigParser()
         if os.path.isfile(self.config_file):
             self.config.read(self.config_file)

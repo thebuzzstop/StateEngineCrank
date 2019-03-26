@@ -1,4 +1,4 @@
-""" StateEngineCrank.FileSupport """
+""" StateEngineCrank File Support """
 
 # System imports
 import logging
@@ -21,13 +21,12 @@ class File(modules.Singleton.Singleton):
     EOF = -1    #: end of file reached
 
     class FileType(Enum):
-        c = 1
-        py = 2
-        unknown = 3
+        c = 1           #: Ansi-C files
+        py = 2          #: Python files
+        unknown = 3     #: Unknown file type
 
     # =========================================================================
     def __init__(self):
-        """ Constructor """
         self.error = modules.ErrorHandling.Error()
         self.file_object = None
         self.file_name = None
@@ -42,15 +41,12 @@ class File(modules.Singleton.Singleton):
     # =========================================================================
     @staticmethod
     def file_type(filename):
-        """ Return enum for filetype (based on extension)
+        """ Return filetype enum for file (based on extension)
 
-            Parameters:
-                filename : name of file to test
-
-            Returns:
-                File.FileType.c : filename ends with '.c'
-                File.FileType.py : filename ends with '.py'
-                File.FileType.unknown : file type is unknown
+            :param filename: name of file to test
+            :returns: File.FileType.c : filename ends with '.c'
+            :returns: File.FileType.py : filename ends with '.py'
+            :returns: File.FileType.unknown : file type is unknown
         """
         if filename.endswith('.c'):
             return File.FileType.c
@@ -63,11 +59,8 @@ class File(modules.Singleton.Singleton):
     def open(self, filename):
         """ Open requested file for reading
 
-            Parameters:
-                filename : name of file to open
-
-            Raises:
-                IOError(filename)
+            :param filename: name of file to open
+            :raises: IOError(filename)
         """
         self.file_name = filename
         logging.debug('[File_Open] %s' % self.file_name)
@@ -81,8 +74,7 @@ class File(modules.Singleton.Singleton):
     def read(self):
         """ Read file contents into array
 
-            Raises:
-                IOError(filename)
+            :raises: IOError(filename)
         """
         logging.debug('[File_Read] %s' % self.file_name)
         try:
@@ -103,14 +95,10 @@ class File(modules.Singleton.Singleton):
     def get_line(self, index):
         """ Get requested line from file array
 
-            Returns a list of the line number and text
+            Returns line number and text as a list[]
 
-            Parameters:
-                index : index of line to return from file
-
-            Returns:
-                file_index : line number
-                file_line : line text
+            :param index: index of line to return from file
+            :returns: [file_index, file_line_text]
         """
         self.file_index = index
         if self.file_index >= self.file_lines:
@@ -131,8 +119,7 @@ class File(modules.Singleton.Singleton):
     def append_line(self, text):
         """ Append text to end of file in memory
 
-            Parameters:
-                text : text to append to end of file in memory
+            :param text: text to append to end of file in memory
         """
         logging.debug('Append:  %s' % text)
         self.file_content.append(text)
@@ -142,11 +129,8 @@ class File(modules.Singleton.Singleton):
     def delete_line(self, index):
         """ Delete line of text specified by 'index' from file in memory
 
-            Parameters:
-                index : index of line to be deleted from memory
-
-            Raises:
-                Exception
+            :param index: index of line to be deleted from memory
+            :raises: Exception
         """
         if (index < 1) or (index > self.file_lines):
             self.error.bad_file_index(index)
@@ -163,11 +147,8 @@ class File(modules.Singleton.Singleton):
     def get_line_text(self, index):
         """ Get specified line of text from file in memory
 
-            Parameters:
-                index : index of line to be retrieved from memory
-
-            Returns:
-                text for requested line
+            :param index: index of line to be retrieved from memory
+            :returns: text for requested line
         """
         return self.get_line(index)[1]
 
@@ -175,9 +156,8 @@ class File(modules.Singleton.Singleton):
     def insert_line_text(self, index, text):
         """ Insert a line of text into file in memory
 
-            Parameters:
-                index : index of line to be inserted into memory
-                text : text of line to insert
+            :param index: index of line to be inserted into memory
+            :param text: text of line to insert
         """
         self.file_content.insert(index, text)
         self.file_lines = self.file_lines + 1
@@ -186,8 +166,7 @@ class File(modules.Singleton.Singleton):
     def number_of_lines(self):
         """ Return number of lines in file in memory
 
-            Returns:
-                Number of lines in file
+            :returns: Number of lines in file
         """
         return self.file_lines
 
@@ -201,9 +180,8 @@ class File(modules.Singleton.Singleton):
     def compare_files(self):
         """ Compare original file to most recent file after all processing
 
-            Returns:
-                 True : files are identical
-                 False : files are different
+            :returns: True : files are identical
+            :returns: False : files are different
         """
         logging.debug('[File_CompareFiles] %s' % self.file_name)
         # files must be of the same length
@@ -220,11 +198,8 @@ class File(modules.Singleton.Singleton):
     def mk_suffix_string(suffix):
         """ Create a suffix string to add as a sequence number to a filename
 
-            Parameters:
-                suffix : string to use as a basis for the sequence number
-
-            Returns:
-                Completed suffix string
+            :param suffix: string to use as a basis for the sequence number
+            :returns: Completed suffix string
         """
         i = str(suffix)
         while len(i) < 3:
@@ -235,8 +210,7 @@ class File(modules.Singleton.Singleton):
     def backup(self, filename):
         """ Make a backup copy of the requested file
 
-            Parameters:
-                filename : name of file to backup
+            :param filename: name of file to backup
         """
         looking = True
         suffix_number = 0
@@ -257,8 +231,7 @@ class File(modules.Singleton.Singleton):
     def update(self, filename):
         """ Update the requested file with the latest contents
 
-            Parameters:
-                filename : name of file to update
+            :param filename: name of file to update
         """
         logging.debug('[Write File] %s' % filename)
         filehandle = open(self.file_name, 'w')

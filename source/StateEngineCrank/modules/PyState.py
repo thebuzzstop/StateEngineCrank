@@ -19,11 +19,10 @@ class StateFunction(object):
     def __init__(self, state=None, enter=None, do=None, exit_=None):
         """ Constructor
 
-            Parameters:
-                state : state to create
-                enter : enter function for the state
-                do : do function for the state
-                exit_ : exit function for the state
+            :param state: state to create
+            :param enter: enter function for the state
+            :param do: do function for the state
+            :param exit_: exit function for the state
         """
         self.state = state
         self.enter = enter
@@ -37,11 +36,10 @@ class StateTransition(object):
     def __init__(self, event=None, state2=None, guard=None, transition=None):
         """ Constructor
 
-            Parameters:
-                event : transition event trigger
-                state2 : transition destination state
-                guard : function to test if transition can be taken
-                transition : function to be executed when the transition is taken
+            :param event: transition event trigger
+            :param state2: transition destination state
+            :param guard: function to test if transition can be taken
+            :param transition: function to be executed when the transition is taken
         """
         self.event = event              #: transition event trigger
         self.state2 = state2            #: transition destination state
@@ -56,13 +54,12 @@ class StateMachine(Thread):
                  function_table=None, transition_table=None):
         """ Constructor
 
-            Parameters:
-                sm_id : state machine ID
-                name : state machine name
-                running : flag indicates state machine is running
-                startup_state : state machine starting state
-                function_table : state machine function table
-                transition_table : state machine transition table
+            :param sm_id: state machine ID
+            :param name: state machine name
+            :param running: flag indicates state machine is running
+            :param startup_state: state machine starting state
+            :param function_table: state machine function table
+            :param transition_table: state machine transition table
         """
         Thread.__init__(self, target=self.run)
         self.id = sm_id
@@ -113,8 +110,7 @@ class StateMachine(Thread):
     def post_event(self, event):
         """ Posts **event** to the state machine event queue
 
-            Parameters:
-                event : event to post
+            :param event: event to post
         """
         self.event_queue.put_nowait(event)
 
@@ -129,8 +125,7 @@ class StateMachine(Thread):
                 * state enter function execution
                 * sets up do function for next state
 
-            Parameters:
-                  event : event to process
+            :param event : event to process
         """
         if event is None:
             return

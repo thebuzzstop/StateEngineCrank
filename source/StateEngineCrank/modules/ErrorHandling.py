@@ -1,4 +1,4 @@
-""" StateEngineCrank Error Handling Exceptions"""
+""" StateEngineCrank Error Handling Exceptions """
 
 # System imports
 import inspect
@@ -69,7 +69,7 @@ class Borg(object):
         state and behavior.
 
         Taken from `Python Cookbook
-        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`
+        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`_
         by David Ascher, Alex Martelli
     """
     _shared_state = {}

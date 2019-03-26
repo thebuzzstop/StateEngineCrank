@@ -239,7 +239,7 @@ class UML(modules.Singleton.Singleton):
         """ **Guard** function test
 
             :param func: text to test
-            :returns: True : 'func' is a Guard function
+            :returns: True : 'func' is a **Guard** function
         """
         return func in self.guard_funcs
 
@@ -248,7 +248,7 @@ class UML(modules.Singleton.Singleton):
         """ **Enter** function test
 
             :param func: text to test
-            :returns: True : 'func' is an Enter function
+            :returns: True : 'func' is an **Enter** function
         """
         return func in self.enter_funcs
 
