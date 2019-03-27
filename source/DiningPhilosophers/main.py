@@ -1,4 +1,4 @@
-""" DiningPhilosophers.main
+""" DiningPhilosophers
 
 * DiningPhilosophers state machine UML, tables and user state functions
 * Contains auto-generated and user created custom code.
@@ -162,11 +162,6 @@ def seconds(minimum, maximum):
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
 
-
-    def __init__(self, id=None):
-        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
-                              function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
 
 class UserCode(StateMachine):
 

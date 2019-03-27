@@ -39,7 +39,8 @@ import logging
 # Project imports
 from modules.PyState import StateMachine    # noqa
 from Common import Statistics as Statistics # noqa
-from SleepingBarber import Barber, WaitingRoom
+import Barber
+import WaitingRoom
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',

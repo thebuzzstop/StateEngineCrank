@@ -42,7 +42,8 @@ import logging
 from modules.PyState import StateMachine    # noqa
 from Common import Config as Config         # noqa
 from Common import Statistics as Statistics # noqa
-from SleepingBarber import Customer, WaitingRoom
+import Customer
+import WaitingRoom
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
@@ -242,7 +243,6 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
-
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
