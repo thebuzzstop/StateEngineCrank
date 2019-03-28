@@ -1,0 +1,80 @@
+@startuml
+
+hide empty members
+
+package "StateEngineCrank MVC" {
+
+    package Model {
+        abstract class model {
+            {abstract} views[] : registry of views
+            {abstract} register(view) : register view with model
+            {abstract} update()
+        }
+        package StateEngineCrank {
+            class StateEngineCrank.Model {
+            }
+            StateEngineCrank.Model --|> model
+        }
+        package DiningPhilosophers {
+            class DiningPhilosophers.Config {
+                NUM_PHILOSOPHERS
+                EATING_MIN_TIME
+                EATING_MAX_TIME
+                THINKING_MIN_TIME
+                THINKING_MAX_TIME
+            }
+            class DiningPhilosophers.Model {
+                philosophers[] : list of dining philosophers
+                waiter : waiter used as arbiter of forks
+            }
+            DiningPhilosophers.Model --|> model
+        }
+        package SleepingBarbers {
+            class SleepingBarbers.Config {
+                NUM_BARBERS
+                NUM_WAITING_CHAIRS
+                CUTTING_MIN_TIME
+                CUTTING_MAX_TIME
+                CUSTOMER_RATE_MIN
+                CUSTOMER_RATE_MAX
+            }
+            class SleepingBarbers.Model {
+                barbers[] : list of barbers available
+                customers[] : list of customers, grows with simulation
+                waiting_chairs[] : list of waiting room chairs
+            }
+            SleepingBarbers.Model --|> model
+            SleepingBarbers.Model --> SleepingBarbers.Config
+            class CustomerGenerator {
+
+            }
+        }
+    }
+
+    package View {
+        abstract class view {
+            model : registered to view
+            {abstract} register(model) : register model with view
+            {abstract} update() : called to update view
+        }
+        class View.Console {
+        }
+        class View.GUI {
+        }
+        View.Console --|> view
+        View.GUI --|> view
+    }
+
+    package Controller {
+        class Controller {
+            models[] : registry of models
+            views[] : registry of model views
+            update_view(view) : function to initiate view updates
+        }
+    }
+    Controller --* StateEngineCrank
+    Controller --* DiningPhilosophers
+    Controller --* SleepingBarbers
+    Controller --> View
+}
+@enduml
