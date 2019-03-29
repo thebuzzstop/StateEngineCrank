@@ -13,6 +13,14 @@ Provides control for:
 # System imports
 
 # Project imports
+# import DiningPhilosophers.main as philosophers
+# import SleepingBarber.Barber as Barber
+# import SleepingBarber.Customer as Customer
+# import SleepingBarber.WaitingRoom as WaitingRoom
+# import SleepingBarber.Common as BarberCommon
+
+# import view
+
 
 if __name__ == '__main__':
 

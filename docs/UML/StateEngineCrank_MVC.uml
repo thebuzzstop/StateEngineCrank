@@ -2,20 +2,33 @@
 
 hide empty members
 
-package "StateEngineCrank MVC" {
+package "StateEngineCrank MVC" <<Frame>> {
 
-    package Model {
+    package Model <<Frame>> {
         abstract class model {
             {abstract} views[] : registry of views
             {abstract} register(view) : register view with model
             {abstract} update()
         }
-        package StateEngineCrank {
+        package StateEngineCrank <<Frame>> {
+            abstract class StateEngineCrank.StateMachine {
+                id : statemachine ID
+                name : string name
+                startup_state : initial state
+                running : boolean True when running
+                event_queue : queue.Queue()
+                current_state : state
+                ---
+                run() : function to run the state machine
+                do() : executes Do() function
+                post_event(event) : posts event to state machine
+                event(event) : performs event processing
+            }
             class StateEngineCrank.Model {
             }
             StateEngineCrank.Model --|> model
         }
-        package DiningPhilosophers {
+        package DiningPhilosophers <<Frame>> {
             class DiningPhilosophers.Config {
                 NUM_PHILOSOPHERS
                 EATING_MIN_TIME
@@ -25,11 +38,19 @@ package "StateEngineCrank MVC" {
             }
             class DiningPhilosophers.Model {
                 philosophers[] : list of dining philosophers
+                forks[] : list of forks
                 waiter : waiter used as arbiter of forks
             }
             DiningPhilosophers.Model --|> model
+            DiningPhilosophers.Model --> DiningPhilosophers.Config
+            DiningPhilosophers.Model --|> StateEngineCrank.StateMachine
         }
-        package SleepingBarbers {
+        package SleepingBarbers <<Frame>> {
+            class WaitingRoom {
+                get_chair(customer) : called to get a chair
+                get_customer() : barber calls to get a customer
+                customer_waiting() : barber checks for waiting customers
+            }
             class SleepingBarbers.Config {
                 NUM_BARBERS
                 NUM_WAITING_CHAIRS
@@ -38,20 +59,37 @@ package "StateEngineCrank MVC" {
                 CUSTOMER_RATE_MIN
                 CUSTOMER_RATE_MAX
             }
+            class Barber {
+            }
+            Barber --> WaitingRoom
+
+            class Customer {
+            }
+            Customer --> WaitingRoom
+
             class SleepingBarbers.Model {
+                statistics : statistics module
                 barbers[] : list of barbers available
                 customers[] : list of customers, grows with simulation
                 waiting_chairs[] : list of waiting room chairs
             }
             SleepingBarbers.Model --|> model
+            SleepingBarbers.Model --* "[1..*]" Barber
+            SleepingBarbers.Model --* "[1..*]" Customer
+            SleepingBarbers.Model --> WaitingRoom
+            SleepingBarbers.Model --|> StateEngineCrank.StateMachine
             SleepingBarbers.Model --> SleepingBarbers.Config
             class CustomerGenerator {
-
+                running : True - simulation is running
+                customers[] : list of customers
+                ---
+                run() : main thread
             }
+            CustomerGenerator --* Customer
         }
     }
 
-    package View {
+    package View <<Frame>> {
         abstract class view {
             model : registered to view
             {abstract} register(model) : register model with view
@@ -65,7 +103,7 @@ package "StateEngineCrank MVC" {
         View.GUI --|> view
     }
 
-    package Controller {
+    package Controller <<Frame>> {
         class Controller {
             models[] : registry of models
             views[] : registry of model views

@@ -39,22 +39,17 @@ import sys
 from enum import Enum
 import random
 from threading import Lock
-from threading import Thread
 import time
-
 import logging
 from typing import List
+
+# Project imports
+from modules.PyState import StateMachine
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
-
-# Project imports
-
-logging.debug('Importing modules.PyState')
-from modules.PyState import StateMachine
-logging.debug('Back from modules.PyState')
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -106,7 +101,7 @@ class Waiter(object):
     def __init__(self):
         self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
 
-    def request(self, id, left_fork, right_fork):
+    def request(self, id_, left_fork, right_fork):
         """ Function called when a Philosopher wants to eat.
 
             * The request will block until the waiter is available,
@@ -116,17 +111,17 @@ class Waiter(object):
             * The caller is assured that both left and right forks are available
               when this function returns.
 
-            :param id: ID of Philosopher making the request
+            :param id_: ID of Philosopher making the request
             :param left_fork: ID of left fork required to eat
             :param right_fork: ID of right fork required to eat
         """
-        logging.debug('SM[%s] waiter[in]' % id)
+        logging.debug('SM[%s] waiter[in]' % id_)
         self.lock.acquire()
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        logging.debug('SM[%s] waiter[out]' % id)
+        logging.debug('SM[%s] waiter[out]' % id_)
 
     def thank_you(self):
         """ Philosopher thank you to the waiter
@@ -139,9 +134,6 @@ class Waiter(object):
 
 #: Forks - 1 for each philosophers, initialized 'free'
 forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
-
-#: Philosophers, populated in __main__
-philosophers = []  # type: List[Philosopher]
 
 #: Waiter who grants requests for access to forks
 waiter = Waiter()
@@ -181,7 +173,7 @@ class UserCode(StateMachine):
         self.event_timer = 0        #: timer used to time eating & thinking
 
         self.initial_state = None   #: starting state for a philosopher
-        if random.randint(0,1) == 0:
+        if random.randint(0, 1) == 0:
             self.initial_state = States.Thinking
         else:
             self.initial_state = States.Hungry
@@ -190,6 +182,7 @@ class UserCode(StateMachine):
         self.right_fork = (self.id + 1) % Config.Philosophers    #: right fork id for this philosopher
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def StartUp_StartUp(self):
         """ State machine enter function processing for the *StartUp* state.
 
@@ -198,6 +191,7 @@ class UserCode(StateMachine):
         self.event(Events.EvStart)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Eating_Eat(self):
         """ State machine *do* function processing for the *Eating* state.
 
@@ -211,6 +205,7 @@ class UserCode(StateMachine):
             self.event(Events.EvFull)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Eating_PutDownForks(self):
         """ State machine *exit* function processing for the *Eating* state.
 
@@ -220,6 +215,7 @@ class UserCode(StateMachine):
         forks[self.right_fork] = ForkStatus.Free
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Eating_StartEatingTimer(self):
         """ State machine enter function processing for the *Eating* state.
 
@@ -229,6 +225,7 @@ class UserCode(StateMachine):
         logging.info('SM[%s] Eating (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Finish_Finish(self):
         """ State machine *do* function processing for the *Finish* state.
 
@@ -239,6 +236,7 @@ class UserCode(StateMachine):
         self.running = False
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Hungry_AskPermission(self):
         """ State machine *Enter* function processing for the *Hungry* state.
 
@@ -254,6 +252,7 @@ class UserCode(StateMachine):
         self.event(Events.EvHavePermission)
 
     # =========================================================
+    # noinspection PyPep8Naming
     def PickUpForks(self):
         """ State machine state transition processing for *PickUpForks*.
 
@@ -265,6 +264,7 @@ class UserCode(StateMachine):
         waiter.thank_you()
 
     # =========================================================
+    # noinspection PyPep8Naming,PyMethodMayBeStatic
     def ThankWaiter(self):
         """ State machine state transition processing for *ThankWaiter*.
 
@@ -274,6 +274,7 @@ class UserCode(StateMachine):
         waiter.thank_you()
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Thinking_StartThinkingTimer(self):
         """ State machine *enter* function processing for the *Thinking* state.
 
@@ -283,6 +284,7 @@ class UserCode(StateMachine):
         logging.info('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Thinking_Think(self):
         """ State machine *do* function processing for the *Thinking* state.
 
@@ -295,6 +297,7 @@ class UserCode(StateMachine):
         if self.event_timer == 0:
             self.event(Events.EvHungry)
 
+    # noinspection PyPep8Naming
     def Think(self):
         """ Guard function used to determine if a Philosophers initial state is *Thinking*
 
@@ -303,6 +306,7 @@ class UserCode(StateMachine):
         """
         return self.initial_state is States.Thinking
 
+    # noinspection PyPep8Naming
     def Eat(self):
         """ Guard function used to determine if a Philosophers initial state is *Eating*
 
@@ -318,6 +322,7 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: [
@@ -379,38 +384,59 @@ class Philosopher(UserCode):
         self.has_forks = False      #: True, philosopher has possession of both forks
 
 
+class DiningPhilosophers(object):
+    """ Main DiningPhilosophers Class """
+
+    def _init_(self):
+        #: The dining philosophers
+        self.philosophers = []  # type: List[Philosopher]
+
+    def run(self):
+        """ DiningPhilosophers Main program
+
+            Implemented as a function so as to be callable from an outside
+            entity when running in concert with other applications.
+
+            Also runnable as a standalone application.
+        """
+
+        # Instantiate and initialize all philosophers
+        for id_ in range(Config.Philosophers):
+            self.philosophers.append(Philosopher(philosopher_id=id_))
+
+        # Philosophers have been instantiated and threads created
+        # Start the simulation, i.e. start all philosophers eating
+        for p in self.philosophers:
+            p.running = True
+            p.post_event(Events.EvStart)
+
+        # Wait for the simulation to complete
+        for loop in range(Config.Dining_Loops):
+            time.sleep(1)
+            loop += 1
+            if loop % 10 is 0:
+                logging.info('Iterations: %s' % loop)
+
+        # Tell philosophers to stop
+        for p in self.philosophers:
+            p.post_event(Events.EvStop)
+
+        # Joining threads
+        for p in self.philosophers:
+            p.join()
+        logging.info('All philosophers stopped')
+
+        # Print some statistics of the simulation
+        for p in self.philosophers:
+            t = p.thinking_seconds
+            e = p.eating_seconds
+            h = int(p.hungry_seconds + 0.5)
+            total = t + e + h
+            print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
+
+
 if __name__ == '__main__':
+    """ Execute main code if run from the command line """
 
-    # Instantiate and initialize all philosophers
-    for id_ in range(Config.Philosophers):
-        philosophers.append(Philosopher(philosopher_id=id_))
-
-    # Philosophers have been instantiated and threads created
-    # Start the simulation, i.e. start all philosophers eating
-    for p in philosophers:
-        p.running = True
-        p.post_event(Events.EvStart)
-
-    # Wait for the simulation to complete
-    for loop in range(Config.Dining_Loops):
-        time.sleep(1)
-        loop += 1
-        if loop % 10 is 0:
-            logging.info('Iterations: %s' % loop)
-
-    # Tell philosophers to stop
-    for p in philosophers:
-        p.post_event(Events.EvStop)
-
-    # Joining threads
-    for p in philosophers:
-        p.join()
-    logging.info('All philosophers stopped')
-
-    # Print some statistics of the simulation
-    for p in philosophers:
-        t = p.thinking_seconds
-        e = p.eating_seconds
-        h = int(p.hungry_seconds + 0.5)
-        total = t + e + h
-        print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
+    dining_philosophers = DiningPhilosophers()
+    dining_philosophers.run()
