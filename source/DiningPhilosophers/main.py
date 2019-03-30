@@ -42,6 +42,7 @@ from threading import Lock
 import time
 import logging
 from typing import List
+from mvc import Model
 
 # Project imports
 from modules.PyState import StateMachine
@@ -384,10 +385,11 @@ class Philosopher(UserCode):
         self.has_forks = False      #: True, philosopher has possession of both forks
 
 
-class DiningPhilosophers(object):
+class DiningPhilosophers(Model):
     """ Main DiningPhilosophers Class """
 
     def _init_(self):
+        Model.__init__(self)
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
 
@@ -399,7 +401,6 @@ class DiningPhilosophers(object):
 
             Also runnable as a standalone application.
         """
-
         # Instantiate and initialize all philosophers
         for id_ in range(Config.Philosophers):
             self.philosophers.append(Philosopher(philosopher_id=id_))

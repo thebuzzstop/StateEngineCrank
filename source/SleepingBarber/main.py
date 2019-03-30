@@ -11,6 +11,7 @@ import time
 import logging
 
 # Project imports
+from mvc import Model                           # noqa
 from Common import Config as Config             # noqa
 from Common import Statistics as Statistics     # noqa
 from Barber import UserCode as Barber           # noqa
@@ -75,9 +76,12 @@ class CustomerGenerator(Thread):
         logging.debug('CG Done')
 
 
-class SleepingBarber(object):
+class SleepingBarber(Model):
     """ Main SleepingBarber(s) Class """
+
     def __init__(self):
+        Model.__init__(self)
+
         #: An array of barbers to cut hair
         self.barbers = [Barber(id=_ + 1) for _ in range(Config.Barbers)]
 
