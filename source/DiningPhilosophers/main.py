@@ -388,10 +388,13 @@ class Philosopher(UserCode):
 class DiningPhilosophers(Model):
     """ Main DiningPhilosophers Class """
 
-    def _init_(self):
-        Model.__init__(self)
+    def __init__(self):
+        super().__init__('philosophers')
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
+
+    def register(self, view):
+        self.views[view.name] = view
 
     def run(self):
         """ DiningPhilosophers Main program
@@ -440,4 +443,4 @@ if __name__ == '__main__':
     """ Execute main code if run from the command line """
 
     dining_philosophers = DiningPhilosophers()
-    dining_philosophers.run()
+    dining_philosophers.set_running()

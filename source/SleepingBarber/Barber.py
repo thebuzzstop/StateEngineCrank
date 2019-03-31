@@ -36,19 +36,14 @@
 import sys
 import time
 from enum import Enum
-import logging
 
 # Project imports
+from mvc import Model
 from modules.PyState import StateMachine    # noqa
 from Common import Config as Config         # noqa
 from Common import Statistics as Statistics # noqa
 import Customer
 import WaitingRoom
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)-15s %(levelname)-8s %(message)s',
-                    stream=sys.stdout)
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -83,19 +78,20 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine):
-    """ User code unique to the Barber state implementation of the SleepingBarber
-        simulation """
+class UserCode(StateMachine, Model):
+    """ User code unique to the Barber state implementation of the SleepingBarber simulation """
+
     def __init__(self, id=None):
         """ Barber class constructor
 
             :param id: barber ID unique to this barber
         """
+        Model.__init__(self, name='Barber%d' % id)
         StateMachine.__init__(self, sm_id=id, name='Barber%d' % id,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
-        logging.debug('Barber[%s] INIT' % id)
+
         self.id = id                    #: barber ID
         self.customers = 0              #: customers served
         self.cut_timer = 0              #: cut timer, used to time the length of a haircut
@@ -103,6 +99,12 @@ class UserCode(StateMachine):
         self.sleeping_time = 0          #: total time spent sleeping
         self.current_customer = None    #: current customer being served
         self.waiting_room = WaitingRoom.WaitingRoom()   #: waiting room instantiation
+
+    def register(self, view):
+        self.views[view.name] = view
+
+    def logger(self, text):
+        self.views['console'].write(text)
 
     # ===========================================================================
     def Cutting_Cut(self):
@@ -119,7 +121,7 @@ class UserCode(StateMachine):
         if self.cut_timer:
             self.cut_timer -= 1
         if self.cut_timer == 0:
-            logging.debug('Barber[%s] Finish cutting %s' % (self.id, self.customers))
+            self.logger('Barber[%s] Finish cutting %s' % (self.id, self.customers))
             self.post_event(Events.EvFinishCutting)
             self.current_customer.post_event(Customer.Events.EvFinishCutting)
 
@@ -133,7 +135,7 @@ class UserCode(StateMachine):
         self.customers += 1
         # start haircut timer
         self.cut_timer = Config.cutting_time()
-        logging.debug('Barber[%s] StartCutting %s [%s]' % (self.id, self.customers, self.cut_timer))
+        self.logger('Barber[%s] StartCutting %s [%s]' % (self.id, self.customers, self.cut_timer))
 
     # ===========================================================================
     def Finish_BarberDone(self):
@@ -142,7 +144,7 @@ class UserCode(StateMachine):
             This function is called when the *Finish* state is entered at the
             end of the SleepingBarber simulation.
         """
-        logging.debug('Barber[%s] BarberDone' % self.id)
+        self.logger('Barber[%s] BarberDone' % self.id)
         stats = Statistics()
         with stats.lock:
             stats.barbers.append(self)
@@ -164,7 +166,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Sleeping* state is entered.
         """
-        logging.debug('Barber[%s] StartSleeping' % self.id)
+        self.logger('Barber[%s] StartSleeping' % self.id)
 
     # ===========================================================================
     def Sleeping_StopSleeping(self):
@@ -172,7 +174,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Sleeping* state is exited.
         """
-        logging.debug('Barber[%s] StopSleeping' % self.id)
+        self.logger('Barber[%s] StopSleeping' % self.id)
 
     # ===========================================================================
     def StartUp_BarberStart(self):
@@ -180,7 +182,7 @@ class UserCode(StateMachine):
 
             This function is called when the *StartUp* state is entered.
         """
-        logging.debug('Barber[%s] Starting' % self.id)
+        self.logger('Barber[%s] Starting' % self.id)
 
     # =========================================================
     def GetCustomer(self):

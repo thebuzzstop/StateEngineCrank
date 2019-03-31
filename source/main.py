@@ -11,8 +11,10 @@ Provides control for:
 """
 
 # System imports
+import time
 
 # Project imports
+import Defines
 import DiningPhilosophers.main as philosophers
 import SleepingBarber.main as barbers
 
@@ -28,11 +30,16 @@ from mvc import Model
 from mvc import Controller
 
 
+class Unimplemented(Exception):
+    pass
+
+
 class Main(Controller):
     """ Main code """
 
     def __init__(self):
-        super().__init__()
+        super().__init__('State Engine Main')
+
         # instantiate models
         self.philosophers = philosophers.DiningPhilosophers()
         self.barbers = barbers.SleepingBarber()
@@ -40,6 +47,7 @@ class Main(Controller):
             'philosophers': self.philosophers,
             'barbers': self.barbers
         }
+
         # instantiate views
         self.console = ConsoleView()
         self.gui = GuiView()
@@ -47,39 +55,66 @@ class Main(Controller):
             'console': self.console,
             'gui': self.gui
         }
-        self.register_models()
-        self.register_views()
 
-    def register_models(self):
-        # register models with views
-        for v in self.views.keys():
-            for m in self.models.keys():
-                self.views[v].register({'name': m, 'model': self.models[m]})
+        # register views and models
+        self._register_views()
+        self._register_models()
 
-    def register_views(self):
-        # register views with models
+        # start our thread of execution
+        self.start()
+
+    def _register_views(self):
+        """ register views with models """
         for m in self.models.keys():
-            for v in self.views.keys():
-                try:
-                    func = self.models[m]
-                    func.register({'name': v, 'view': self.views[m]})
-                    self.models[m].register({'name': v, 'view': self.views[m]})
-                except Exception as e:
-                    print(e)
+            for v in self.views.values():
+                self.models[m].register(v)
+
+    def _register_models(self):
+        """ register models with views """
+        for v in self.views.keys():
+            for m in self.models.values():
+                self.views[v].register(m)
 
     def update(self):
         """ Called to initiate an update of all views """
         for v in self.views.keys():
             self.views[v].update()
 
+    def stop(self):
+        self.running = False
+
     def run(self):
+        """ Main running procedure """
+
+        # Wait until we are running
+        while not self.running:
+            time.sleep(Defines.Times.Waiting)
+
+        # Start all model/view threads
         for v in self.views.keys():
-            self.views[v].run()
+            self.views[v].start()
         for m in self.models.keys():
-            self.models[m].run()
+            self.models[m].start()
+
+        # Start all models and views
+        for v in self.views.keys():
+            self.views[v].set_running()
+        for m in self.models.keys():
+            self.models[m].set_running()
+
+        # main loop of execution
+        while self.running:
+            time.sleep(0.1)
+
+        # Tell all views and models to stop
+        self.stopping = True
+        for v in self.views.keys():
+            self.views[v].stop()
+        for m in self.models.keys():
+            self.models[m].stop()
 
 
 if __name__ == '__main__':
     """ Run from the command line """
     main = Main()
-    main.run()
+    main.running = True

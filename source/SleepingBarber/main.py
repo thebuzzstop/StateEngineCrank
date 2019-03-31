@@ -80,7 +80,7 @@ class SleepingBarber(Model):
     """ Main SleepingBarber(s) Class """
 
     def __init__(self):
-        Model.__init__(self)
+        super().__init__('barbers')
 
         #: An array of barbers to cut hair
         self.barbers = [Barber(id=_ + 1) for _ in range(Config.Barbers)]
@@ -90,6 +90,13 @@ class SleepingBarber(Model):
 
         #: Instantiate the statistics module
         self.statistics = Statistics()
+
+    def register(self, view):
+        for b in self.barbers:
+            b.register(view)
+
+    def stop(self):
+        raise Exception
 
     def run(self):
         """ SleepingBarber Main Program
@@ -156,4 +163,4 @@ if __name__ == '__main__':
     """ Execute main code if run from the command line """
 
     sleeping_barbers = SleepingBarber()
-    sleeping_barbers.run()
+    sleeping_barbers.set_running()

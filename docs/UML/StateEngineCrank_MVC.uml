@@ -4,12 +4,54 @@ hide empty members
 
 package "StateEngineCrank MVC" <<Frame>> {
 
-    package Model <<Frame>> {
-        abstract class model {
-            {abstract} views[] : registry of views
-            {abstract} register(view) : register view with model
-            {abstract} update()
+    package MVC <<Frame>> {
+        class Thread
+
+        abstract class MVC.MVC {
+            name : MVC element name
+            running : boolean : True when running
+            stopping : boolean : True when stopping
+            _stopevent : Event : Set to cause element to stop
+            ---
+            {abstract} run() : main thread execution target
+            stop() : initiate stopping
+            join() : called to terminate a thread
+            ---
+            set_running() : accessor to set the running flag
+            set_stopping() : accessor to set the stopping flag
         }
+
+        abstract class MVC.Model {
+            views{} : dictionary of views
+            ---
+            {abstract} run() : main thread execution target
+            {abstract} register(view) : register view with model
+            update() : update all views
+        }
+        MVC.Model --|> MVC.MVC
+        MVC.MVC --|> Thread
+
+        abstract class MVC.View {
+            model{} : dictionary of models
+            ---
+            {abstract} run() : main thread execution target
+            {abstract}register(model) : register model with view
+            {abstract} update() : called to update view
+        }
+        MVC.View --|> MVC.MVC
+
+        abstract class MVC.Controller {
+            models{} : dictionary of models
+            views{} : dictionary of views
+            ---
+            {abstract} run() : main thread execution target
+            {abstract} register(mv) : register a model or a view
+            update() : called to update views
+        }
+        MVC.Controller --|> MVC.MVC
+    }
+
+    package Model <<Frame>> {
         package StateEngineCrank <<Frame>> {
             abstract class StateEngineCrank.StateMachine {
                 id : statemachine ID
@@ -26,7 +68,7 @@ package "StateEngineCrank MVC" <<Frame>> {
             }
             class StateEngineCrank.Model {
             }
-            StateEngineCrank.Model --|> model
+            StateEngineCrank.Model --|> MVC.Model
         }
         package DiningPhilosophers <<Frame>> {
             class DiningPhilosophers.Config {
@@ -41,7 +83,7 @@ package "StateEngineCrank MVC" <<Frame>> {
                 forks[] : list of forks
                 waiter : waiter used as arbiter of forks
             }
-            DiningPhilosophers.Model --|> model
+            DiningPhilosophers.Model --|> MVC.Model
             DiningPhilosophers.Model --> DiningPhilosophers.Config
             DiningPhilosophers.Model --|> StateEngineCrank.StateMachine
         }
@@ -60,10 +102,12 @@ package "StateEngineCrank MVC" <<Frame>> {
                 CUSTOMER_RATE_MAX
             }
             class Barber {
+                register(view) : register view with model
             }
             Barber --> WaitingRoom
 
             class Customer {
+                register(view) : register view with model
             }
             Customer --> WaitingRoom
 
@@ -72,8 +116,10 @@ package "StateEngineCrank MVC" <<Frame>> {
                 barbers[] : list of barbers available
                 customers[] : list of customers, grows with simulation
                 waiting_chairs[] : list of waiting room chairs
+                ---
+                register(view) : register view with model
             }
-            SleepingBarbers.Model --|> model
+            SleepingBarbers.Model --|> MVC.Model
             SleepingBarbers.Model --* "[1..*]" Barber
             SleepingBarbers.Model --* "[1..*]" Customer
             SleepingBarbers.Model --> WaitingRoom
@@ -83,33 +129,42 @@ package "StateEngineCrank MVC" <<Frame>> {
                 running : True - simulation is running
                 customers[] : list of customers
                 ---
-                run() : main thread
+                run() : main thread execution target
             }
             CustomerGenerator --* Customer
         }
     }
 
     package View <<Frame>> {
-        abstract class view {
-            model : registered to view
-            {abstract} register(model) : register model with view
-            {abstract} update() : called to update view
-        }
         class View.Console {
+            run() : main thread execution target
+            update() : update view
         }
         class View.GUI {
+            run() : main thread execution target
+            update() : update view
+            tk_run() : GUI thread execution
         }
-        View.Console --|> view
-        View.GUI --|> view
+        View.Console --|> MVC.View
+        View.GUI --|> MVC.View
     }
 
     package Controller <<Frame>> {
-        class Controller {
-            models[] : registry of models
-            views[] : registry of model views
-            update_view(view) : function to initiate view updates
+        class Controller.Controller {
+            models{} : dictionary of models
+            views{} : dictionary of views
+            ---
+            philosophers : class instantiation
+            barbers : class instantiation
+            console : class instantiation
+            gui : class instantiation
+            ---
+            run() : main thread execution target
+            stop() : stop main loop execution
+            update() : function to initiate view updates
         }
     }
+    Controller.Controller --|> MVC.Controller
     Controller --* StateEngineCrank
     Controller --* DiningPhilosophers
     Controller --* SleepingBarbers

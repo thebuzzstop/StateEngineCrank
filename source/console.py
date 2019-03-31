@@ -1,28 +1,39 @@
 """ StateEngineCrank Console View """
 
 # System imports
-from threading import Thread
-
-# 3rd party imports
+import datetime
+import time
+import queue
 
 # Project imports
 import mvc
-import exceptions
+import Defines
 
 
-class ConsoleView(mvc.View, Thread):
+class ConsoleView(mvc.View, queue.Queue):
     """ StateEngineCrank Console View """
 
     def __init__(self):
-        Thread.__init__(self, target=self.run)
-        mvc.View.__init__(self)
-        self.models = {}
+        mvc.View.__init__(self, 'console')
+        queue.Queue.__init__(self)
 
     def update(self):
+        """ ConsoleView is a simple logger, we do nothing for an update """
         pass
+
+    def write(self, text):
+        self.put_nowait('%s %s' % (str.split('%s' % datetime.datetime.now(), ' ')[1], text))
+
+    def register(self, model):
+        self.models[model.name] = model
 
     def run(self):
-        pass
-
-    def stop(self):
-        pass
+        """ Console view running """
+        # wait until we are running
+        while not self.running:
+            time.sleep(Defines.Times.Waiting)
+        # loop until no longer running
+        while self.running and not self._stopevent.isSet():
+            time.sleep(Defines.Times.Running)
+            while not self.empty():
+                print(self.get_nowait())
