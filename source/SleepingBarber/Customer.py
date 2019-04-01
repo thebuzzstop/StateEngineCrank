@@ -31,21 +31,15 @@
 """
 
 # System imports
-import sys
 import time
 from enum import Enum
-import logging
 
 # Project imports
-from modules.PyState import StateMachine    # noqa
-from Common import Statistics as Statistics # noqa
+from mvc import Model
+from modules.PyState import StateMachine
+from Common import Statistics as Statistics
 import Barber
 import WaitingRoom
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)-15s %(levelname)-8s %(message)s',
-                    stream=sys.stdout)
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -79,23 +73,24 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine):
+class UserCode(StateMachine, Model):
     """ User code unique to the Customer state implementation of the SleepingBarber simulation """
 
-    def __init__(self, id=None, barbers=None):
+    def __init__(self, id_=None, barbers=None):
         """ Customer class constructor
 
-            :param id: customer ID, unique to this customer
+            :param id_: customer ID, unique to this customer
             :param barbers[]: list of barbers in the simulation
         """
-        StateMachine.__init__(self, sm_id=id, name='Customer%03d' % id,
+        name_ = 'Customer%03d' % id_
+        Model.__init__(self, name=name_)
+        StateMachine.__init__(self, sm_id=id_, name=name_,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        logging.debug('Customer[%d] INIT' % id)
         self.barbers = barbers  #: list of barbers in this simulation
-        self.id = id            #: our customer ID
+        self.id = id_           #: our customer ID
 
         # clock time of simulation from start to finish
         self.start_time = time.time()   #: simulation clock start time
@@ -114,7 +109,14 @@ class UserCode(StateMachine):
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
         self.waiting_time = 0               #: waiting time - simulation time (seconds)
 
+    def register(self, view):
+        self.views[view.name] = view
+
+    def logger(self, text):
+        self.views['console'].write(text)
+
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Finish_CustomerDone(self):
         """ State machine *enter* function processing for the *Finish* state.
 
@@ -123,8 +125,7 @@ class UserCode(StateMachine):
         self.finish_time = time.time()
         elapsed_time = self.finish_time - self.start_time
         simulation_time = self.waiting_time + self.cutting_time
-        logging.debug('Customer[%s] Done (%d/%d)' %
-                      (self.id, elapsed_time, simulation_time))
+        self.logger('Customer[%s] Done (%d/%d)' % (self.id, elapsed_time, simulation_time))
         # record customer statistics
         stats = Statistics()
         with stats.lock:
@@ -132,6 +133,7 @@ class UserCode(StateMachine):
         self.running = False
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def HairCut_GetHairCut(self):
         """ State machine *do* function processing for the *HairCut* state.
 
@@ -142,42 +144,46 @@ class UserCode(StateMachine):
         self.cutting_time += 1
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def HairCut_StartHairCut(self):
         """ State machine *enter* function processing for the *HairCut* state.
 
             This function is called when the *HairCut* state is entered.
         """
-        logging.debug('Customer[%s] StartHairCut' % self.id)
+        self.logger('Customer[%s] StartHairCut' % self.id)
         self.cutting_time_start = time.time()
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def HairCut_StopHairCut(self):
         """ State machine *exit* function processing for the *HairCut* state.
 
             This function is called when the *HairCut* state is exited.
         """
-        logging.debug('Customer[%s] StopHairCut (%s)' % (self.id, self.cutting_time))
+        self.logger('Customer[%s] StopHairCut (%s)' % (self.id, self.cutting_time))
         self.cutting_time_finish = time.time()
         self.cutting_time_elapsed = self.cutting_time_finish - self.cutting_time_start
 
     # =========================================================
+    # noinspection PyPep8Naming
     def NoHairCut(self):
         """ State machine state *transition* processing for *NoHairCut* transition.
 
             This function is called whenever the state transition *NoHairCut* is taken.
         """
-        logging.debug('Customer[%s] NoHairCut.' % self.id)
+        self.logger('Customer[%s] NoHairCut.' % self.id)
         stats = Statistics()
         with stats.lock:
             stats.lost_customers += 1
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def StartUp_CustomerStart(self):
         """ State machine *enter* function processing for the *StartUp* state.
 
             This function is called when the *StartUp* state is entered.
         """
-        logging.debug('Customer[%s] CustomerStart' % self.id)
+        self.logger('Customer[%s] CustomerStart' % self.id)
 
         # tell barbers we are here
         for barber in self.barbers:
@@ -193,25 +199,28 @@ class UserCode(StateMachine):
         self.post_event(Events.EvStart)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Waiting_StartWaiting(self):
         """ State machine *enter* function processing for the *Waiting* state.
 
             This function is called when the *Waiting* state is entered.
         """
-        logging.info('Customer[%s] StartWaiting' % self.id)
+        self.logger('Customer[%s] StartWaiting' % self.id)
         self.waiting_time_start = time.time()
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Waiting_StopWaiting(self):
         """ State machine *exit* function processing for the *Waiting* state.
 
             This function is called when the *Waiting* state is exited.
         """
-        logging.info('Customer[%s] StopWaiting' % self.id)
+        self.logger('Customer[%s] StopWaiting' % self.id)
         self.waiting_time_finish = time.time()
         self.waiting_time_elapsed = self.waiting_time_finish - self.waiting_time_start
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Waiting_Wait(self):
         """ State machine *do* function processing for the *Waiting* state.
 
@@ -222,6 +231,7 @@ class UserCode(StateMachine):
         self.waiting_time += 1
 
     # =========================================================
+    # noinspection PyPep8Naming
     def BarberSleeping(self):
         """ State machine *guard* processing for *BarberSleeping*.
 
@@ -238,13 +248,15 @@ class UserCode(StateMachine):
             return False
 
     # =========================================================
+    # noinspection PyPep8Naming
     def BarberCutting_AND_NOT_WaitingRoomChair(self):
         """ State machine guard processing for *BarberCutting_AND_NOT_WaitingRoomChair*.
 
             This function is called whenever the guard *BarberCutting_AND_NOT_WaitingRoomChair* is tested.
 
             :returns: True : Guard is active/valid. All barbers are cutting and there are no waiting room chairs free.
-            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
+            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or,
+                            there are no are no waiting room chairs free.
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
@@ -253,13 +265,16 @@ class UserCode(StateMachine):
             return self.waiting_room.full()
 
     # =========================================================
+    # noinspection PyPep8Naming
     def BarberCutting_AND_WaitingRoomChair(self):
         """ State machine guard processing for *BarberCutting_AND_WaitingRoomChair*.
 
             This function is called whenever the guard *BarberCutting_AND_WaitingRoomChair* is tested.
 
-            :returns: True : Guard is active/valid. All barbers are cutting and there are waiting room chairs free.
-            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or, there are no are no waiting room chairs free.
+            :returns: True : Guard is active/valid. All barbers are cutting and
+                             there are waiting room chairs free.
+            :returns: False : Guard is inactive/invalid. Not all barbers are cutting, or,
+                              there are no are no waiting room chairs free.
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
@@ -268,6 +283,7 @@ class UserCode(StateMachine):
             return not self.waiting_room.full()
 
     # =========================================================
+    # noinspection PyPep8Naming
     def GetChair(self):
         """ State machine state transition processing for *GetChair*.
 
@@ -284,11 +300,14 @@ class UserCode(StateMachine):
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
 
+
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: [
         {'state2': States.HairCut, 'guard': UserCode.BarberSleeping, 'transition': None},
-        {'state2': States.Waiting, 'guard': UserCode.BarberCutting_AND_WaitingRoomChair, 'transition': UserCode.GetChair},
-        {'state2': States.Finish, 'guard': UserCode.BarberCutting_AND_NOT_WaitingRoomChair, 'transition': UserCode.NoHairCut},
+        {'state2': States.Waiting, 'guard': UserCode.BarberCutting_AND_WaitingRoomChair,
+         'transition': UserCode.GetChair},
+        {'state2': States.Finish, 'guard': UserCode.BarberCutting_AND_NOT_WaitingRoomChair,
+         'transition': UserCode.NoHairCut},
     ],
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
 }

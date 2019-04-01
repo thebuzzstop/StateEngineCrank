@@ -17,6 +17,7 @@ class GuiView(mvc.View):
     def __init__(self):
         super().__init__('gui')
         self.root = None
+        self.mainframe = None
         self.gui_thread = None
 
     def update(self):
@@ -43,4 +44,22 @@ class GuiView(mvc.View):
         """ Main routine for Tkinter GUI """
         self.root = Tk()
         self.root.title(Defines.TITLE)
+        self.mainframe = ttk.Frame(self.root, padding="3 3 12 12")
+        self.mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+
+        # Dining Philosophers
+        dining_frame = ttk.Frame(self.mainframe, padding="3 3 12 12")
+        dining_frame.grid(row=1, column=0, sticky=(N, W))
+        dining_label = Label(dining_frame, text='Dining Philosophers')
+        dining_label.grid()
+
+        # Sleeping Barbers
+        barber_frame = ttk.Frame(self.mainframe, padding="3 3 12 12")
+        barber_frame.grid(row=1, column=1, sticky=(N, E))
+        barber_label = Label(barber_frame, text='Sleeping Barber(s)')
+        barber_label.grid()
+
+        # all setup so run
         self.root.mainloop()

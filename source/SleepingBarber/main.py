@@ -5,28 +5,20 @@
 """
 
 # System imports
-import sys
-from threading import Thread
 import time
-import logging
 
 # Project imports
-from mvc import Model                           # noqa
-from Common import Config as Config             # noqa
-from Common import Statistics as Statistics     # noqa
-from Barber import UserCode as Barber           # noqa
-from Barber import Events as BarberEvents       # noqa
-from Customer import UserCode as Customer       # noqa
-from Customer import Events as CustomerEvents   # noqa
-from WaitingRoom import WaitingRoom             # noqa
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)-15s %(levelname)-8s %(message)s',
-                    stream=sys.stdout)
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
+from mvc import Model
+from Common import Config as Config
+from Common import Statistics as Statistics
+from Barber import UserCode as Barber
+from Barber import Events as BarberEvents
+from Customer import UserCode as Customer
+from Customer import Events as CustomerEvents
+from WaitingRoom import WaitingRoom
 
 
-class CustomerGenerator(Thread):
+class CustomerGenerator(Model):
     """ Class for generating customers based on configurable criteria. """
 
     def __init__(self, customer_rate, customer_variance, barbers):
@@ -36,33 +28,38 @@ class CustomerGenerator(Thread):
             :param customer_variance: used to introduce variation in customer rate
             :param barbers: list of barbers cutting hair
         """
-        Thread.__init__(self, target=self.run)
+        super().__init__('CG')
         self.customer_rate = customer_rate          #: rate at which customers will be generated
         self.customer_variance = customer_variance  #: variance in rate, used by random number generator
         self.customer_count = 0                     #: total customers
         self.customer_list = []                     #: list of customer objects
-        self.running = False                        #: boolean determining when we are supposed to run
         self.barbers = barbers                      #: list of barbers cutting hair
-        logging.debug('CG: Start')
-        self.start()
+
+    def register(self, view):
+        self.views[view.name] = view
+
+    def logger(self, text):
+        self.views['console'].write(text)
 
     def run(self):
         """ Customer generator main thread
 
             The customer generator thread runs in the background creating customers for the simulation.
         """
-        logging.debug('CG: run.wait')
+        self.logger('run.wait')
         # wait until the simulation is running
         while not self.running:
             time.sleep(0.100)
-        logging.debug('CG: running')
+        self.logger('running')
 
         # run until the simulation is stopped
         while self.running:
             # generate a new customer
             self.customer_count += 1
-            logging.debug('CG[%s] new customer' % self.customer_count)
-            next_customer = Customer(id=self.customer_count, barbers=self.barbers)
+            self.logger('[%s] new customer' % self.customer_count)
+            next_customer = Customer(id_=self.customer_count, barbers=self.barbers)
+            for v in self.views:
+                next_customer.register(self.views[v])
             next_customer.running = True
             self.customer_list.append(next_customer)
 
@@ -71,9 +68,9 @@ class CustomerGenerator(Thread):
                 self.customer_rate - self.customer_variance,
                 self.customer_rate + self.customer_variance
             )
-            logging.debug('CG[%s] Zzzz [%s]' % (self.customer_count, sleep))
+            self.logger('[%s] Zzzz [%s]' % (self.customer_count, sleep))
             time.sleep(sleep)
-        logging.debug('CG Done')
+        self.logger('Done')
 
 
 class SleepingBarber(Model):
@@ -83,7 +80,10 @@ class SleepingBarber(Model):
         super().__init__('barbers')
 
         #: An array of barbers to cut hair
-        self.barbers = [Barber(id=_ + 1) for _ in range(Config.Barbers)]
+        self.barbers = [Barber(id_=_ + 1) for _ in range(Config.Barbers)]
+
+        #: Instantiate the customer generator
+        self.cg = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance, self.barbers)
 
         #: Instantiate the waiting room
         self.waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
@@ -92,8 +92,13 @@ class SleepingBarber(Model):
         self.statistics = Statistics()
 
     def register(self, view):
+        self.views[view.name] = view
         for b in self.barbers:
             b.register(view)
+        self.cg.register(view)
+
+    def logger(self, text):
+        self.views['console'].write(text)
 
     def stop(self):
         raise Exception
@@ -107,8 +112,9 @@ class SleepingBarber(Model):
             Also runnable as a standalone application.
         """
 
-        # Instantiate the customer generator
-        customers = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance, self.barbers)
+        # Wait for simulation to be running
+        while not self.running:
+            time.sleep(1)
 
         # Start the simulation, i.e. start all barbers and the customer generator
         for barber in self.barbers:
@@ -116,47 +122,48 @@ class SleepingBarber(Model):
             barber.event(BarberEvents.EvStart)
 
         # Start the customer generator
-        customers.running = True
+        self.cg.start()
+        self.cg.running = True
 
         # Wait for the simulation to complete
         for loop in range(Config.SimulationLoops):
             time.sleep(1)
             loop += 1
             if loop % 10 is 0:
-                logging.info('Iterations: %s' % loop)
+                self.logger('Iterations: %s' % loop)
 
         # Stop the customer generator
-        customers.running = False
+        self.cg.running = False
 
         # Tell the barber(s) to stop
         for barber in self.barbers:
             barber.event(BarberEvents.EvStop)
 
         # Tell any waiting customers to stop
-        for customer in customers.customer_list:
+        for customer in self.cg.customer_list:
             customer.event(CustomerEvents.EvStop)
 
         # Joining threads
-        logging.debug('Main: Joining customers')
-        for customer in customers.customer_list:
+        self.logger('Main: Joining customers')
+        for customer in self.cg.customer_list:
             customer.join()
-        logging.debug('Main: Customers joined')
+        self.logger('Main: Customers joined')
 
-        logging.debug('CG: Join')
-        customers.join()
-        logging.debug('CG: Joined')
+        self.logger('CG: Join')
+        self.cg.join()
+        self.logger('CG: Joined')
 
         for barber in self.barbers:
-            logging.debug('Barber[%s] Join' % barber.id)
+            self.logger('Barber[%s] Join' % barber.id)
             barber.join()
-            logging.debug('Barber[%s] Joined' % barber.id)
+            self.logger('Barber[%s] Joined' % barber.id)
 
-        logging.info('Barber(s) all stopped')
+        self.logger('Barber(s) all stopped')
 
         # print statistics
-        self.statistics.print_barber_stats()
-        self.statistics.print_customer_stats()
-        self.statistics.print_summary_stats()
+        self.logger(self.statistics.barber_stats())
+        self.logger(self.statistics.customer_stats())
+        self.logger(self.statistics.summary_stats())
 
 
 if __name__ == '__main__':

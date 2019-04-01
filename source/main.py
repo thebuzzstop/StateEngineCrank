@@ -90,17 +90,17 @@ class Main(Controller):
         while not self.running:
             time.sleep(Defines.Times.Waiting)
 
-        # Start all model/view threads
+        # Start views and models
         for v in self.views.keys():
             self.views[v].start()
         for m in self.models.keys():
             self.models[m].start()
 
-        # Start all models and views
+        # Start models and views running
         for v in self.views.keys():
             self.views[v].set_running()
-        for m in self.models.keys():
-            self.models[m].set_running()
+        #for m in self.models.keys():
+        #    self.models[m].set_running()
 
         # main loop of execution
         while self.running:

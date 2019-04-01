@@ -35,22 +35,15 @@
 """
 
 # System imports
-import sys
 from enum import Enum
 import random
 from threading import Lock
 import time
-import logging
 from typing import List
 from mvc import Model
 
 # Project imports
 from modules.PyState import StateMachine
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)-15s %(levelname)-8s %(message)s',
-                    stream=sys.stdout)
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -88,7 +81,7 @@ class Config(object):
     Think_Min = 15          #: minimum number of seconds to think
     Think_Max = 45          #: maximum number of seconds to think
     Philosophers = 9        #: number of philosophers dining
-    Dining_Loops = 600      #: number of main loops for dining
+    Dining_Loops = 100      #: number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -96,11 +89,28 @@ class ForkStatus(Enum):
     InUse = 1           #: Fork is currently in use by a philosopher
 
 
-class Waiter(object):
+class Waiter(Model):
     """ Waiter class used to provide synchronization between philosophers wanting to eat """
 
     def __init__(self):
+        Model.__init__(self, name='Waiter')
         self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
+        self.id_ = None         #: last philosopher ID to make a request
+
+    def register(self, view):
+        self.views[view.name] = view
+
+    def logger(self, text):
+        self.views['console'].write(text)
+
+    def run(self):
+        # see if we are not running yet
+        if not self.running:
+            while not self.running:
+                time.sleep(1)
+        # run until we aren't then exit
+        while self.running:
+            time.sleep(1)
 
     def request(self, id_, left_fork, right_fork):
         """ Function called when a Philosopher wants to eat.
@@ -116,20 +126,21 @@ class Waiter(object):
             :param left_fork: ID of left fork required to eat
             :param right_fork: ID of right fork required to eat
         """
-        logging.debug('SM[%s] waiter[in]' % id_)
+        self.id_ = id_
+        self.logger('SM[%s] waiter[in]' % id_)
         self.lock.acquire()
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        logging.debug('SM[%s] waiter[out]' % id_)
+        self.logger('SM[%s] waiter[out]' % id_)
 
     def thank_you(self):
         """ Philosopher thank you to the waiter
 
             We use this opportunity to release the Waiter lock
         """
-        logging.debug('SM[%s] waiter release' % id)
+        self.logger('SM[%s] waiter release' % self.id_)
         self.lock.release()
 
 
@@ -156,17 +167,18 @@ def seconds(minimum, maximum):
 # ==============================================================================
 
 
-class UserCode(StateMachine):
+class UserCode(StateMachine, Model):
 
     def __init__(self, user_id=None):
         """ UserCode Constructor
 
             :param user_id: unique identifier for this User
         """
-        StateMachine.__init__(self, sm_id=user_id, startup_state=States.StartUp,
+        name = 'philosopher%s' % user_id
+        Model.__init__(self, name)
+        StateMachine.__init__(self, sm_id=user_id, name=name, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
-
         self.events_counter = 0     #: counter for tracking events
         self.eating_seconds = 0     #: number of seconds spent eating
         self.thinking_seconds = 0   #: number of seconds spent thinking
@@ -181,6 +193,12 @@ class UserCode(StateMachine):
 
         self.left_fork = self.id     #: left fork id for this philosopher
         self.right_fork = (self.id + 1) % Config.Philosophers    #: right fork id for this philosopher
+
+    def register(self, view):
+        self.views[view.name] = view
+
+    def logger(self, text):
+        self.views['console'].write(text)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -223,7 +241,7 @@ class UserCode(StateMachine):
             Called when the *Eating* state is entered.
         """
         self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
-        logging.info('SM[%s] Eating (%s)' % (self.id, self.event_timer))
+        self.logger('SM[%s] Eating (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -233,7 +251,7 @@ class UserCode(StateMachine):
             Called once every state machine iteration to perform
             processing for the *Finish* state.
         """
-        logging.info('SM[%s] Finished' % self.id)
+        self.logger('SM[%s] Finished' % self.id)
         self.running = False
 
     # ===========================================================================
@@ -243,13 +261,13 @@ class UserCode(StateMachine):
 
             Called when the *Hungry* state is entered.
         """
-        logging.info('SM[%s] Hungry!' % self.id)
+        self.logger('SM[%s] Hungry!' % self.id)
         tstart = time.time()
         waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
         thungry = tend-tstart
         self.hungry_seconds += thungry
-        logging.info('SM[%s] Hungry (%s)' % (self.id, round(thungry)))
+        self.logger('SM[%s] Hungry (%s)' % (self.id, round(thungry)))
         self.event(Events.EvHavePermission)
 
     # =========================================================
@@ -282,7 +300,7 @@ class UserCode(StateMachine):
             Called when the *Thinking* state is entered.
         """
         self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
-        logging.info('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
+        self.logger('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -392,9 +410,18 @@ class DiningPhilosophers(Model):
         super().__init__('philosophers')
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
+        # Instantiate and initialize all philosophers
+        for id_ in range(Config.Philosophers):
+            self.philosophers.append(Philosopher(philosopher_id=id_))
 
     def register(self, view):
         self.views[view.name] = view
+        for p in self.philosophers:
+            p.register(view)
+        waiter.register(view)
+
+    def logger(self, text):
+        self.views['console'].write(text)
 
     def run(self):
         """ DiningPhilosophers Main program
@@ -404,9 +431,10 @@ class DiningPhilosophers(Model):
 
             Also runnable as a standalone application.
         """
-        # Instantiate and initialize all philosophers
-        for id_ in range(Config.Philosophers):
-            self.philosophers.append(Philosopher(philosopher_id=id_))
+
+        # Wait for simulation to start running
+        while not self.running:
+            time.sleep(1.0)
 
         # Philosophers have been instantiated and threads created
         # Start the simulation, i.e. start all philosophers eating
@@ -419,7 +447,7 @@ class DiningPhilosophers(Model):
             time.sleep(1)
             loop += 1
             if loop % 10 is 0:
-                logging.info('Iterations: %s' % loop)
+                self.logger('Iterations: %s' % loop)
 
         # Tell philosophers to stop
         for p in self.philosophers:
@@ -428,7 +456,7 @@ class DiningPhilosophers(Model):
         # Joining threads
         for p in self.philosophers:
             p.join()
-        logging.info('All philosophers stopped')
+        self.logger('All philosophers stopped')
 
         # Print some statistics of the simulation
         for p in self.philosophers:
@@ -436,7 +464,7 @@ class DiningPhilosophers(Model):
             e = p.eating_seconds
             h = int(p.hungry_seconds + 0.5)
             total = t + e + h
-            print('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
+            self.logger('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
 
 
 if __name__ == '__main__':

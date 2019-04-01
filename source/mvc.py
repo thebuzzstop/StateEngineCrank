@@ -15,16 +15,19 @@ class MVC(ABC, threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self, name=name)
         self.name = name                    #: name of this MVC
+        self.starting = True                #: starting status
         self.running = False                #: running status
         self.stopping = False               #: stopping status
         self._stopevent = threading.Event() #: event used to stop our thread
 
     def set_running(self):
         """ Accessor to set the *running* flag """
+        self.starting = False
         self.running = True
 
     def set_stopping(self):
         """ Accessor to set the *stopping* flag """
+        self.running = False
         self.stopping = True
 
     @abstractmethod

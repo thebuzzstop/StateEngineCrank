@@ -83,8 +83,13 @@ class Statistics(Borg):
             self.customers_simulation_time = 0  #: total simulation time (cutting + waiting) for all customers
             self.simulation_start_time = time.time()
 
-    def print_customer_stats(self):
-        """ Calculates and prints customer statistics
+            # Summary statistics - fetchable as strings
+            self._customer_stats = ''
+            self._barber_stats = ''
+            self._summary_stats = ''
+
+    def customer_stats(self):
+        """ Compiles customer statistics for the simulation
 
         Calculates:
             * total customers elapsed time
@@ -92,15 +97,18 @@ class Statistics(Borg):
             * total customers waiting time
             * total customers simulation time
 
-        Prints:
+        Returns:
             * individual customer statistics
             * cumulative statistics for all customers
+
+        :returns: Statistics for all customers (string)
         """
 
         # sort customers by ID
         customers = sorted(self.customers, key=lambda customer: customer.id)
 
-        # Print some customer statistics of the simulation
+        # Compile customer statistics for the simulation
+        self._customer_stats = ''
         for c in range(len(customers)):
             customer = customers[c]
             elapsed_time = customer.finish_time - customer.start_time
@@ -109,41 +117,56 @@ class Statistics(Borg):
             self.customers_simulation_time += simulation_time
             self.customers_cutting_time += customer.cutting_time
             self.customers_waiting_time += customer.waiting_time
-            print('customer[%03d] start: %4.2d  finish: %4.2d  elapsed: %3.2d  cutting: %2d  waiting: %2d  simulation: %2d' %
+            if self._customer_stats is not '':
+                self._customer_stats = self._customer_stats + '\n'
+            self._customer_stats = self._customer_stats + \
+                'customer[%03d] start: %4.2d  finish: %4.2d  elapsed: %3.2d  cutting: %2d  waiting: %2d  simulation: %2d' % \
                 (customer.id,
                  customer.start_time - self.simulation_start_time,
                  customer.finish_time - self.simulation_start_time,
                  elapsed_time,
                  customer.cutting_time,
                  customer.waiting_time,
-                 simulation_time))
+                 simulation_time)
 
-        print('\nelapsed: %4.2d  cutting: %3d  waiting: %3d  simulation: %3d' %
-              (self.customers_elapsed_time, self.customers_cutting_time,
-               self.customers_waiting_time, self.customers_simulation_time))
+        self._customer_stats = self._customer_stats + \
+            '\nelapsed: %4.2d  cutting: %3d  waiting: %3d  simulation: %3d' % \
+            (self.customers_elapsed_time, self.customers_cutting_time,
+             self.customers_waiting_time, self.customers_simulation_time)
 
-    def print_barber_stats(self):
-        """ Prints statistics for all barbers
+        return self._customer_stats
+
+    def barber_stats(self):
+        """ Compiles statistics for all barbers
 
             * total barber sleeping time
             * total barber cutting time
             * total barber customers
+
+            :returns: Statistics for all barbers (string)
         """
 
         # Sort barber array by ID
         barbers = sorted(self.barbers, key=lambda barber: barber.id)
 
-        # Print some barber statistics of the simulation
+        # Compile barber statistics for the simulation
+        self._barber_stats = ''
         for b in range(len(barbers)):
             barber = barbers[b]
             self.barber_sleeping_time += barber.sleeping_time
             self.barber_cutting_time += barber.cutting_time
             self.barber_total_customers += barber.customers
-            print('barber[%s] customers: %3d  cutting: %3d  sleeping: %3d' %
-                  (barber.id, barber.customers, barber.cutting_time, barber.sleeping_time))
+            if self._barber_stats is not '':
+                self._barber_stats = self._barber_stats + '\n'
+            self._barber_stats = \
+                self._barber_stats + \
+                'barber[%s] customers: %3d  cutting: %3d  sleeping: %3d' % \
+                (barber.id, barber.customers, barber.cutting_time, barber.sleeping_time)
 
-    def print_summary_stats(self):
-        """ Prints summary statistics for barbers and customers
+        return self._barber_stats
+
+    def summary_stats(self):
+        """ Compiles summary statistics for barbers and customers
 
             * total barber customers
             * total barber sleeping time
@@ -151,7 +174,12 @@ class Statistics(Borg):
             * total customer waiting time
             * number of lost customers (no chairs)
             * maximum number of customer waiting
+
+            :returns: Compiled summary statistics (string)
         """
-        print('Customers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' %
-              (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
-               self.customers_waiting_time, self.lost_customers, self.max_waiters))
+        self._summary_stats = \
+            ('Customers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' %
+             (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
+              self.customers_waiting_time, self.lost_customers, self.max_waiters))
+
+        return self._summary_stats

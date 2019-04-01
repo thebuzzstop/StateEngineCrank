@@ -33,15 +33,14 @@
     @enduml
 """
 # System imports
-import sys
 import time
 from enum import Enum
 
 # Project imports
 from mvc import Model
-from modules.PyState import StateMachine    # noqa
-from Common import Config as Config         # noqa
-from Common import Statistics as Statistics # noqa
+from modules.PyState import StateMachine
+from Common import Config as Config
+from Common import Statistics as Statistics
 import Customer
 import WaitingRoom
 
@@ -81,18 +80,18 @@ class StateTables(object):
 class UserCode(StateMachine, Model):
     """ User code unique to the Barber state implementation of the SleepingBarber simulation """
 
-    def __init__(self, id=None):
+    def __init__(self, id_=None):
         """ Barber class constructor
 
-            :param id: barber ID unique to this barber
+            :param id_: barber ID unique to this barber
         """
-        Model.__init__(self, name='Barber%d' % id)
-        StateMachine.__init__(self, sm_id=id, name='Barber%d' % id,
+        Model.__init__(self, name='Barber%d' % id_)
+        StateMachine.__init__(self, sm_id=id_, name='Barber%d' % id_,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.id = id                    #: barber ID
+        self.id = id_                   #: barber ID
         self.customers = 0              #: customers served
         self.cut_timer = 0              #: cut timer, used to time the length of a haircut
         self.cutting_time = 0           #: total time spent cutting
@@ -107,6 +106,7 @@ class UserCode(StateMachine, Model):
         self.views['console'].write(text)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Cutting_Cut(self):
         """ State machine *do* function processing for the *Cutting* state.
 
@@ -126,6 +126,7 @@ class UserCode(StateMachine, Model):
             self.current_customer.post_event(Customer.Events.EvFinishCutting)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Cutting_StartCutting(self):
         """ State machine *enter* function processing for the *Cutting* state.
 
@@ -138,6 +139,7 @@ class UserCode(StateMachine, Model):
         self.logger('Barber[%s] StartCutting %s [%s]' % (self.id, self.customers, self.cut_timer))
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Finish_BarberDone(self):
         """ State machine *enter* function processing for the *Finish* state.
 
@@ -151,6 +153,7 @@ class UserCode(StateMachine, Model):
         self.running = False
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Sleeping_Sleep(self):
         """ State machine *do* function processing for the *Sleeping* state.
 
@@ -161,6 +164,7 @@ class UserCode(StateMachine, Model):
         self.sleeping_time += 1
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Sleeping_StartSleeping(self):
         """ State machine *enter* function processing for the *Sleeping* state.
 
@@ -169,6 +173,7 @@ class UserCode(StateMachine, Model):
         self.logger('Barber[%s] StartSleeping' % self.id)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Sleeping_StopSleeping(self):
         """ State machine *exit* function processing for the *Sleeping* state.
 
@@ -177,6 +182,7 @@ class UserCode(StateMachine, Model):
         self.logger('Barber[%s] StopSleeping' % self.id)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def StartUp_BarberStart(self):
         """ State machine *enter* function processing for the *StartUp* state.
 
@@ -185,6 +191,7 @@ class UserCode(StateMachine, Model):
         self.logger('Barber[%s] Starting' % self.id)
 
     # =========================================================
+    # noinspection PyPep8Naming
     def GetCustomer(self):
         """ State machine state transition processing for *GetCustomer*.
 
@@ -199,6 +206,7 @@ class UserCode(StateMachine, Model):
         self.current_customer.post_event(Customer.Events.EvBarberReady)
 
     # =========================================================
+    # noinspection PyPep8Naming
     def NOT_WaitingCustomer(self):
         """ State machine guard processing for *NOT_WaitingCustomer*.
 
@@ -212,6 +220,7 @@ class UserCode(StateMachine, Model):
             return not self.waiting_room.customer_waiting()
 
     # =========================================================
+    # noinspection PyPep8Naming
     def WaitingCustomer(self):
         """ State machine guard processing for *GetWaitingCustomer*.
 
@@ -225,6 +234,7 @@ class UserCode(StateMachine, Model):
             return self.waiting_room.customer_waiting()
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def Stopping_Cut(self):
         """ State machine *do* function processing for the *Stopping* state.
 
@@ -245,6 +255,7 @@ class UserCode(StateMachine, Model):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
