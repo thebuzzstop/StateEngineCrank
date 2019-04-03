@@ -14,25 +14,27 @@ import mvc
 class Animation(object):
     """ Common definition of a GUI Animation View """
 
-    def __init__(self, mainframe=None, config=None):
+    def __init__(self, root=None, mainframe=None, config=None):
         super().__init__()
+        self.root = root
         self.mainframe = mainframe
         self.config = config
         self.row = 0
         self.col = self.config['column']
 
-        # Animation GUI definitions
+        # Top level frame for this simulation
         ani_frame = ttk.Frame(self.mainframe, padding="3 3 12 12")
         ani_frame.grid(row=self.next_row(), column=config['column'], sticky=self.config['frame stick'])
-
         ani_label = Label(ani_frame, text=config['title'])
         ani_label.grid(row=self.next_row(), column=config['column'], sticky=self.config['label stick'])
 
-        ani_animation_frame = ttk.Frame(ani_frame, padd="3 3 12 12")
+        # Top level frame for this simulation animation
+        ani_animation_frame = ttk.Frame(ani_frame, padding="3 3 12 12")
         ani_animation_frame.grid(row=self.next_row(), column=config['column'], sticky=self.config['animation stick'])
         ani_animation_coming_soon = Label(ani_animation_frame, text='Coming soon to this space')
         ani_animation_coming_soon.grid(row=0, column=0)
 
+        # Buttons and controls frame
         ani_buttons_frame = ttk.Frame(ani_frame)
         ani_buttons_frame.grid(row=self.next_row(), column=config['column'], sticky=self.config['buttons stick'])
         ani_button_start = ttk.Button(ani_buttons_frame, text='Start')
@@ -44,11 +46,19 @@ class Animation(object):
         ani_button_stop = ttk.Button(ani_buttons_frame, text='Stop')
         ani_button_stop.grid(row=0, column=4)
 
+        # Console for text and logging output
         ani_console_label = Label(ani_frame, text='Console Log')
         ani_console_label.grid(row=self.next_row(), column=self.col, sticky=self.config['console label stick'])
-        ani_console = Text(ani_frame, width=40, height=10)
+        ani_console = Text(ani_frame, height=10)
         ani_console.grid(row=self.next_row(), column=self.col, sticky=self.config['console stick'])
         ani_console.insert('2.0', config['console text'])
+
+        # Set frame weights
+        self.root.grid_columnconfigure(self.col, weight=1)
+        self.mainframe.grid_columnconfigure(self.col, weight=1)
+        ani_animation_frame.grid_columnconfigure(self.col, weight=1)
+        ani_frame.grid_columnconfigure(self.col, weight=1)
+        ani_console.grid_columnconfigure(self.col, weight=1)
 
     def next_row(self):
         self.row = self.row + 1
@@ -90,20 +100,6 @@ class GuiView(mvc.View):
         self.mainframe = None
         self.gui_thread = None
 
-        self.dp_col = 0
-        self.dp_row = 1
-
-        self.sb_col = 1
-        self.sb_row = 1
-
-    def sb_row_next(self):
-        self.sb_row += 1
-        return self.sb_row
-
-    def dp_row_next(self):
-        self.dp_row += 1
-        return self.dp_row
-
     def update(self):
         raise Exception
 
@@ -129,13 +125,14 @@ class GuiView(mvc.View):
         self.root = Tk()
         self.root.title(Defines.TITLE)
         self.mainframe = ttk.Frame(self.root, padding="3 3 12 12")
-        self.mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        self.mainframe.grid(row=1, column=1, sticky=(N, W, E, S))
 
-        # Dining Philosophers
-        ani_dining = Animation(self.mainframe, config=self.philosophers)
-        ani_barbers = Animation(self.mainframe, config=self.barbers)
+        # Instantiate the animation blocks
+        ani_dining = Animation(self.root, self.mainframe, config=self.philosophers)
+        ani_barbers = Animation(self.root, self.mainframe, config=self.barbers)
+
+        # Hook up the buttons
+
 
         # all setup so run
         self.root.mainloop()
