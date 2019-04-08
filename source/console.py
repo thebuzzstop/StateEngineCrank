@@ -17,15 +17,15 @@ class ConsoleView(mvc.View, queue.Queue):
         mvc.View.__init__(self, 'console')
         queue.Queue.__init__(self)
 
-    def update(self):
-        """ ConsoleView is a simple logger, we do nothing for an update """
+    def update(self, event):
+        """ ConsoleView is a simple logger, we do nothing for an update
+
+            :param event: An event to be processed
+        """
         pass
 
     def write(self, text):
         self.put_nowait('%s %s' % (str.split('%s' % datetime.datetime.now(), ' ')[1], text))
-
-    def register(self, model):
-        self.models[model.name] = model
 
     def run(self):
         """ Console view running """

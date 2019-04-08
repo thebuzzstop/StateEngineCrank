@@ -14,3 +14,13 @@ class InvalidModel(Exception):
 class InvalidView(Exception):
     """ Invalid view passed """
     pass
+
+
+class UnknownModelEvent(Exception):
+    """ Invalid/Unknown model event received """
+    pass
+
+
+class UnknownViewEvent(Exception):
+    """ Invalid/Unknown view event received """
+    pass

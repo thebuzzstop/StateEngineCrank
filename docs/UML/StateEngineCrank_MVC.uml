@@ -7,6 +7,11 @@ package "StateEngineCrank MVC" <<Frame>> {
     package MVC <<Frame>> {
         class Thread
 
+        abstract class MVC.Event {
+            Used to communicate events
+            between MVC elements
+        }
+
         abstract class MVC.MVC {
             name : MVC element name
             running : boolean : True when running
@@ -14,6 +19,8 @@ package "StateEngineCrank MVC" <<Frame>> {
             _stopevent : Event : Set to cause element to stop
             ---
             {abstract} run() : main thread execution target
+            {abstract} update(event) : event notification (inbound)
+            {abstract} notify(event) : event notification (outbound)
             stop() : initiate stopping
             join() : called to terminate a thread
             ---
@@ -24,19 +31,16 @@ package "StateEngineCrank MVC" <<Frame>> {
         abstract class MVC.Model {
             views{} : dictionary of views
             ---
-            {abstract} run() : main thread execution target
             {abstract} register(view) : register view with model
-            update() : update all views
         }
         MVC.Model --|> MVC.MVC
+        MVC.MVC --|> MVC.Event
         MVC.MVC --|> Thread
 
         abstract class MVC.View {
             model{} : dictionary of models
             ---
-            {abstract} run() : main thread execution target
-            {abstract}register(model) : register model with view
-            {abstract} update() : called to update view
+            {abstract} register(model) : register model with view
         }
         MVC.View --|> MVC.MVC
 
@@ -44,9 +48,7 @@ package "StateEngineCrank MVC" <<Frame>> {
             models{} : dictionary of models
             views{} : dictionary of views
             ---
-            {abstract} run() : main thread execution target
             {abstract} register(mv) : register a model or a view
-            update() : called to update views
         }
         MVC.Controller --|> MVC.MVC
     }
@@ -93,6 +95,7 @@ package "StateEngineCrank MVC" <<Frame>> {
                 get_customer() : barber calls to get a customer
                 customer_waiting() : barber checks for waiting customers
             }
+            WaitingRoom --|> MVC.Model
             class SleepingBarbers.Config {
                 NUM_BARBERS
                 NUM_WAITING_CHAIRS
@@ -120,9 +123,9 @@ package "StateEngineCrank MVC" <<Frame>> {
                 register(view) : register view with model
             }
             SleepingBarbers.Model --|> MVC.Model
-            SleepingBarbers.Model --* "[1..*]" Barber
-            SleepingBarbers.Model --* "[1..*]" Customer
-            SleepingBarbers.Model --> WaitingRoom
+            SleepingBarbers.Model --* "[1..*]   " Barber
+            SleepingBarbers.Model --* "[1..*]     " Customer
+            SleepingBarbers.Model --* "[1]   " WaitingRoom
             SleepingBarbers.Model --|> StateEngineCrank.StateMachine
             SleepingBarbers.Model --> SleepingBarbers.Config
             class CustomerGenerator {
@@ -138,11 +141,13 @@ package "StateEngineCrank MVC" <<Frame>> {
     package View <<Frame>> {
         class View.Console {
             run() : main thread execution target
-            update() : update view
+            update(event) : event notification (inbound)
+            notify(event) : event notification (outbound)
         }
         class View.GUI {
             run() : main thread execution target
-            update() : update view
+            update(event) : event notification (inbound)
+            notify(event) : event notification (outbound)
             tk_run() : GUI thread execution
         }
         View.Console --|> MVC.View
@@ -161,7 +166,8 @@ package "StateEngineCrank MVC" <<Frame>> {
             ---
             run() : main thread execution target
             stop() : stop main loop execution
-            update() : function to initiate view updates
+            update(event) : event notification (inbound)
+            notify(event) : event notification (outbound)
         }
     }
     Controller.Controller --|> MVC.Controller

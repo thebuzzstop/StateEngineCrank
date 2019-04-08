@@ -15,8 +15,9 @@ import mvc
 class Animation(object):
     """ Common definition of a GUI Animation View """
 
-    def __init__(self, root=None, mainframe=None, config=None, common=None):
+    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
         super().__init__()
+        self.parent=parent
         self.root = root
         self.mainframe = mainframe
         self.config = config
@@ -28,15 +29,15 @@ class Animation(object):
         self.ani_frame = ttk.Frame(self.mainframe, padding="3 3 12 12")
         self.ani_frame['borderwidth'] = 4
         self.ani_frame['relief'] = 'sunken'
-        self.ani_frame.grid(row=self.next_row(), column=config['column'], sticky=self.config['frame stick'])
+        self.ani_frame.grid(row=self._next_row(), column=config['column'], sticky=self.common['frame stick'])
 
         self.ani_label = Label(self.ani_frame, text=config['title'])
-        self.ani_label.grid(row=self.next_row(), column=config['column'], sticky=self.config['label stick'])
+        self.ani_label.grid(row=self._next_row(), column=config['column'], sticky=self.common['label stick'])
 
         # Top level frame for this simulation animation
         self.ani_animation_frame = ttk.Frame(self.ani_frame, padding="3 3 12 12")
-        self.ani_animation_frame.grid(row=self.next_row(), column=config['column'],
-                                      sticky=self.config['animation stick'])
+        self.ani_animation_frame.grid(row=self._next_row(), column=config['column'],
+                                      sticky=self.common['animation stick'])
         self.ani_animation_frame['borderwidth'] = 4
         self.ani_animation_frame['relief'] = 'sunken'
 
@@ -53,30 +54,37 @@ class Animation(object):
 
         # Buttons and controls frame
         self.ani_buttons_frame = ttk.Frame(self.ani_frame)
-        self.ani_buttons_frame.grid(row=self.next_row(), column=config['column'], sticky=self.config['buttons stick'])
+        self.ani_buttons_frame.grid(row=self._next_row(), column=config['column'], sticky=self.common['buttons stick'])
         self.ani_buttons_frame['borderwidth'] = 4
         self.ani_buttons_frame['relief'] = 'raised'
 
-        self.ani_button_start = ttk.Button(self.ani_buttons_frame, text='Start')
-        self.ani_button_start.grid(row=0, column=1)
-        self.ani_button_step = ttk.Button(self.ani_buttons_frame, text='Step')
-        self.ani_button_step.grid(row=0, column=2)
-        self.ani_button_pause = ttk.Button(self.ani_buttons_frame, text='Pause')
-        self.ani_button_pause.grid(row=0, column=3)
-        self.ani_button_stop = ttk.Button(self.ani_buttons_frame, text='Stop')
-        self.ani_button_stop.grid(row=0, column=4)
+        self.buttons = [
+            ['Start', self._button_start],
+            ['Stop', self._button_stop],
+            ['Step', self._button_step],
+            ['Pause', self._button_pause],
+            ['Resume', self._button_resume],
+        ]
+
+        self.ani_buttons = {}
+        column = -1
+        button_row = self._next_row()
+        for b in self.buttons:
+            column += 1
+            self.ani_buttons[b[0]] = ttk.Button(self.ani_buttons_frame, text=b[0], command=b[1])
+            self.ani_buttons[b[0]].grid(row=button_row, column=column)
 
         # Console for text and logging output
         self.ani_console_label = Label(self.ani_frame, text='Console Log')
-        self.ani_console_label.grid(row=self.next_row(),
+        self.ani_console_label.grid(row=self._next_row(),
                                     column=self.col,
-                                    sticky=self.config['console label stick'])
+                                    sticky=self.common['console label stick'])
         self.ani_console = Text(self.ani_frame,
                                 height=self.common['console']['height'],
                                 width=self.common['console']['width'])
-        self.ani_console.grid(row=self.next_row(),
+        self.ani_console.grid(row=self._next_row(),
                               column=self.col,
-                              sticky=self.config['console stick'])
+                              sticky=self.common['console stick'])
         self.ani_console.insert('2.0', config['console text'])
 
         # Set frame weights
@@ -86,16 +94,32 @@ class Animation(object):
         self.ani_frame.grid_columnconfigure(self.col, weight=1)
         self.ani_console.grid_columnconfigure(self.col, weight=1)
 
-    def next_row(self):
+    def _next_row(self):
         self.row = self.row + 1
         return self.row
 
+    def _button_start(self):
+        self.parent.update(mvc.MVC.Event.Start)
+
+    def _button_step(self):
+        self.parent.update(mvc.MVC.Event.Step)
+
+    def _button_stop(self):
+        self.parent.update(mvc.MVC.Event.Stop)
+
+    def _button_pause(self):
+        self.parent.update(mvc.MVC.Event.Pause)
+
+    def _button_resume(self):
+        self.parent.update(mvc.MVC.Event.Resume)
+
 
 class DiningPhilosophers(Animation):
-    """ Logic to draw the Dining Philosophers Simulation Animation """
+    """ Logic to Manage Dining Philosophers Simulation Animation """
 
-    def __init__(self, root=None, mainframe=None, config=None, common=None):
-        super().__init__(root, mainframe, config, common)
+    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
+        super().__init__(self, root, mainframe, config, common)
+        self.my_parent = parent
         self.philosophers = self.config['philosophers']
         self.canvas_x_mid, self.canvas_y_mid = self.ani_center
         self.delta_angle_degrees = 360 / self.philosophers
@@ -147,7 +171,6 @@ class DiningPhilosophers(Animation):
         """ Add the waiter graphic to the simulation """
         waiter_x = -(self.ani_width/2 - self.gap - self.config['waiter.radius'])
         waiter_y = self.ani_height/2 - self.gap - self.config['waiter.radius']
-        #self.circle_at(waiter_x, waiter_y, self.config['waiter.radius'], self.config['waiter.color'])
         self.circle_at(0, 0, self.config['waiter.radius'], self.config['waiter.color'])
 
     def canvas_xy(self, animation_x, animation_y):
@@ -180,12 +203,33 @@ class DiningPhilosophers(Animation):
         y = radius * math.cos(math.radians(angle))
         return x, y
 
+    def update(self, event):
+        """ Function to process all animation events
+
+            :param event: Animation event (mvc.MVC.Event...)
+        """
+        if isinstance(event, int):
+            event = mvc.MVC.Event(event)
+        if event.event is mvc.MVC.Event.Logger:
+            print(event.text)
+        elif event.event is mvc.MVC.Event.Start:
+            print('Start')
+        elif event.event is mvc.MVC.Event.Stop:
+            print('Stop')
+        elif event.event is mvc.MVC.Event.Step:
+            print('Step')
+        elif event.event is mvc.MVC.Event.Pause:
+            print('Pause')
+        elif event.event is mvc.MVC.Event.Resume:
+            print('Resume')
+
 
 class SleepingBarbers(Animation):
-    """ Logic to draw the Dining Philosophers Simulation Animation """
+    """ Logic to Manage Sleeping Barber(s) Simulation Animation """
 
-    def __init__(self, root=None, mainframe=None, config=None, common=None):
-        super().__init__(root, mainframe, config, common)
+    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
+        super().__init__(self, root, mainframe, config, common)
+        self.my_parent = parent
 
     def draw_barbershop(self):
         self.ani_canvas.grid()
@@ -201,24 +245,23 @@ class GuiView(mvc.View):
     """ StateEngineCrank GUI View """
 
     common_config = {
+        'animation': {'width': 360, 'height': 360},
+        'animation stick': (N, S, E, W),
+        'buttons stick': (W),
         'console': {'width': 40, 'height': 10},
-        'animation': {'width': 300, 'height': 300}
+        'console stick': (N, S, E, W),
+        'console label stick': (W),
+        'frame stick': (N, S, E, W),
+        'label stick': (N, W),
     }
 
-    philosophers = {
+    philosophers_config = {
         'title': 'Dining Philosophers',
         'column': 1,
-        'frame stick': (N, W),
-        'label stick': (N, W),
-        'animation stick': (W),
         'animation text': 'The Dining Room',
-        'buttons': ['Start', 'Step', 'Stop', 'Pause'],
-        'buttons stick': (N, W),
         'console text': 'Hello, Dining Philosophers',
-        'console label stick': (W),
-        'console stick': (S, W),
 
-        'philosophers': 5,
+        'philosophers': 11,
         'table.radius': 75,
         'table.color': 'grey',
         'chair.radius': 20,
@@ -227,18 +270,11 @@ class GuiView(mvc.View):
         'waiter.color': 'blue',
     }
 
-    barbers = {
+    barbers_config = {
         'title': 'Sleeping Barber(s)',
         'column': 2,
-        'frame stick': (N, W),
-        'label stick': (N, W),
-        'animation stick': (W),
         'animation text': 'The Barber Shop',
-        'buttons': ['Start', 'Step', 'Stop', 'Pause'],
-        'buttons stick': (N, W),
         'console text': 'Hello, Sleeping Barber(s)',
-        'console label stick': (W),
-        'console stick': (S, E),
 
         'barbers': 4,
         'chair.radius': 10,
@@ -250,11 +286,12 @@ class GuiView(mvc.View):
         self.mainframe = None
         self.gui_thread = None
 
-    def update(self):
-        raise Exception
+    def update(self, event):
+        """ Called to let us know of an event
 
-    def register(self, model):
-        self.models[model.name] = model
+            :param event: Event that occurred, we should do some kind of update
+        """
+        print('Event: %s' % event)
 
     def run(self):
         """ GUI view running """
@@ -270,27 +307,38 @@ class GuiView(mvc.View):
         # stop the GUI
         self.gui_thread.join(timeout=Defines.Times.Stopping)
 
+    def write(self, text):
+        print(text)
+
     def tk_run(self):
         """ Main routine for Tkinter GUI """
         self.root = Tk()
         self.root.title(Defines.TITLE)
-        self.mainframe = ttk.Frame(self.root, padding="3 3 12 12", width=800, height=800)
+        self.mainframe = ttk.Frame(self.root, padding="3 3 12 12")     # width=800, height=800)
         self.mainframe.grid(row=1, column=1, sticky=(N, W, E, S))
 
         # Instantiate DiningPhilosophers and create the animation graphics
-        ani_dining = DiningPhilosophers(self.root, self.mainframe, config=self.philosophers, common=self.common_config)
+        ani_dining = DiningPhilosophers(parent=self,
+                                        root=self.root,
+                                        mainframe=self.mainframe,
+                                        config=self.philosophers_config,
+                                        common=self.common_config)
         ani_dining.add_table()
         ani_dining.add_chairs()
         ani_dining.add_forks()
         ani_dining.add_waiter()
 
         # Instantiate SleepingBarbers and create the animation graphics
-        ani_barbers = SleepingBarbers(self.root, self.mainframe, config=self.barbers, common=self.common_config)
+        ani_barbers = SleepingBarbers(parent=self,
+                                      root=self.root,
+                                      mainframe=self.mainframe,
+                                      config=self.barbers_config,
+                                      common=self.common_config)
         ani_barbers.draw_barbershop()
         ani_barbers.add_barbers()
         ani_barbers.add_waiting_room()
-
-        # Hook up the buttons
+        for b in ani_barbers.ani_buttons.keys():
+            ani_barbers.ani_buttons[b].state(['disabled'])
 
         # all setup so run
         self.root.mainloop()

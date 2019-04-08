@@ -80,7 +80,7 @@ class Config(object):
     Eat_Max = 45            #: maximum number of seconds to eat
     Think_Min = 15          #: minimum number of seconds to think
     Think_Max = 45          #: maximum number of seconds to think
-    Philosophers = 9        #: number of philosophers dining
+    Philosophers = 4        #: number of philosophers dining
     Dining_Loops = 100      #: number of main loops for dining
 
 
@@ -97,11 +97,9 @@ class Waiter(Model):
         self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
         self.id_ = None         #: last philosopher ID to make a request
 
-    def register(self, view):
-        self.views[view.name] = view
-
-    def logger(self, text):
-        self.views['console'].write(text)
+    def update(self, event):
+        """ Called by views to alert us to an update - we ignore it """
+        pass
 
     def run(self):
         # see if we are not running yet
@@ -193,12 +191,6 @@ class UserCode(StateMachine, Model):
 
         self.left_fork = self.id     #: left fork id for this philosopher
         self.right_fork = (self.id + 1) % Config.Philosophers    #: right fork id for this philosopher
-
-    def register(self, view):
-        self.views[view.name] = view
-
-    def logger(self, text):
-        self.views['console'].write(text)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -402,12 +394,16 @@ class Philosopher(UserCode):
         self.running = False        #: True, simulation is running
         self.has_forks = False      #: True, philosopher has possession of both forks
 
+    def update(self, event):
+        """ Called by View to alert us to an event - we ignore """
+        pass
+
 
 class DiningPhilosophers(Model):
     """ Main DiningPhilosophers Class """
 
     def __init__(self):
-        super().__init__('philosophers')
+        super().__init__(name='philosophers', target=self.run)
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
         # Instantiate and initialize all philosophers
@@ -420,8 +416,11 @@ class DiningPhilosophers(Model):
             p.register(view)
         waiter.register(view)
 
-    def logger(self, text):
-        self.views['console'].write(text)
+    def update(self, event):
+        """ Called by Views and/or Controller to alert us to an event.
+            We ignore for now.
+        """
+        pass
 
     def run(self):
         """ DiningPhilosophers Main program
@@ -466,9 +465,16 @@ class DiningPhilosophers(Model):
             total = t + e + h
             self.logger('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
 
+        # Shutdown
+        self.set_stopping()
+
 
 if __name__ == '__main__':
     """ Execute main code if run from the command line """
 
     dining_philosophers = DiningPhilosophers()
+    dining_philosophers.start()
     dining_philosophers.set_running()
+    while dining_philosophers.running:
+        time.sleep(1)
+    print('Done')

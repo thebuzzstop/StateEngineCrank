@@ -75,10 +75,13 @@ class Main(Controller):
             for m in self.models.values():
                 self.views[v].register(m)
 
-    def update(self):
-        """ Called to initiate an update of all views """
+    def update(self, event):
+        """ Called to initiate an update of all views
+
+            :param event: event to be processed
+        """
         for v in self.views.keys():
-            self.views[v].update()
+            self.views[v].update(event)
 
     def stop(self):
         self.running = False
@@ -99,8 +102,6 @@ class Main(Controller):
         # Start models and views running
         for v in self.views.keys():
             self.views[v].set_running()
-        #for m in self.models.keys():
-        #    self.models[m].set_running()
 
         # main loop of execution
         while self.running:

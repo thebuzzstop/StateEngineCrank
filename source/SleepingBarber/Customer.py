@@ -109,12 +109,6 @@ class UserCode(StateMachine, Model):
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
         self.waiting_time = 0               #: waiting time - simulation time (seconds)
 
-    def register(self, view):
-        self.views[view.name] = view
-
-    def logger(self, text):
-        self.views['console'].write(text)
-
     # ===========================================================================
     # noinspection PyPep8Naming
     def Finish_CustomerDone(self):

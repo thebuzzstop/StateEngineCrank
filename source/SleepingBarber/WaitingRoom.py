@@ -4,18 +4,13 @@
 """
 
 # System imports
-import logging
 import sys
 from threading import Lock as Lock
 from queue import Queue as Queue
 
 # Project imports
 from SleepingBarber import Common
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)-15s %(levelname)-8s %(message)s',
-                    stream=sys.stdout)
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
+from mvc import Model
 
 
 class CustomerWaitingError(Exception):
@@ -38,7 +33,7 @@ class Borg(object):
         self.__dict__ = self._shared_state  #: Borg class shared state
 
 
-class WaitingRoom(Borg, Queue):
+class WaitingRoom(Borg, Queue, Model):
     """ Waiting Room Implementation
 
         Implemented as a Borg so that all instantiations of the WaitingRoom class will
@@ -58,6 +53,8 @@ class WaitingRoom(Borg, Queue):
             if chairs is None:
                 chairs = Common.Config.WaitingChairs
             Queue.__init__(self, maxsize=chairs)
+            Model.__init__(self, name='WaitingRoom')
+
             self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
             self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
 
@@ -77,7 +74,7 @@ class WaitingRoom(Borg, Queue):
             chair = True
             with self.stats.lock:
                 self.stats.max_waiters = max(self.stats.max_waiters, self.qsize())
-        logging.debug('WR: get_chair [%s]' % chair)
+        self.logger('WR: get_chair [%s]' % chair)
         return chair
 
     def get_customer(self):
@@ -92,7 +89,7 @@ class WaitingRoom(Borg, Queue):
             raise CustomerWaitingError
         else:
             customer = self.get(block=False)
-        logging.debug('WR: get_customer [%s]' % customer.id)
+        self.logger('WR: get_customer [%s]' % customer.id)
         return customer
 
     def customer_waiting(self):
@@ -103,8 +100,17 @@ class WaitingRoom(Borg, Queue):
             :returns: False : No customer is waiting
         """
         if not self.empty():
-            logging.debug('WR: customer_waiting [TRUE]')
+            self.logger('WR: customer_waiting [TRUE]')
             return True
         else:
-            logging.debug('WR: customer_waiting [FALSE]')
+            self.logger('WR: customer_waiting [FALSE]')
             return False
+
+    def update(self, event):
+        """ Called by views or controllers to tell us to update
+            We currently do nothing.
+        """
+        pass
+
+    def run(self):
+        pass

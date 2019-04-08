@@ -99,11 +99,9 @@ class UserCode(StateMachine, Model):
         self.current_customer = None    #: current customer being served
         self.waiting_room = WaitingRoom.WaitingRoom()   #: waiting room instantiation
 
-    def register(self, view):
-        self.views[view.name] = view
-
-    def logger(self, text):
-        self.views['console'].write(text)
+    def update(self, event):
+        """ Called by view to alert us to a change - we ignore for now """
+        pass
 
     # ===========================================================================
     # noinspection PyPep8Naming

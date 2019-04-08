@@ -3,6 +3,7 @@
 # System Imports
 from abc import ABC, abstractmethod
 import threading
+import enum
 
 # Project Imports
 import Defines
@@ -12,13 +13,40 @@ import exceptions
 class MVC(ABC, threading.Thread):
     """ Base class definition of an MVC Model, View or Controller """
 
-    def __init__(self, name):
-        threading.Thread.__init__(self, name=name)
-        self.name = name                    #: name of this MVC
-        self.starting = True                #: starting status
-        self.running = False                #: running status
-        self.stopping = False               #: stopping status
-        self._stopevent = threading.Event() #: event used to stop our thread
+    class Event(ABC):
+        """ MVC Events - Model and View """
+
+        Start = 1       #: Start execution, enter run-state
+        Stop = 2        #: Stop execution, terminate program
+        Step = 3        #: Single execution step
+        Pause = 4       #: Pause execution, retain current state
+        Resume = 5      #: Resume execution
+        Logger = 6      #: Log entry
+
+        def __init__(self, event, **kwargs):
+            """ A Model-View-Controller Event
+
+                An Event contains::
+
+                    * event : the specific event
+                    * text : optional text string
+                    * data : optional data payload
+            """
+            self.event = event
+            self.text = None
+            self.data = None
+            if 'text' in kwargs.keys():
+                self.text = kwargs['text']
+            if 'data' in kwargs.keys():
+                self.data = kwargs['data']
+
+    def __init__(self, name=None, target=None):
+        threading.Thread.__init__(self, name=name, target=target)
+        self.name = name                        #: name of this MVC
+        self.starting = True                    #: starting status
+        self.running = False                    #: running status
+        self.stopping = False                   #: stopping status
+        self._stopevent = threading.Event()     #: event used to stop our thread
 
     def set_running(self):
         """ Accessor to set the *running* flag """
@@ -29,6 +57,22 @@ class MVC(ABC, threading.Thread):
         """ Accessor to set the *stopping* flag """
         self.running = False
         self.stopping = True
+
+    @abstractmethod
+    def notify(self, event):
+        """ Called to send a notification of the occurrence of event
+
+            :param event: Event to be sent to those in registry
+        """
+        pass
+
+    @abstractmethod
+    def update(self, event):
+        """ Called to notify us of the occurrence of event
+
+            :param event: Event to be processed
+        """
+        pass
 
     @abstractmethod
     def run(self):
@@ -53,15 +97,10 @@ class MVC(ABC, threading.Thread):
 class Controller(MVC):
     """ Base class definition of a Controller """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name=None, target=None):
+        super().__init__(name=name, target=target)
         self.models = {}    #: dictionary of models under our control
         self.views = {}     #: dictionary of views to be updated
-
-    def update_views(self):
-        """ Called by models or view to initiate an update """
-        for v in self.views:
-            v.update()
 
     def register(self, mv):
         """ Called to register a model or view with the controller
@@ -76,6 +115,18 @@ class Controller(MVC):
         else:
             raise exceptions.InvalidMVC
 
+    def notify(self, event):
+        """ Called to send notification of the occurrence of event
+
+            :param event: Event to be sent
+        """
+        if isinstance(event, Model.Event):
+            for v in self.views:
+                v.notify(event)
+        elif isinstance(event, View.Event):
+            for m in self.models:
+                m.notify(event)
+
     @abstractmethod
     def run(self):
         """ Called to initiate running """
@@ -85,11 +136,10 @@ class Controller(MVC):
 class Model(MVC):
     """ Base class definition of a Model """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name=None, target=None):
+        super().__init__(name=name, target=target)
         self.views = {}         #: dictionary of views we update
 
-    @abstractmethod
     def register(self, view):
         """ Register a view with us
 
@@ -101,10 +151,33 @@ class Model(MVC):
         else:
             raise exceptions.InvalidView(view)
 
-    def update(self):
-        """ Called by view or controller to initiate an update """
+    def logger(self, text):
+        """ Function to support console logging
+
+            :param text: Text to be displayed on registered console view
+        """
+        if 'console' in self.views.keys():
+            self.views['console'].write(text)
+        else:
+            print('logger: %s' % text)
+
+    def notify(self, event):
+        """ Called by us to notify Views about a Model event
+
+            :param event: Model event to be sent
+        """
         for v in self.views:
-            v.update()
+            v.update(event)
+
+    @abstractmethod
+    def update(self, event):
+        """ Called by Views to tell us to update
+
+            :param event: View event to be processed
+        """
+        if not isinstance(event, View.Event):
+            raise exceptions.UnknownViewEvent
+        pass
 
     @abstractmethod
     def run(self):
@@ -115,11 +188,10 @@ class Model(MVC):
 class View(MVC):
     """ Base class definition of a View """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name=None, target=None):
+        super().__init__(name=name, target=target)
         self.models = {}        #: our models
 
-    @abstractmethod
     def register(self, model):
         """ Register a model with us
 
@@ -130,9 +202,22 @@ class View(MVC):
         else:
             raise exceptions.InvalidModel(model)
 
+    def notify(self, event):
+        """ Called by us to notify Models about a View event
+
+            :param event: View event to be sent
+        """
+        for m in self.models:
+            m.update(event)
+
     @abstractmethod
-    def update(self):
-        """ Called by models or controller to initiate an update """
+    def update(self, event):
+        """ Called by Models to tell us to update
+
+            :param event: Model event to be processed
+        """
+        if not isinstance(event, Model.Event):
+            raise exceptions.UnknownModelEvent
         pass
 
     @abstractmethod

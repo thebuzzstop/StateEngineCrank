@@ -35,11 +35,8 @@ class CustomerGenerator(Model):
         self.customer_list = []                     #: list of customer objects
         self.barbers = barbers                      #: list of barbers cutting hair
 
-    def register(self, view):
-        self.views[view.name] = view
-
-    def logger(self, text):
-        self.views['console'].write(text)
+    def update(self, event):
+        pass
 
     def run(self):
         """ Customer generator main thread
@@ -97,8 +94,9 @@ class SleepingBarber(Model):
             b.register(view)
         self.cg.register(view)
 
-    def logger(self, text):
-        self.views['console'].write(text)
+    def update(self, event):
+        """ Called by view to alert us to a change - we ignore for now """
+        pass
 
     def stop(self):
         raise Exception
