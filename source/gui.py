@@ -124,10 +124,11 @@ class DiningPhilosophers(Animation):
         self.canvas_x_mid, self.canvas_y_mid = self.ani_center
         self.delta_angle_degrees = 360 / self.philosophers
 
-        self.chair_radius = self.config['chair.radius']
-        self.table_radius = self.config['table.radius']
         self.ani_width = self.common['animation']['width']
         self.ani_height = self.common['animation']['height']
+        self.table_radius = self.config['table.radius']
+        self.chair_radius = self.config['chair.radius']
+        self.fork_radius = self.config['fork.radius']
 
         self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * self.chair_radius) / 4
         self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * self.chair_radius) / 4
@@ -153,15 +154,20 @@ class DiningPhilosophers(Animation):
 
     def add_chairs(self):
         """ Add chairs around the dining table """
+        radius = self.table_radius + self.gap + self.chair_radius
         for chair in range(self.philosophers):
-            radius = self.table_radius + self.gap + self.chair_radius
             angle = chair * self.delta_angle_degrees
             chair_x, chair_y = self.transform_2xy(radius, angle)
             self.circle_at(chair_x, chair_y, self.chair_radius, self.config['chair.color'])
 
     def add_forks(self):
         """ Add forks around the table """
-        pass
+        angle_offset = self.delta_angle_degrees/2
+        radius = self.table_radius - self.fork_radius*2
+        for fork in range(self.philosophers):
+            angle = angle_offset + fork * self.delta_angle_degrees
+            fork_x, fork_y = self.transform_2xy(radius, angle)
+            self.circle_at(fork_x, fork_y, self.fork_radius, self.config['fork.color'])
 
     def add_philosophers(self):
         """ Add philosophers around the table """
@@ -211,9 +217,9 @@ class DiningPhilosophers(Animation):
         if isinstance(event, int):
             event = mvc.MVC.Event(event)
         if event.event is mvc.MVC.Event.Logger:
-            print(event.text)
+            self.my_parent.update(event)
         elif event.event is mvc.MVC.Event.Start:
-            print('Start')
+            self.my_parent.update(event)
         elif event.event is mvc.MVC.Event.Stop:
             print('Stop')
         elif event.event is mvc.MVC.Event.Step:
@@ -257,11 +263,14 @@ class GuiView(mvc.View):
 
     philosophers_config = {
         'title': 'Dining Philosophers',
+        'model': 'philosophers',
         'column': 1,
         'animation text': 'The Dining Room',
         'console text': 'Hello, Dining Philosophers',
 
-        'philosophers': 11,
+        'philosophers': 5,
+        'fork.radius': 10,
+        'fork.color': 'green',
         'table.radius': 75,
         'table.color': 'grey',
         'chair.radius': 20,
@@ -272,6 +281,7 @@ class GuiView(mvc.View):
 
     barbers_config = {
         'title': 'Sleeping Barber(s)',
+        'model': 'barbers',
         'column': 2,
         'animation text': 'The Barber Shop',
         'console text': 'Hello, Sleeping Barber(s)',
@@ -327,6 +337,7 @@ class GuiView(mvc.View):
         ani_dining.add_chairs()
         ani_dining.add_forks()
         ani_dining.add_waiter()
+        ani_dining.add_philosophers()
 
         # Instantiate SleepingBarbers and create the animation graphics
         ani_barbers = SleepingBarbers(parent=self,
