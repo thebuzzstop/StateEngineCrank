@@ -99,19 +99,33 @@ class Animation(object):
         return self.row
 
     def _button_start(self):
-        self.parent.update(mvc.MVC.Event.Start)
+        self.parent.update(self.config['event.class'](mvc.MVC.Event.Start))
 
     def _button_step(self):
-        self.parent.update(mvc.MVC.Event.Step)
+        self.parent.update(self.config['event.class'](mvc.MVC.Event.Step))
 
     def _button_stop(self):
-        self.parent.update(mvc.MVC.Event.Stop)
+        self.parent.update(self.config['event.class'](mvc.MVC.Event.Stop))
 
     def _button_pause(self):
-        self.parent.update(mvc.MVC.Event.Pause)
+        self.parent.update(self.config['event.class'](mvc.MVC.Event.Pause))
 
     def _button_resume(self):
-        self.parent.update(mvc.MVC.Event.Resume)
+        self.parent.update(self.config['event.class'](mvc.MVC.Event.Resume))
+
+
+class DiningPhilosopherEvents(mvc.MVC.Event):
+    """ Define events in terms of base class events """
+
+    def __init__(self, event, **kwargs):
+        mvc.MVC.Event.__init__(self, event, **kwargs)
+
+
+class SleepingBarberEvents(mvc.MVC.Event):
+    """ Define events in terms of base class events """
+
+    def __init__(self, event, **kwargs):
+        mvc.MVC.Event.__init__(self, event, **kwargs)
 
 
 class DiningPhilosophers(Animation):
@@ -215,19 +229,8 @@ class DiningPhilosophers(Animation):
             :param event: Animation event (mvc.MVC.Event...)
         """
         if isinstance(event, int):
-            event = mvc.MVC.Event(event)
-        if event.event is mvc.MVC.Event.Logger:
-            self.my_parent.update(event)
-        elif event.event is mvc.MVC.Event.Start:
-            self.my_parent.update(event)
-        elif event.event is mvc.MVC.Event.Stop:
-            print('Stop')
-        elif event.event is mvc.MVC.Event.Step:
-            print('Step')
-        elif event.event is mvc.MVC.Event.Pause:
-            print('Pause')
-        elif event.event is mvc.MVC.Event.Resume:
-            print('Resume')
+            event = self.config['event.class'](event)
+        self.my_parent.update(event)
 
 
 class SleepingBarbers(Animation):
@@ -245,6 +248,15 @@ class SleepingBarbers(Animation):
 
     def add_waiting_room(self):
         pass
+
+    def update(self, event):
+        """ Function to process all animation events
+
+            :param event: Animation event (mvc.MVC.Event...)
+        """
+        if isinstance(event, int):
+            event = self.config['event.class'](event)
+        self.my_parent.update(event)
 
 
 class GuiView(mvc.View):
@@ -267,6 +279,7 @@ class GuiView(mvc.View):
         'column': 1,
         'animation text': 'The Dining Room',
         'console text': 'Hello, Dining Philosophers',
+        'event.class': DiningPhilosopherEvents,
 
         'philosophers': 5,
         'fork.radius': 10,
@@ -285,6 +298,7 @@ class GuiView(mvc.View):
         'column': 2,
         'animation text': 'The Barber Shop',
         'console text': 'Hello, Sleeping Barber(s)',
+        'event.class': SleepingBarberEvents,
 
         'barbers': 4,
         'chair.radius': 10,
@@ -301,7 +315,10 @@ class GuiView(mvc.View):
 
             :param event: Event that occurred, we should do some kind of update
         """
-        print('Event: %s' % event)
+        if isinstance(event, DiningPhilosopherEvents):
+            self.models['philosophers'].update(event)
+        elif isinstance(event, SleepingBarberEvents):
+            self.models['barbers'].update(event)
 
     def run(self):
         """ GUI view running """

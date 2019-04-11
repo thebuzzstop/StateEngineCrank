@@ -40,10 +40,11 @@ import random
 from threading import Lock
 import time
 from typing import List
-from mvc import Model
 
 # Project imports
 from modules.PyState import StateMachine
+import mvc
+import gui
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -89,11 +90,11 @@ class ForkStatus(Enum):
     InUse = 1           #: Fork is currently in use by a philosopher
 
 
-class Waiter(Model):
+class Waiter(mvc.Model):
     """ Waiter class used to provide synchronization between philosophers wanting to eat """
 
     def __init__(self):
-        Model.__init__(self, name='Waiter')
+        mvc.Model.__init__(self, name='Waiter')
         self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
         self.id_ = None         #: last philosopher ID to make a request
 
@@ -165,7 +166,7 @@ def seconds(minimum, maximum):
 # ==============================================================================
 
 
-class UserCode(StateMachine, Model):
+class UserCode(StateMachine, mvc.Model):
 
     def __init__(self, user_id=None):
         """ UserCode Constructor
@@ -173,7 +174,7 @@ class UserCode(StateMachine, Model):
             :param user_id: unique identifier for this User
         """
         name = 'philosopher%s' % user_id
-        Model.__init__(self, name)
+        mvc.Model.__init__(self, name)
         StateMachine.__init__(self, sm_id=user_id, name=name, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
@@ -399,7 +400,7 @@ class Philosopher(UserCode):
         pass
 
 
-class DiningPhilosophers(Model):
+class DiningPhilosophers(mvc.Model):
     """ Main DiningPhilosophers Class """
 
     def __init__(self):
@@ -420,7 +421,24 @@ class DiningPhilosophers(Model):
         """ Called by Views and/or Controller to alert us to an event.
             We ignore for now.
         """
-        pass
+        if isinstance(event, int):
+            event = gui.DiningPhilosopherEvents(event)
+        if isinstance(event, gui.DiningPhilosopherEvents):
+            print('Dining: %s' % event)
+        else:
+            raise Exception('Dining: Unknown event type')
+
+        # process event received
+        if event.event is gui.DiningPhilosopherEvents.Start:
+            self.running = True
+        elif event.event is gui.DiningPhilosopherEvents.Stop:
+            self.running = False
+        elif event.event is gui.DiningPhilosopherEvents.Pause:
+            print('Pause: unhandled')
+        elif event.event is gui.DiningPhilosopherEvents.Resume:
+            print('Resume: unhandled')
+        elif event.event is gui.DiningPhilosopherEvents.Logger:
+            print('Logger: Event: %s / %s' % (event.text, event.data))
 
     def run(self):
         """ DiningPhilosophers Main program
@@ -447,6 +465,8 @@ class DiningPhilosophers(Model):
             loop += 1
             if loop % 10 is 0:
                 self.logger('Iterations: %s' % loop)
+            if self.running is False:
+                break
 
         # Tell philosophers to stop
         for p in self.philosophers:
