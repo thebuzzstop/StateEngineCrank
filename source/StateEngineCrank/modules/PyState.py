@@ -4,13 +4,9 @@ State machine class definitions to define StateEngineCrank implementation compon
 Main state machine processing loop.
 """
 
-from threading import Thread
 import time
 import queue
-
-import logging
-logging.basicConfig(level=logging.DEBUG, format='%(message)s')
-logging.debug('Loading modules: %s as %s' % (__file__, __name__))
+import mvc
 
 
 class StateFunction(object):
@@ -47,7 +43,7 @@ class StateTransition(object):
         self.transition = transition    #: transition function
 
 
-class StateMachine(Thread):
+class StateMachine(mvc.Model):
     """ The StateMachine class is the main execution engine """
 
     def __init__(self, sm_id=None, name=None, running=None, startup_state=None,
@@ -61,7 +57,7 @@ class StateMachine(Thread):
             :param function_table: state machine function table
             :param transition_table: state machine transition table
         """
-        Thread.__init__(self, target=self.run)
+        mvc.Model.__init__(self, name=name, target=self.run)
         self.id = sm_id
         self.name = name
         self.startup_state = startup_state
@@ -72,7 +68,7 @@ class StateMachine(Thread):
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
-        logging.debug('%s-SM StateMachine thread start' % self.name)
+        self.logger('%s-SM StateMachine thread start' % self.name)
         self.start()
 
     def run(self):
@@ -82,24 +78,24 @@ class StateMachine(Thread):
             * Stops running when the **running** boolean is False
         """
         # wait until our state machine has been activated
-        logging.debug('%s-SM StateMachine activating [%s]' % (self.name, self.current_state))
+        self.logger('%s-SM StateMachine activating [%s]' % (self.name, self.current_state))
         while not self.running:
             time.sleep(0.1)
-        logging.debug('%s-SM StateMachine activated [%s]' % (self.name, self.current_state))
+        self.logger('%s-SM StateMachine activated [%s]' % (self.name, self.current_state))
 
         # check for an enter function
         if self.enter_func is not None:
-            logging.debug('%s-SM StateMachine Enter Function [%s]' % (self.name, self.current_state))
+            self.logger('%s-SM StateMachine Enter Function [%s]' % (self.name, self.current_state))
             self.enter_func(self)
-            logging.debug('%s-SM StateMachine Enter+ Function [%s]' % (self.name, self.current_state))
+            self.logger('%s-SM StateMachine Enter+ Function [%s]' % (self.name, self.current_state))
 
-        logging.debug('%s-SM StateMachine running [%s]' % (self.name, self.current_state))
+        self.logger('%s-SM StateMachine running [%s]' % (self.name, self.current_state))
         while self.running:
             if not self.event_queue.empty():
                 self.event(self.event_queue.get_nowait())
             else:
                 self.do()
-        logging.debug('%s-SM StateMachine exiting [%s]' % (self.name, self.current_state))
+        self.logger('%s-SM StateMachine exiting [%s]' % (self.name, self.current_state))
 
     def do(self):
         """ Execute current state **do** function if it exists """
@@ -129,14 +125,14 @@ class StateMachine(Thread):
         """
         if event is None:
             return
-        logging.debug('%s-SM Event %s [%s]' % (self.name, event, self.current_state))
+        self.logger('%s-SM Event %s [%s]' % (self.name, event, self.current_state))
         # lookup current state in transitions table and check for any transitions
         # associated with the newly received event
         transition_table = self.state_transition_table[self.current_state]
         if event not in transition_table:
             return
         transition = None
-        logging.debug('%s-SM Event+ %s' % (self.name, event))
+        self.logger('%s-SM Event+ %s' % (self.name, event))
 
         # Event entries in the transition table can be either a single transition with a
         # guard function or a list of transitions, each with a guard function. The first
@@ -167,7 +163,7 @@ class StateMachine(Thread):
             return
 
         # either no guard function or guard function is true
-        logging.debug('%s-SM Event++ %s' % (self.name, event))
+        self.logger('%s-SM Event++ %s' % (self.name, event))
 
         # Execute state exit function if it is not None
         exit_func = self.state_function_table[self.current_state]['exit']
@@ -180,7 +176,7 @@ class StateMachine(Thread):
 
         # Enter next state
         self.current_state = transition['state2']
-        logging.debug('%s-SM Event+++ %s [%s]' % (self.name, event, self.current_state))
+        self.logger('%s-SM Event+++ %s [%s]' % (self.name, event, self.current_state))
 
         # Execute state enter function if it is not None
         enter_func = self.state_function_table[self.current_state]['enter']
@@ -189,3 +185,11 @@ class StateMachine(Thread):
 
         # Setup do function
         self.do_func = self.state_function_table[self.current_state]['do']
+
+    def update(self, event):
+        """ Called by View/Controller to tell us to update
+            We currently have nothing to do.
+
+            :param event: View/Controller event to be processed
+        """
+        pass

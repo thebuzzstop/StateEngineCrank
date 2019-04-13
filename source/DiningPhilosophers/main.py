@@ -418,27 +418,25 @@ class DiningPhilosophers(mvc.Model):
         waiter.register(view)
 
     def update(self, event):
-        """ Called by Views and/or Controller to alert us to an event.
-            We ignore for now.
-        """
+        """ Called by Views and/or Controller to alert us to an event. """
         if isinstance(event, int):
             event = gui.DiningPhilosopherEvents(event)
-        if isinstance(event, gui.DiningPhilosopherEvents):
-            print('Dining: %s' % event)
-        else:
+        if not isinstance(event, gui.DiningPhilosopherEvents):
             raise Exception('Dining: Unknown event type')
 
         # process event received
         if event.event is gui.DiningPhilosopherEvents.Start:
+            self.logger('Start')
             self.running = True
         elif event.event is gui.DiningPhilosopherEvents.Stop:
+            self.logger('Stop')
             self.running = False
         elif event.event is gui.DiningPhilosopherEvents.Pause:
-            print('Pause: unhandled')
+            self.logger('Pause: unhandled')
         elif event.event is gui.DiningPhilosopherEvents.Resume:
-            print('Resume: unhandled')
+            self.logger('Resume: unhandled')
         elif event.event is gui.DiningPhilosopherEvents.Logger:
-            print('Logger: Event: %s / %s' % (event.text, event.data))
+            self.logger('Event: %s / %s' % (event.text, event.data))
 
     def run(self):
         """ DiningPhilosophers Main program

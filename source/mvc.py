@@ -3,7 +3,6 @@
 # System Imports
 from abc import ABC, abstractmethod
 import threading
-import enum
 
 # Project Imports
 import Defines
@@ -61,6 +60,7 @@ class MVC(ABC, threading.Thread):
     @abstractmethod
     def notify(self, event):
         """ Called to send a notification of the occurrence of event
+            Events are outbound.
 
             :param event: Event to be sent to those in registry
         """
@@ -69,6 +69,7 @@ class MVC(ABC, threading.Thread):
     @abstractmethod
     def update(self, event):
         """ Called to notify us of the occurrence of event
+            Events are inbound.
 
             :param event: Event to be processed
         """
@@ -94,11 +95,42 @@ class MVC(ABC, threading.Thread):
         threading.Thread.join(self, timeout)
 
 
-class Controller(MVC):
+class Logger(object):
+    """ Logger class for simplified logging to console """
+
+    def __init__(self, parent):
+        self.parent = parent
+        if not hasattr(self, 'name'):
+            if hasattr(parent, 'name'):
+                self.name = parent.name
+            else:
+                self.name = ''
+
+    def logger(self, text):
+        """ Function to support console logging
+
+            :param text: Text to be displayed
+        """
+        # if there are no views then just print
+        if not hasattr(self.parent, 'views'):
+            print('logger[%s]: %s' % (self.name, text))
+
+        # parent has views
+        elif len(self.parent.views.keys()) > 0:
+            for v in self.parent.views.keys():
+                if hasattr(self.parent.views[v], 'write'):
+                    self.parent.views[v].write(text)
+        else:
+            # parent has no views
+            print('logger[%s]: %s' % (self.name, text))
+
+
+class Controller(MVC, Logger):
     """ Base class definition of a Controller """
 
     def __init__(self, name=None, target=None):
-        super().__init__(name=name, target=target)
+        MVC.__init__(self, name=name, target=target)
+        Logger.__init__(self, self)
         self.models = {}    #: dictionary of models under our control
         self.views = {}     #: dictionary of views to be updated
 
@@ -117,6 +149,8 @@ class Controller(MVC):
 
     def notify(self, event):
         """ Called to send notification of the occurrence of event
+            We deliver Model Events to Views.
+            We deliver View Events to Models.
 
             :param event: Event to be sent
         """
@@ -133,11 +167,12 @@ class Controller(MVC):
         pass
 
 
-class Model(MVC):
+class Model(MVC, Logger):
     """ Base class definition of a Model """
 
     def __init__(self, name=None, target=None):
-        super().__init__(name=name, target=target)
+        MVC.__init__(self, name=name, target=target)
+        Logger.__init__(self, self)
         self.views = {}         #: dictionary of views we update
 
     def register(self, view):
@@ -151,23 +186,13 @@ class Model(MVC):
         else:
             raise exceptions.InvalidView(view)
 
-    def logger(self, text):
-        """ Function to support console logging
-
-            :param text: Text to be displayed on registered console view
-        """
-        if 'console' in self.views.keys():
-            self.views['console'].write(text)
-        else:
-            print('logger: %s' % text)
-
     def notify(self, event):
         """ Called by us to notify Views about a Model event
 
             :param event: Model event to be sent
         """
-        for v in self.views:
-            v.update(event)
+        for vk in self.views.keys():
+            self.views[vk].update(event)
 
     @abstractmethod
     def update(self, event):
@@ -185,11 +210,12 @@ class Model(MVC):
         pass
 
 
-class View(MVC):
+class View(MVC, Logger):
     """ Base class definition of a View """
 
     def __init__(self, name=None, target=None):
-        super().__init__(name=name, target=target)
+        MVC.__init__(self, name=name, target=target)
+        Logger.__init__(self, self)
         self.models = {}        #: our models
 
     def register(self, model):

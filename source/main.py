@@ -40,20 +40,16 @@ class Main(Controller):
     def __init__(self):
         super().__init__('State Engine Main')
 
-        # instantiate models
-        self.philosophers = philosophers.DiningPhilosophers()
-        self.barbers = barbers.SleepingBarber()
+        # dictionary of models
         self.models = {
-            'philosophers': self.philosophers,
-            'barbers': self.barbers
+            'philosophers': philosophers.DiningPhilosophers(),
+            'barbers': barbers.SleepingBarber()
         }
 
-        # instantiate views
-        self.console = ConsoleView()
-        self.gui = GuiView()
+        # dictionary of views
         self.views = {
-            'console': self.console,
-            'gui': self.gui
+            'console': ConsoleView(),
+            'gui': GuiView()
         }
 
         # register views and models

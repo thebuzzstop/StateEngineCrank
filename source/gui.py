@@ -259,6 +259,23 @@ class SleepingBarbers(Animation):
         self.my_parent.update(event)
 
 
+class GuiConsoleView(mvc.View):
+    """ GUI Console View """
+
+    def __init__(self, name, widget):
+        super().__init__('%s_console' % name)
+        self.widget = widget
+
+    def update(self, event):
+        pass
+
+    def run(self):
+        pass
+
+    def logger(self, text):
+        print(text)
+
+
 class GuiView(mvc.View):
     """ StateEngineCrank GUI View """
 
@@ -319,18 +336,26 @@ class GuiView(mvc.View):
             self.models['philosophers'].update(event)
         elif isinstance(event, SleepingBarberEvents):
             self.models['barbers'].update(event)
+        else:
+            print(event)
 
     def run(self):
-        """ GUI view running """
+        # wait for models to register with
+        while len(self.models) is 0:
+            time.sleep(0.010)
+
         # wait until we are running:
         while not self.running:
             time.sleep(Defines.Times.Waiting)
+
         # start the GUI thread
         self.gui_thread = threading.Thread(target=self.tk_run, name='tk_gui')
         self.gui_thread.start()
+
         # loop until no longer running
         while self.running:
             time.sleep(Defines.Times.Running)
+
         # stop the GUI
         self.gui_thread.join(timeout=Defines.Times.Stopping)
 
@@ -338,30 +363,35 @@ class GuiView(mvc.View):
         print(text)
 
     def tk_run(self):
-        """ Main routine for Tkinter GUI """
+        """ GUI view running - setup basic framework """
         self.root = Tk()
         self.root.title(Defines.TITLE)
         self.mainframe = ttk.Frame(self.root, padding="3 3 12 12")     # width=800, height=800)
         self.mainframe.grid(row=1, column=1, sticky=(N, W, E, S))
 
-        # Instantiate DiningPhilosophers and create the animation graphics
-        ani_dining = DiningPhilosophers(parent=self,
-                                        root=self.root,
-                                        mainframe=self.mainframe,
-                                        config=self.philosophers_config,
-                                        common=self.common_config)
+        # instantiate our GUI animation views
+        ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,
+                                        config=self.philosophers_config, common=self.common_config)
+        dining_gui_console = GuiConsoleView('philosophers', ani_dining)
+
+        ani_barbers = SleepingBarbers(parent=self, root=self.root, mainframe=self.mainframe,
+                                      config=self.barbers_config, common=self.common_config)
+        barbers_gui_console = GuiConsoleView('barbers', ani_barbers)
+
+        # register our console views
+        if self.philosophers_config['model'] in self.models:
+            self.models[self.philosophers_config['model']].register(dining_gui_console)
+        if self.barbers_config['model'] in self.models:
+            self.models[self.barbers_config['model']].register(barbers_gui_console)
+
+        # Populate DiningPhilosophers animation graphics
         ani_dining.add_table()
         ani_dining.add_chairs()
         ani_dining.add_forks()
         ani_dining.add_waiter()
         ani_dining.add_philosophers()
 
-        # Instantiate SleepingBarbers and create the animation graphics
-        ani_barbers = SleepingBarbers(parent=self,
-                                      root=self.root,
-                                      mainframe=self.mainframe,
-                                      config=self.barbers_config,
-                                      common=self.common_config)
+        # Populate SleepingBarbers animation graphics
         ani_barbers.draw_barbershop()
         ani_barbers.add_barbers()
         ani_barbers.add_waiting_room()
