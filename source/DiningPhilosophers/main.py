@@ -77,12 +77,12 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 15            #: minimum number of seconds to eat
-    Eat_Max = 45            #: maximum number of seconds to eat
-    Think_Min = 15          #: minimum number of seconds to think
-    Think_Max = 45          #: maximum number of seconds to think
-    Philosophers = 4        #: number of philosophers dining
-    Dining_Loops = 100      #: number of main loops for dining
+    Eat_Min = 10            #: minimum number of seconds to eat
+    Eat_Max = 30            #: maximum number of seconds to eat
+    Think_Min = 10          #: minimum number of seconds to think
+    Think_Max = 30          #: maximum number of seconds to think
+    Philosophers = 5        #: number of philosophers dining
+    Dining_Loops = 200      #: number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -98,18 +98,33 @@ class Waiter(mvc.Model):
         self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
         self.id_ = None         #: last philosopher ID to make a request
 
+        self.mvc = mvc.Event()  #: mvc Event registry
+        self.mvc.register_class(class_name=self.name)
+        self.mvc.register_event(self.name, 'Starting', 'Model')
+        self.mvc.register_event(self.name, 'Running', 'Model')
+        self.mvc.register_event(self.name, 'In', 'Model')
+        self.mvc.register_event(self.name, 'Out', 'Model')
+        self.mvc.register_event(self.name, 'Acquire', 'Model')
+        self.mvc.register_event(self.name, 'LeftFork', 'Model')
+        self.mvc.register_event(self.name, 'RightFork', 'Model')
+        self.mvc.register_event(self.name, 'Release', 'Model')
+        self.mvc.register_event(self.name, 'Stopping', 'Model')
+
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
         pass
 
     def run(self):
         # see if we are not running yet
+        self.notify(self.mvc.events[self.name]['Starting'])
         if not self.running:
             while not self.running:
                 time.sleep(1)
         # run until we aren't then exit
+        self.notify(self.mvc.events[self.name]['Running'])
         while self.running:
             time.sleep(1)
+        self.notify(self.mvc.events[self.name]['Stopping'])
 
     def request(self, id_, left_fork, right_fork):
         """ Function called when a Philosopher wants to eat.
@@ -127,11 +142,15 @@ class Waiter(mvc.Model):
         """
         self.id_ = id_
         self.logger('SM[%s] waiter[in]' % id_)
+        self.notify(self.mvc.events[self.name]['In'])
         self.lock.acquire()
+        self.notify(self.mvc.events[self.name]['LeftFork'])
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
+        self.notify(self.mvc.events[self.name]['RightFork'])
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
+        self.notify(self.mvc.events[self.name]['Out'])
         self.logger('SM[%s] waiter[out]' % id_)
 
     def thank_you(self):
@@ -140,6 +159,7 @@ class Waiter(mvc.Model):
             We use this opportunity to release the Waiter lock
         """
         self.logger('SM[%s] waiter release' % self.id_)
+        self.notify(self.mvc.events[self.name]['Release'])
         self.lock.release()
 
 
@@ -183,6 +203,12 @@ class UserCode(StateMachine, mvc.Model):
         self.thinking_seconds = 0   #: number of seconds spent thinking
         self.hungry_seconds = 0     #: number of seconds spent hungry
         self.event_timer = 0        #: timer used to time eating & thinking
+
+        self.mvc = mvc.Event()
+        self.mvc.register_class(name)
+        for e in Events:
+            self.mvc.register_event(class_name=name, event_name=e.name, event_type='model',
+                                    text='%s[%s][%s]' % (name, e.name, e.value), data=e.value)
 
         self.initial_state = None   #: starting state for a philosopher
         if random.randint(0, 1) == 0:
@@ -405,8 +431,12 @@ class DiningPhilosophers(mvc.Model):
 
     def __init__(self):
         super().__init__(name='philosophers', target=self.run)
+        #: event processing
+        self.events = mvc.Event()
+
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
+
         # Instantiate and initialize all philosophers
         for id_ in range(Config.Philosophers):
             self.philosophers.append(Philosopher(philosopher_id=id_))
@@ -419,23 +449,21 @@ class DiningPhilosophers(mvc.Model):
 
     def update(self, event):
         """ Called by Views and/or Controller to alert us to an event. """
-        if isinstance(event, int):
-            event = gui.DiningPhilosopherEvents(event)
-        if not isinstance(event, gui.DiningPhilosopherEvents):
+        if event['class'] is not self.name:
             raise Exception('Dining: Unknown event type')
 
         # process event received
-        if event.event is gui.DiningPhilosopherEvents.Start:
+        if event['event'] is self.events.events[self.name]['Start']['event']:
             self.logger('Start')
             self.running = True
-        elif event.event is gui.DiningPhilosopherEvents.Stop:
+        elif event['event'] is self.events.events[self.name]['Stop']['event']:
             self.logger('Stop')
             self.running = False
-        elif event.event is gui.DiningPhilosopherEvents.Pause:
+        elif event['event'] is self.events.events[self.name]['Pause']['event']:
             self.logger('Pause: unhandled')
-        elif event.event is gui.DiningPhilosopherEvents.Resume:
+        elif event['event'] is self.events.events[self.name]['Resume']['event']:
             self.logger('Resume: unhandled')
-        elif event.event is gui.DiningPhilosopherEvents.Logger:
+        elif event['event'] is self.events.events[self.name]['Logger']['event']:
             self.logger('Event: %s / %s' % (event.text, event.data))
 
     def run(self):

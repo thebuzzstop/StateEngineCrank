@@ -1,6 +1,7 @@
 """ StateEngineCrank Tkinter GUI View """
 
 # System imports
+import datetime
 import threading
 from tkinter import *
 from tkinter import ttk
@@ -12,49 +13,60 @@ import Defines
 import mvc
 
 
-class Animation(object):
+class Animation(mvc.View):
     """ Common definition of a GUI Animation View """
 
-    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
-        super().__init__()
-        self.parent=parent
+    def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
+        mvc.View.__init__(self, name=('Animation[%s]' % config['model']), parent=parent)
         self.root = root
         self.mainframe = mainframe
         self.config = config
         self.common = common
-        self.row = 0
         self.col = self.config['column']
 
         # Top level frame for this simulation
-        self.ani_frame = ttk.Frame(self.mainframe, padding="3 3 12 12")
+        self.ani_frame_row_ = -1
+        self.ani_frame = ttk.Frame(self.mainframe, padding="8 8 8 8", name='ani_frame%s' % self.col)
         self.ani_frame['borderwidth'] = 4
         self.ani_frame['relief'] = 'sunken'
-        self.ani_frame.grid(row=self._next_row(), column=config['column'], sticky=self.common['frame stick'])
 
-        self.ani_label = Label(self.ani_frame, text=config['title'])
-        self.ani_label.grid(row=self._next_row(), column=config['column'], sticky=self.common['label stick'])
+        self.ani_frame_row = self._next_animation_frame_row()
+        self.ani_frame.grid(row=self.ani_frame_row, column=config['column'], sticky=self.common['frame stick'])
+        self.ani_frame.rowconfigure(self.ani_frame_row, weight=1)
+
+        self.ani_label = Label(self.ani_frame, text=config['title'], name='ani_label%s' % self.col)
+        self.ani_label_row = self._next_animation_frame_row()
+        self.ani_label.grid(row=self.ani_label_row, column=config['column'], sticky=self.common['label stick'])
 
         # Top level frame for this simulation animation
-        self.ani_animation_frame = ttk.Frame(self.ani_frame, padding="3 3 12 12")
-        self.ani_animation_frame.grid(row=self._next_row(), column=config['column'],
+        self.ani_animation_frame = ttk.Frame(self.ani_frame, padding="3 3 12 12",
+                                             name='ani_animation_frame%s' % self.col)
+        self.ani_animation_frame_row = self._next_animation_frame_row()
+        self.ani_animation_frame.grid(row=self.ani_animation_frame_row, column=config['column'],
                                       sticky=self.common['animation stick'])
         self.ani_animation_frame['borderwidth'] = 4
         self.ani_animation_frame['relief'] = 'sunken'
 
-        self.ani_animation_text = Label(self.ani_animation_frame, text=self.config['animation text'])
-        self.ani_animation_text.grid(row=0, column=0)
+        self.ani_animation_title = Label(self.ani_animation_frame, text=self.config['animation text'],
+                                         name='ani_animation_text%s' % self.col)
+        self.ani_animation_title.grid()
 
         # Define a canvas where animation graphics can be drawn
         self.ani_canvas = Canvas(self.ani_animation_frame,
                                  width=self.common['animation']['width'],
-                                 height=self.common['animation']['height'])
+                                 height=self.common['animation']['height'],
+                                 name='ani_canvas%s' % self.col)
+        self.ani_canvas.grid()
 
         # Calculate the center of the animation canvas
         self.ani_center = (self.common['animation']['width']/2, self.common['animation']['height']/2)
 
         # Buttons and controls frame
-        self.ani_buttons_frame = ttk.Frame(self.ani_frame)
-        self.ani_buttons_frame.grid(row=self._next_row(), column=config['column'], sticky=self.common['buttons stick'])
+        self.ani_buttons_frame = ttk.Frame(self.ani_frame, name='ani_buttons_frame%s' % self.col)
+        self.ani_buttons_frame_row = self._next_animation_frame_row()
+        self.ani_buttons_frame.grid(row=self.ani_buttons_frame_row,
+                                    column=config['column'],
+                                    sticky=self.common['buttons stick'])
         self.ani_buttons_frame['borderwidth'] = 4
         self.ani_buttons_frame['relief'] = 'raised'
 
@@ -68,71 +80,84 @@ class Animation(object):
 
         self.ani_buttons = {}
         column = -1
-        button_row = self._next_row()
+        self.button_row = self._next_animation_frame_row()
         for b in self.buttons:
             column += 1
             self.ani_buttons[b[0]] = ttk.Button(self.ani_buttons_frame, text=b[0], command=b[1])
-            self.ani_buttons[b[0]].grid(row=button_row, column=column)
+            self.ani_buttons[b[0]].grid(row=self.button_row, column=column)
 
         # Console for text and logging output
-        self.ani_console_label = Label(self.ani_frame, text='Console Log')
-        self.ani_console_label.grid(row=self._next_row(),
+        self.ani_console_label = Label(self.ani_frame, text='Console Log', name='ani_console_label%s' % self.col)
+        self.ani_console_label_row = self._next_animation_frame_row()
+        self.ani_console_row = self.ani_console_label_row
+        self.ani_console_label.grid(row=self.ani_console_row,
                                     column=self.col,
                                     sticky=self.common['console label stick'])
         self.ani_console = Text(self.ani_frame,
                                 height=self.common['console']['height'],
-                                width=self.common['console']['width'])
-        self.ani_console.grid(row=self._next_row(),
+                                width=self.common['console']['width'],
+                                name='ani_console%s' % self.col)
+        self.ani_console_row = self._next_animation_frame_row()
+        self.ani_console.grid(row=self.ani_console_row,
                               column=self.col,
                               sticky=self.common['console stick'])
+        self.ani_console.rowconfigure(self.ani_console_row, weight=2)
+
         self.ani_console.insert('2.0', config['console text'])
+        self.ani_console.insert(END, '\n\n')
 
         # Set frame weights
         self.root.grid_columnconfigure(self.col, weight=1)
         self.mainframe.grid_columnconfigure(self.col, weight=1)
+        self.ani_animation_frame.grid_rowconfigure(self.ani_animation_frame_row, weight=1)
         self.ani_animation_frame.grid_columnconfigure(self.col, weight=1)
+        self.ani_frame.grid_rowconfigure(self.ani_frame_row, weight=1)
         self.ani_frame.grid_columnconfigure(self.col, weight=1)
+        self.ani_console.grid_rowconfigure(self.ani_console_row, weight=1)
         self.ani_console.grid_columnconfigure(self.col, weight=1)
 
-    def _next_row(self):
-        self.row = self.row + 1
-        return self.row
+        self.mvc_events = mvc.Event()
+        self.mvc_events.register_class(config['event.class'])
+        self.mvc_events.register_event(config['event.class'], 'Start', event_type='view', text='Start')
+        self.mvc_events.register_event(config['event.class'], 'Step', event_type='view', text='Step')
+        self.mvc_events.register_event(config['event.class'], 'Stop', event_type='view', text='Stop')
+        self.mvc_events.register_event(config['event.class'], 'Pause', event_type='view', text='Pause')
+        self.mvc_events.register_event(config['event.class'], 'Resume', event_type='view', text='Resume')
+        self.mvc_events.register_event(config['event.class'], 'Logger', event_type='view', text='Logger')
+
+    def run(self):
+        """ Satisfy base class requirements """
+        pass
+
+    def update(self, event):
+        """ Satisfy base class requirements """
+        pass
+
+    def _next_animation_frame_row(self):
+        self.ani_frame_row_ += 1
+        return self.ani_frame_row_
 
     def _button_start(self):
-        self.parent.update(self.config['event.class'](mvc.MVC.Event.Start))
+        self.parent.update(self.mvc_events.events[self.config['event.class']]['Start'])
 
     def _button_step(self):
-        self.parent.update(self.config['event.class'](mvc.MVC.Event.Step))
+        self.parent.update(self.mvc_events.events[self.config['event.class']]['Step'])
 
     def _button_stop(self):
-        self.parent.update(self.config['event.class'](mvc.MVC.Event.Stop))
+        self.parent.update(self.mvc_events.events[self.config['event.class']]['Stop'])
 
     def _button_pause(self):
-        self.parent.update(self.config['event.class'](mvc.MVC.Event.Pause))
+        self.parent.update(self.mvc_events.events[self.config['event.class']]['Pause'])
 
     def _button_resume(self):
-        self.parent.update(self.config['event.class'](mvc.MVC.Event.Resume))
-
-
-class DiningPhilosopherEvents(mvc.MVC.Event):
-    """ Define events in terms of base class events """
-
-    def __init__(self, event, **kwargs):
-        mvc.MVC.Event.__init__(self, event, **kwargs)
-
-
-class SleepingBarberEvents(mvc.MVC.Event):
-    """ Define events in terms of base class events """
-
-    def __init__(self, event, **kwargs):
-        mvc.MVC.Event.__init__(self, event, **kwargs)
+        self.parent.update(self.mvc_events.events[self.config['event.class']]['Resume'])
 
 
 class DiningPhilosophers(Animation):
     """ Logic to Manage Dining Philosophers Simulation Animation """
 
-    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
-        super().__init__(self, root, mainframe, config, common)
+    def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
+        super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
         self.my_parent = parent
         self.philosophers = self.config['philosophers']
         self.canvas_x_mid, self.canvas_y_mid = self.ani_center
@@ -226,19 +251,18 @@ class DiningPhilosophers(Animation):
     def update(self, event):
         """ Function to process all animation events
 
-            :param event: Animation event (mvc.MVC.Event...)
+            :param event: Animation event (mvc.Event)
         """
-        if isinstance(event, int):
-            event = self.config['event.class'](event)
-        self.my_parent.update(event)
+        if hasattr(self, 'parent'):
+            self.my_parent.update(event)
+        self.notify(event)
 
 
 class SleepingBarbers(Animation):
     """ Logic to Manage Sleeping Barber(s) Simulation Animation """
 
-    def __init__(self, parent=None, root=None, mainframe=None, config=None, common=None):
-        super().__init__(self, root, mainframe, config, common)
-        self.my_parent = parent
+    def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
+        super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
 
     def draw_barbershop(self):
         self.ani_canvas.grid()
@@ -252,11 +276,11 @@ class SleepingBarbers(Animation):
     def update(self, event):
         """ Function to process all animation events
 
-            :param event: Animation event (mvc.MVC.Event...)
+            :param event: Animation event (mvc.Event)
         """
-        if isinstance(event, int):
-            event = self.config['event.class'](event)
-        self.my_parent.update(event)
+        if hasattr(self, 'parent'):
+            self.parent.update(event)
+        self.notify(event)
 
 
 class GuiConsoleView(mvc.View):
@@ -267,7 +291,9 @@ class GuiConsoleView(mvc.View):
         self.widget = widget
 
     def update(self, event):
-        pass
+        ts = event['datetime'].strftime('%H:%M:%S:%f')
+        msg = '%s [%s] %s\n' % (ts, event['class'], event['text'])
+        self.widget.ani_console.insert(END, msg)
 
     def run(self):
         pass
@@ -293,10 +319,10 @@ class GuiView(mvc.View):
     philosophers_config = {
         'title': 'Dining Philosophers',
         'model': 'philosophers',
-        'column': 1,
+        'column': 0,
         'animation text': 'The Dining Room',
         'console text': 'Hello, Dining Philosophers',
-        'event.class': DiningPhilosopherEvents,
+        'event.class': 'philosophers',
 
         'philosophers': 5,
         'fork.radius': 10,
@@ -312,10 +338,10 @@ class GuiView(mvc.View):
     barbers_config = {
         'title': 'Sleeping Barber(s)',
         'model': 'barbers',
-        'column': 2,
+        'column': 1,
         'animation text': 'The Barber Shop',
         'console text': 'Hello, Sleeping Barber(s)',
-        'event.class': SleepingBarberEvents,
+        'event.class': 'barbers',
 
         'barbers': 4,
         'chair.radius': 10,
@@ -332,12 +358,26 @@ class GuiView(mvc.View):
 
             :param event: Event that occurred, we should do some kind of update
         """
-        if isinstance(event, DiningPhilosopherEvents):
+        if event['class'].lower() == 'philosophers':
             self.models['philosophers'].update(event)
-        elif isinstance(event, SleepingBarberEvents):
+        elif event['class'].lower() == 'waiter':
+            self.update_gui('waiter', event)
+        elif event['class'].lower() == 'barbers':
             self.models['barbers'].update(event)
+        elif event['class'].lower() == 'mvc':
+            self.update_gui('mvc', event)
+        elif event['class'].lower() == 'sm':
+            pass
         else:
             print(event)
+
+    def update_gui(self, gui, event):
+        # print('%s[%s] %s -> %s' % (event.sm_name, event.sm_event, event.sim_event, event.sim_state))
+        if gui is 'waiter':
+            self.update_dining_console(event)
+
+    def update_dining_console(self, event):
+        pass
 
     def run(self):
         # wait for models to register with
@@ -366,8 +406,11 @@ class GuiView(mvc.View):
         """ GUI view running - setup basic framework """
         self.root = Tk()
         self.root.title(Defines.TITLE)
-        self.mainframe = ttk.Frame(self.root, padding="3 3 12 12")     # width=800, height=800)
-        self.mainframe.grid(row=1, column=1, sticky=(N, W, E, S))
+
+        self.mainframe = ttk.Frame(self.root, padding="10 10 10 10", name='mainframe')     # width=800, height=800)
+        self.mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
+        self.mainframe.grid_rowconfigure(0, weight=10)
+        self.mainframe.grid_columnconfigure(0, weight=10)
 
         # instantiate our GUI animation views
         ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,

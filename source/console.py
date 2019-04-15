@@ -33,7 +33,7 @@ class ConsoleView(mvc.View, queue.Queue):
         while not self.running:
             time.sleep(Defines.Times.Waiting)
         # loop until no longer running
-        while self.running and not self._stopevent.isSet():
+        while self.running and not self._stop_event.isSet():
             time.sleep(Defines.Times.Running)
             while not self.empty():
                 print(self.get_nowait())
