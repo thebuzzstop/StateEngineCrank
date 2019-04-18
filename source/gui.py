@@ -24,6 +24,9 @@ class Animation(mvc.View):
         self.common = common
         self.col = self.config['column']
 
+        # Mainframe
+        self.mainframe.grid(row=0, column=self.config['column'], sticky=self.common['mainframe.stick'])
+
         # Top level frame for this simulation
         self.ani_frame_row_ = -1
         self.ani_frame = ttk.Frame(self.mainframe, padding="8 8 8 8", name='ani_frame%s' % self.col)
@@ -31,23 +34,23 @@ class Animation(mvc.View):
         self.ani_frame['relief'] = 'sunken'
 
         self.ani_frame_row = self._next_animation_frame_row()
-        self.ani_frame.grid(row=self.ani_frame_row, column=config['column'], sticky=self.common['frame stick'])
+        self.ani_frame.grid(row=self.ani_frame_row, column=config['column'], sticky=self.common['frame.stick'])
         self.ani_frame.rowconfigure(self.ani_frame_row, weight=1)
 
         self.ani_label = Label(self.ani_frame, text=config['title'], name='ani_label%s' % self.col)
         self.ani_label_row = self._next_animation_frame_row()
-        self.ani_label.grid(row=self.ani_label_row, column=config['column'], sticky=self.common['label stick'])
+        self.ani_label.grid(row=self.ani_label_row, column=config['column'], sticky=self.common['label.stick'])
 
         # Top level frame for this simulation animation
         self.ani_animation_frame = ttk.Frame(self.ani_frame, padding="3 3 12 12",
                                              name='ani_animation_frame%s' % self.col)
         self.ani_animation_frame_row = self._next_animation_frame_row()
         self.ani_animation_frame.grid(row=self.ani_animation_frame_row, column=config['column'],
-                                      sticky=self.common['animation stick'])
+                                      sticky=self.common['animation.stick'])
         self.ani_animation_frame['borderwidth'] = 4
         self.ani_animation_frame['relief'] = 'sunken'
 
-        self.ani_animation_title = Label(self.ani_animation_frame, text=self.config['animation text'],
+        self.ani_animation_title = Label(self.ani_animation_frame, text=self.config['animation.text'],
                                          name='ani_animation_text%s' % self.col)
         self.ani_animation_title.grid()
 
@@ -66,7 +69,7 @@ class Animation(mvc.View):
         self.ani_buttons_frame_row = self._next_animation_frame_row()
         self.ani_buttons_frame.grid(row=self.ani_buttons_frame_row,
                                     column=config['column'],
-                                    sticky=self.common['buttons stick'])
+                                    sticky=self.common['buttons.stick'])
         self.ani_buttons_frame['borderwidth'] = 4
         self.ani_buttons_frame['relief'] = 'raised'
 
@@ -92,7 +95,7 @@ class Animation(mvc.View):
         self.ani_console_row = self.ani_console_label_row
         self.ani_console_label.grid(row=self.ani_console_row,
                                     column=self.col,
-                                    sticky=self.common['console label stick'])
+                                    sticky=self.common['console.label.stick'])
         self.ani_console = Text(self.ani_frame,
                                 height=self.common['console']['height'],
                                 width=self.common['console']['width'],
@@ -100,14 +103,13 @@ class Animation(mvc.View):
         self.ani_console_row = self._next_animation_frame_row()
         self.ani_console.grid(row=self.ani_console_row,
                               column=self.col,
-                              sticky=self.common['console stick'])
+                              sticky=self.common['console.stick'])
         self.ani_console.rowconfigure(self.ani_console_row, weight=2)
 
-        self.ani_console.insert('2.0', config['console text'])
+        self.ani_console.insert('2.0', config['console.text'])
         self.ani_console.insert(END, '\n\n')
 
         # Set frame weights
-        self.root.grid_columnconfigure(self.col, weight=1)
         self.mainframe.grid_columnconfigure(self.col, weight=1)
         self.ani_animation_frame.grid_rowconfigure(self.ani_animation_frame_row, weight=1)
         self.ani_animation_frame.grid_columnconfigure(self.col, weight=1)
@@ -306,22 +308,23 @@ class GuiView(mvc.View):
     """ StateEngineCrank GUI View """
 
     common_config = {
+        'mainframe.stick': (N, S, E, W),
         'animation': {'width': 360, 'height': 360},
-        'animation stick': (N, S, E, W),
-        'buttons stick': (W),
+        'animation.stick': N,
+        'buttons.stick': N,
         'console': {'width': 40, 'height': 10},
-        'console stick': (N, S, E, W),
-        'console label stick': (W),
-        'frame stick': (N, S, E, W),
-        'label stick': (N, W),
+        'console.stick': (N, S, E, W),
+        'console.label.stick': N,
+        'frame.stick': (N, S, E, W),
+        'label.stick': N,
     }
 
     philosophers_config = {
         'title': 'Dining Philosophers',
         'model': 'philosophers',
         'column': 0,
-        'animation text': 'The Dining Room',
-        'console text': 'Hello, Dining Philosophers',
+        'animation.text': 'The Dining Room',
+        'console.text': 'Hello, Dining Philosophers',
         'event.class': 'philosophers',
 
         'philosophers': 5,
@@ -339,8 +342,8 @@ class GuiView(mvc.View):
         'title': 'Sleeping Barber(s)',
         'model': 'barbers',
         'column': 1,
-        'animation text': 'The Barber Shop',
-        'console text': 'Hello, Sleeping Barber(s)',
+        'animation.text': 'The Barber Shop',
+        'console.text': 'Hello, Sleeping Barber(s)',
         'event.class': 'barbers',
 
         'barbers': 4,
@@ -406,11 +409,16 @@ class GuiView(mvc.View):
         """ GUI view running - setup basic framework """
         self.root = Tk()
         self.root.title(Defines.TITLE)
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
         self.mainframe = ttk.Frame(self.root, padding="10 10 10 10", name='mainframe')     # width=800, height=800)
-        self.mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
-        self.mainframe.grid_rowconfigure(0, weight=10)
-        self.mainframe.grid_columnconfigure(0, weight=10)
+        #self.mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
+        #self.mainframe.grid(row=0, column=1, sticky=(N, W, E, S))
+        #self.mainframe.grid_rowconfigure(0, weight=1)
+        #self.mainframe.grid_columnconfigure(0, weight=1)
+        #self.mainframe.grid_rowconfigure(1, weight=1)
+        #self.mainframe.grid_columnconfigure(1, weight=1)
 
         # instantiate our GUI animation views
         ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,

@@ -4,50 +4,55 @@ from tkinter import ttk
 
 class MyTk():
 
-    def __init__(self):
-        self.root = Tk()
-        self.root.title('MyTk Root')
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-
+    def draw_mainframe(self, column):
         # ------------------------------------------------
         # main frame - lives inside TkRoot
         # row 0: mainframe label
-        self.mainframe = ttk.Frame(self.root, padding="10 10 10 10")
-        self.mainframe.grid(row=1, column=0, sticky=(N, W, E, S))
-        self.mainframe.grid_rowconfigure(1, weight=1)
-        self.mainframe.grid_columnconfigure(0, weight=1)
-        self.mainframe['borderwidth'] = 4
-        self.mainframe['relief'] = 'raised'
+        mainframe = ttk.Frame(self.root, padding="10 10 10 10")
+        mainframe.grid(row=0, column=column, sticky=(N, W, E, S))
+        mainframe.grid_rowconfigure(1, weight=1)
+        mainframe.grid_columnconfigure(column, weight=1)
+        mainframe['borderwidth'] = 4
+        mainframe['relief'] = 'raised'
 
-        self.mainframe_label = Label(self.mainframe, text='MainFrame Label')
-        self.mainframe_label.grid(row=0, column=0, sticky=(N, W, E, S))
-        self.mainframe_label.grid_rowconfigure(0, weight=1)
-        self.mainframe_label.grid_columnconfigure(0, weight=1)
-        self.mainframe_label['borderwidth'] = 4
-        self.mainframe_label['relief'] = 'sunken'
+        mainframe_label = Label(mainframe, text='MainFrame Label')
+        mainframe_label.grid(row=0, column=column, sticky=(N, W, E, S))
+        mainframe_label.grid_rowconfigure(0, weight=1)
+        mainframe_label.grid_columnconfigure(column, weight=1)
+        mainframe_label['borderwidth'] = 4
+        mainframe_label['relief'] = 'sunken'
 
         # -----------------------------------------------
         # animation frame - lives inside mainframe
         # row 0: label
         # row 1: console
-        self.ani_frame = ttk.Frame(self.mainframe, padding="10 10 10 10")
-        self.ani_frame.grid(row=1, column=0, sticky=(N, W, E, S))
-        self.ani_frame.grid_rowconfigure(1, weight=1)
-        self.ani_frame.grid_columnconfigure(0, weight=1)
-        self.ani_frame['borderwidth'] = 4
-        self.ani_frame['relief'] = 'raised'
+        ani_frame = ttk.Frame(mainframe, padding="10 10 10 10")
+        ani_frame.grid(row=1, column=column, sticky=(N, W, E, S))
+        ani_frame.grid_rowconfigure(1, weight=1)
+        ani_frame.grid_columnconfigure(column, weight=1)
+        ani_frame['borderwidth'] = 4
+        ani_frame['relief'] = 'raised'
 
-        self.ani_frame_label = Label(self.ani_frame, text='AniFrame Label')
-        self.ani_frame_label.grid(row=0, column=0, sticky=(N, W, E, S))
-        self.ani_frame_label['borderwidth'] = 4
-        self.ani_frame_label['relief'] = 'sunken'
+        ani_frame_label = Label(ani_frame, text='AniFrame Label')
+        ani_frame_label.grid(row=0, column=column, sticky=(N, W, E, S))
+        ani_frame_label['borderwidth'] = 4
+        ani_frame_label['relief'] = 'sunken'
 
-        self.ani_console = Text(self.ani_frame, name='ani_console')
-        self.ani_console.grid(row=1, column=0, sticky=(N, W, E, S))
-        self.ani_console.grid_rowconfigure(1, weight=1)
-        self.ani_console.grid_columnconfigure(0, weight=1)
-        self.ani_console['relief'] = 'raised'
+        ani_console = Text(ani_frame, name='ani_console')
+        ani_console.grid(row=1, column=column, sticky=(N, W, E, S))
+        ani_console.grid_rowconfigure(1, weight=1)
+        ani_console.grid_columnconfigure(column, weight=1)
+        ani_console['relief'] = 'raised'
+
+    def __init__(self):
+        self.root = Tk()
+        self.root.title('MyTk Root')
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        self.draw_mainframe(0)
+        self.draw_mainframe(1)
 
 
 myTk = MyTk()
