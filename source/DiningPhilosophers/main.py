@@ -45,6 +45,7 @@ from typing import List
 from modules.PyState import StateMachine
 import mvc
 import gui
+import exceptions
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -81,8 +82,8 @@ class Config(object):
     Eat_Max = 30            #: maximum number of seconds to eat
     Think_Min = 10          #: minimum number of seconds to think
     Think_Max = 30          #: maximum number of seconds to think
-    Philosophers = 5        #: number of philosophers dining
-    Dining_Loops = 200      #: number of main loops for dining
+    Philosophers = 9        #: number of philosophers dining
+    Dining_Loops = 500      #: number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -95,20 +96,19 @@ class Waiter(mvc.Model):
 
     def __init__(self):
         mvc.Model.__init__(self, name='Waiter')
-        self.lock = Lock()      #: Lock to be acquired when accessing the *Waiter*
-        self.id_ = None         #: last philosopher ID to make a request
-
-        self.mvc = mvc.Event()  #: mvc Event registry
+        self.lock = Lock()          #: Lock to be acquired when accessing the *Waiter*
+        self.id_ = None             #: last philosopher ID to make a request
+        self.mvc = mvc.Event()      #: mvc Event registry
         self.mvc.register_class(class_name=self.name)
         self.mvc.register_event(self.name, 'Starting', 'Model')
-        self.mvc.register_event(self.name, 'Running', 'Model')
-        self.mvc.register_event(self.name, 'In', 'Model')
-        self.mvc.register_event(self.name, 'Out', 'Model')
-        self.mvc.register_event(self.name, 'Acquire', 'Model')
-        self.mvc.register_event(self.name, 'LeftFork', 'Model')
-        self.mvc.register_event(self.name, 'RightFork', 'Model')
-        self.mvc.register_event(self.name, 'Release', 'Model')
-        self.mvc.register_event(self.name, 'Stopping', 'Model')
+        self.mvc.register_event(self.name, 'Running','Model')
+        self.mvc.register_event(self.name, 'In','Model')
+        self.mvc.register_event(self.name, 'Out','Model')
+        self.mvc.register_event(self.name, 'Acquire','Model')
+        self.mvc.register_event(self.name, 'LeftFork','Model')
+        self.mvc.register_event(self.name, 'RightFork','Model')
+        self.mvc.register_event(self.name, 'Release','Model')
+        self.mvc.register_event(self.name, 'Stopping','Model')
 
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
@@ -141,25 +141,25 @@ class Waiter(mvc.Model):
             :param right_fork: ID of right fork required to eat
         """
         self.id_ = id_
-        self.logger('SM[%s] waiter[in]' % id_)
-        self.notify(self.mvc.events[self.name]['In'])
+        self.logger('SM[{}] waiter[in]'.format(id_))
+        self.notify(self.mvc.events[self.name]['In'], data=id_)
         self.lock.acquire()
-        self.notify(self.mvc.events[self.name]['LeftFork'])
+        self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        self.notify(self.mvc.events[self.name]['RightFork'])
+        self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        self.notify(self.mvc.events[self.name]['Out'])
-        self.logger('SM[%s] waiter[out]' % id_)
+        self.notify(self.mvc.events[self.name]['Out'], data=id_)
+        self.logger('SM[%s] waiter[out]')
 
-    def thank_you(self):
+    def thank_you(self, philosopher_id):
         """ Philosopher thank you to the waiter
 
             We use this opportunity to release the Waiter lock
         """
-        self.logger('SM[%s] waiter release' % self.id_)
-        self.notify(self.mvc.events[self.name]['Release'])
+        self.logger('SM[%s] waiter release' % philosopher_id)
+        self.notify(self.mvc.events[self.name]['Release'], data=philosopher_id)
         self.lock.release()
 
 
@@ -299,7 +299,7 @@ class UserCode(StateMachine, mvc.Model):
         forks[self.left_fork] = ForkStatus.InUse
         forks[self.right_fork] = ForkStatus.InUse
         # thanking the waiter releases the Waiter's lock
-        waiter.thank_you()
+        waiter.thank_you(self.id)
 
     # =========================================================
     # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -309,7 +309,7 @@ class UserCode(StateMachine, mvc.Model):
             Called when the state transition *ThankWaiter* is taken.
             Thanking the waiter releases the Waiter's lock.
         """
-        waiter.thank_you()
+        waiter.thank_you(self.id)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -432,7 +432,15 @@ class DiningPhilosophers(mvc.Model):
     def __init__(self):
         super().__init__(name='philosophers', target=self.run)
         #: event processing
-        self.events = mvc.Event()
+        self.mvc_events = mvc.Event()
+        try:
+            self.mvc_events.register_class(self.name)
+        except exceptions.ClassAlreadyRegistered:
+            pass
+        self.mvc_events.register_event(class_name=self.name, event_name='Iterations', event_type='*')
+        self.mvc_events.register_event(class_name=self.name, event_name='AllStopped', event_type='*',
+                                       text='All philosophers stopped')
+        self.mvc_events.register_event(class_name=self.name, event_name='Statistics', event_type='*')
 
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
@@ -453,17 +461,17 @@ class DiningPhilosophers(mvc.Model):
             raise Exception('Dining: Unknown event type')
 
         # process event received
-        if event['event'] is self.events.events[self.name]['Start']['event']:
+        if event['event'] is self.mvc_events.events[self.name]['Start']['event']:
             self.logger('Start')
             self.running = True
-        elif event['event'] is self.events.events[self.name]['Stop']['event']:
+        elif event['event'] is self.mvc_events.events[self.name]['Stop']['event']:
             self.logger('Stop')
             self.running = False
-        elif event['event'] is self.events.events[self.name]['Pause']['event']:
+        elif event['event'] is self.mvc_events.events[self.name]['Pause']['event']:
             self.logger('Pause: unhandled')
-        elif event['event'] is self.events.events[self.name]['Resume']['event']:
+        elif event['event'] is self.mvc_events.events[self.name]['Resume']['event']:
             self.logger('Resume: unhandled')
-        elif event['event'] is self.events.events[self.name]['Logger']['event']:
+        elif event['event'] is self.mvc_events.events[self.name]['Logger']['event']:
             self.logger('Event: %s / %s' % (event.text, event.data))
 
     def run(self):
@@ -490,7 +498,7 @@ class DiningPhilosophers(mvc.Model):
             time.sleep(1)
             loop += 1
             if loop % 10 is 0:
-                self.logger('Iterations: %s' % loop)
+                self.notify(self.mvc_events.events[self.name]['Iterations'], text='Iterations: %s' % loop)
             if self.running is False:
                 break
 
@@ -501,15 +509,18 @@ class DiningPhilosophers(mvc.Model):
         # Joining threads
         for p in self.philosophers:
             p.join()
-        self.logger('All philosophers stopped')
+        self.notify(self.mvc_events.events[self.name]['AllStopped'])
 
         # Print some statistics of the simulation
+        text = ''
         for p in self.philosophers:
             t = p.thinking_seconds
             e = p.eating_seconds
             h = int(p.hungry_seconds + 0.5)
             total = t + e + h
-            self.logger('Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total))
+            text = text + \
+                   '\n   Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total)
+        self.notify(self.mvc_events.events[self.name]['Statistics'], text=text+'\n')
 
         # Shutdown
         self.set_stopping()

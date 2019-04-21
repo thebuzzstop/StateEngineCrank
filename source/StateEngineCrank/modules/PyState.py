@@ -160,7 +160,6 @@ class StateMachine(mvc.Model):
 
         # notify any who are registered with us for events
         text = '%s-SM Event %s [%s]' % (self.name, event, self.current_state)
-        self.logger(text)
         self.notify(self.sm_events.events.post(class_name='SM', event_name='POST_EVENT', text=text))
 
         # lookup current state in transitions table and check for any transitions
@@ -214,9 +213,6 @@ class StateMachine(mvc.Model):
             self.notify(self.sm_events.events.post(class_name='SM', event_name='NO_TRANSITION', text=text))
             return
 
-        # either no guard function or guard function is true
-        self.logger('%s-SM Event++ %s' % (self.name, event))
-
         # Execute state exit function if it is not None
         exit_func = self.state_function_table[self.current_state]['exit']
         if exit_func is not None:
@@ -234,7 +230,6 @@ class StateMachine(mvc.Model):
         self.current_state = transition['state2']
         text = '%s-SM Event %s [%s]' % (self.name, event, self.current_state)
         self.notify(self.sm_events.events.post(class_name='SM', event_name='STATE_TRANSITION', text=text))
-        self.logger('%s-SM Event+++ %s [%s]' % (self.name, event, self.current_state))
 
         # Execute state enter function if it is not None
         enter_func = self.state_function_table[self.current_state]['enter']

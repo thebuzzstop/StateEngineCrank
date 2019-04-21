@@ -4,12 +4,14 @@
 import threading
 from tkinter import *
 from tkinter import ttk
+
 import time
 import math
 
 # Project imports
 import Defines
 import mvc
+import exceptions
 
 
 class Animation(mvc.View):
@@ -26,53 +28,41 @@ class Animation(mvc.View):
         self.ani_frame_column = self.config['column']
         self.mainframe.grid_columnconfigure(self.config['column'], weight=1)
 
-        # Establish the rows of our animation layout
-        # Row: 0 - the only row of the top-level frame
-        self.ani_frame_row_ = -1
-        self.ani_frame_row = self._next_ani_frame_row()
-
+        # --------------------------------------------------------
         # Top level frame for this simulation
-        self.ani_frame = ttk.Frame(self.mainframe, padding='4 4 4 4', name=self.name_rc('ani_frame'))
+        # ani_frame lives in a column of the mainframe
+        # --------------------------------------------------------
+        self.ani_frame = ttk.LabelFrame(self.mainframe, text=config['title'], padding='4 4 4 4')
         self.ani_frame['relief'] = 'raised'
         self.ani_frame['borderwidth'] = 4
         # row=0, top-most row of the animation frame
-        self.ani_frame.grid(row=self.ani_frame_row, column=self.ani_frame_column, sticky=self.common['ani.frame.stick'])
+        self.ani_frame.grid(row=0, column=self.ani_frame_column, sticky=self.common['ani.frame.stick'])
         self.ani_frame.grid_columnconfigure(0, weight=1)
 
-        self.ani_frame_label = Label(self.ani_frame, text=config['title'], name=self.name_rc('ani_frame_label'))
-        self.ani_frame_label_row = self._next_ani_frame_row()   # first row of ani_frame
-        self.ani_frame_label.grid(row=self.ani_frame_label_row, sticky=self.common['label.stick'])
-
+        # --------------------------------------------------------
         # Top level frame for this simulation animation
-        self.ani_graphics_frame = ttk.Frame(self.ani_frame, padding='4 4 4 4',
-                                            name=self.name_rc('ani_graphics_frame'))
+        # --------------------------------------------------------
+        self.ani_graphics_frame = ttk.LabelFrame(self.ani_frame, text=self.config['animation.text'], padding='4 4 4 4')
         self.ani_graphics_frame['borderwidth'] = 4
         self.ani_graphics_frame['relief'] = 'sunken'
-        self.ani_graphics_frame_row = self._next_ani_frame_row()
-        self.ani_graphics_frame.grid(row=self.ani_graphics_frame_row, sticky=self.common['animation.stick'])
-        self.ani_graphics_frame.grid_rowconfigure(self.ani_graphics_frame_row, weight=1)
-
-        self.ani_animation_title = Label(self.ani_graphics_frame, text=self.config['animation.text'],
-                                         name=self.name_rc('ani_animation_text'))
-        self.ani_animation_title.grid(sticky='n')
+        self.ani_graphics_frame.pack()
 
         # Define a canvas where animation graphics can be drawn
         self.ani_canvas = Canvas(self.ani_graphics_frame,
                                  width=self.common['animation']['width'],
-                                 height=self.common['animation']['height'],
-                                 name=self.name_rc('ani_canvas'))
-        self.ani_canvas.grid(sticky='n')
+                                 height=self.common['animation']['height'])
+        self.ani_canvas.pack()
 
         # Calculate the center of the animation canvas
         self.ani_center = (self.common['animation']['width']/2, self.common['animation']['height']/2)
 
+        # --------------------------------------------------------
         # Buttons and controls start a new frame
-        self.ani_buttons_frame = ttk.Frame(self.ani_frame, padding="4 4 4 4", name=self.name_rc('ani_buttons_frame'))
+        # --------------------------------------------------------
+        self.ani_buttons_frame = ttk.Frame(self.ani_graphics_frame, padding="4 4 4 4")
         self.ani_buttons_frame['borderwidth'] = 4
         self.ani_buttons_frame['relief'] = 'raised'
-        self.ani_buttons_frame_row = self._next_ani_frame_row()
-        self.ani_buttons_frame.grid(row=self.ani_buttons_frame_row, sticky=self.common['buttons.stick'])
-
+        self.ani_buttons_frame.pack(expand=0, fill=X)
         self.buttons = [
             ['Start', self._button_start],
             ['Stop', self._button_stop],
@@ -80,48 +70,68 @@ class Animation(mvc.View):
             ['Pause', self._button_pause],
             ['Resume', self._button_resume],
         ]
-
         self.ani_buttons = {}
         column = -1
         for b in self.buttons:
             column += 1
             self.ani_buttons[b[0]] = ttk.Button(self.ani_buttons_frame, text=b[0], command=b[1])
-            self.ani_buttons[b[0]].grid(row=0, column=column)
+            self.ani_buttons[b[0]].pack(expand=0, side=LEFT)
 
+        # --------------------------------------------------------------------------------------
         # Console for text and logging output starts a new frame
-        self.ani_console_frame = ttk.Frame(self.ani_frame, padding="4 4 4 4", name=self.name_rc('ani_console_frame'))
-        self.ani_console_frame_row = self._next_ani_frame_row()
-        self.ani_console_frame.grid(row=self.ani_console_frame_row, sticky=self.common['console.frame.stick'])
-        self.ani_console_frame.grid_rowconfigure(self.ani_console_frame_row, weight=1)
-        self.ani_console_frame.grid_columnconfigure(0, weight=1)
+        # Organized as a frame within a frame to properly position the textbox and scrollbars.
+        #
+        # Frame: ani_console_frame (outer frame, holds everything)
+        # >> Frame: ani_console_vframe (parent: ani_console_frame)
+        # >>>> Text: ani_console_text (parent: ani_console_vframe)
+        # >>>> Scrollbar: ani_console_vscrollbar
+        # >> Scrollbar: ani_console_hscrollbar (parent: ani_console_frame)
+        # --------------------------------------------------------------------------------------
+        self.ani_console_frame = ttk.LabelFrame(self.ani_frame, text='Console Log', padding="4 4 4 4")
+        self.ani_console_frame.pack(expand=1, fill=BOTH)
         self.ani_console_frame['borderwidth'] = 4
         self.ani_console_frame['relief'] = 'raised'
-        self.ani_console_label_row = 0
-        self.ani_console_text_row = 1
-        self.ani_console_label = Label(self.ani_console_frame, text='Console Log',
-                                       name=self.name_rc('ani_console_label'))
-        self.ani_console_label.grid(row=self.ani_console_label_row, sticky=self.common['console.label.stick'])
-        self.ani_console_text = Text(self.ani_console_frame,
+
+        # vframe to hold the textbox and the vertical scrollbar
+        # parent is ani_console_frame
+        self.ani_console_vframe = ttk.Frame(self.ani_console_frame)
+        self.ani_console_vframe.pack(expand=1, fill=BOTH)
+        self.ani_console_text = Text(self.ani_console_vframe,
+                                     wrap=NONE,
                                      height=self.common['console']['height'],
-                                     width=self.common['console']['width'],
-                                     name=self.name_rc('ani_console_text'))
-        self.ani_console_text.grid(row=self.ani_console_text_row, sticky=self.common['console.stick'])
-        self.ani_console_text.grid_rowconfigure(self.ani_console_text_row, weight=1)
+                                     width=self.common['console']['width'])
+        self.ani_console_text.pack(side='left', expand=1, fill=BOTH)
+        # parent is ani_console_vframe
+        self.ani_console_vscrollbar = Scrollbar(self.ani_console_vframe, orient="vertical",
+                                                command=self.ani_console_text.yview)
+        self.ani_console_vscrollbar.pack(side='right', fill='y')
+        # parent is ani_console_frame
+        self.ani_console_hscrollbar = Scrollbar(self.ani_console_frame, orient="horizontal",
+                                                command=self.ani_console_text.xview)
+        self.ani_console_hscrollbar.pack(side='bottom', fill='x')
+
+        self.ani_console_text.config(yscrollcommand=self.ani_console_vscrollbar.set)
+        self.ani_console_text.config(xscrollcommand=self.ani_console_hscrollbar.set)
+
+        # --------------------------------------------------------
+        # Stuff some introductory text into the text display
         self.ani_console_text.insert('2.0', config['console.text'])
         self.ani_console_text.insert(END, '\n\n')
 
+        # --------------------------------------------------------
         # Animation Button Events
+        # --------------------------------------------------------
         self.mvc_events = mvc.Event()
-        self.mvc_events.register_class(config['event.class'])
+        try:
+            self.mvc_events.register_class(config['event.class'])
+        except exceptions.ClassAlreadyRegistered:
+            pass
         self.mvc_events.register_event(config['event.class'], 'Start', event_type='view', text='Start')
         self.mvc_events.register_event(config['event.class'], 'Step', event_type='view', text='Step')
         self.mvc_events.register_event(config['event.class'], 'Stop', event_type='view', text='Stop')
         self.mvc_events.register_event(config['event.class'], 'Pause', event_type='view', text='Pause')
         self.mvc_events.register_event(config['event.class'], 'Resume', event_type='view', text='Resume')
         self.mvc_events.register_event(config['event.class'], 'Logger', event_type='view', text='Logger')
-
-    def name_rc(self, base):
-        return '%s-%s-%s' % (base, self.ani_frame_row_, self.ani_frame_column)
 
     def run(self):
         """ Satisfy base class requirements """
@@ -130,10 +140,6 @@ class Animation(mvc.View):
     def update(self, event):
         """ Satisfy base class requirements """
         pass
-
-    def _next_ani_frame_row(self):
-        self.ani_frame_row_ += 1
-        return self.ani_frame_row_
 
     def _button_start(self):
         self.parent.update(self.mvc_events.events[self.config['event.class']]['Start'])
@@ -187,7 +193,7 @@ class DiningPhilosophers(Animation):
         canvas_x2, canvas_y2 = self.canvas_xy(x+r, y-r)
 
         self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
-        self.ani_canvas.grid()
+        self.ani_canvas.pack()
 
     def add_chairs(self):
         """ Add chairs around the dining table """
@@ -263,7 +269,7 @@ class SleepingBarbers(Animation):
         super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
 
     def draw_barbershop(self):
-        self.ani_canvas.grid()
+        self.ani_canvas.pack()
 
     def add_barbers(self):
         pass
@@ -290,8 +296,13 @@ class GuiConsoleView(mvc.View):
 
     def update(self, event):
         ts = event['datetime'].strftime('%H:%M:%S:%f')
-        msg = '%s [%s] %s\n' % (ts, event['class'], event['text'])
-        self.widget.ani_console.insert(END, msg)
+        msg = '{} [{}]'.format(ts, event['class'])
+        if 'text' in event.keys() and event['text'] is not None:
+            msg = '{} {}'.format(msg, event['text'])
+        if 'data' in event.keys() and event['data'] is not None:
+            msg = '{} {}'.format(msg, event['data'])
+        self.widget.ani_console_text.insert(END, msg+'\n')
+        self.widget.ani_console_text.see(END)
 
     def run(self):
         pass
@@ -317,14 +328,14 @@ class GuiView(mvc.View):
     }
 
     philosophers_config = {
-        'title': 'Dining Philosophers',
+        'title': 'Dining Philosophers Simulation',
         'model': 'philosophers',
         'column': 0,
         'animation.text': 'The Dining Room',
         'console.text': 'Hello, Dining Philosophers',
         'event.class': 'philosophers',
 
-        'philosophers': 5,
+        'philosophers': 9,
         'fork.radius': 10,
         'fork.color': 'green',
         'table.radius': 75,
@@ -336,7 +347,7 @@ class GuiView(mvc.View):
     }
 
     barbers_config = {
-        'title': 'Sleeping Barber(s)',
+        'title': 'Sleeping Barber(s) Simulation',
         'model': 'barbers',
         'column': 1,
         'animation.text': 'The Barber Shop',
@@ -352,10 +363,8 @@ class GuiView(mvc.View):
         self.root = None
         self.mainframe = None
         self.gui_thread = None
-
         self.tkobj_dictionary = {}
         self.tkobj_dictionary2 = {}
-
         self.tkobj_deltas = []
 
     def update(self, event):
@@ -375,13 +384,6 @@ class GuiView(mvc.View):
             pass
         else:
             print(event)
-        print('==========================================================================================')
-        self.dump_tkinfo(1, self.root)
-
-        print('---------------------------------')
-        for tkobj in self.tkobj_dictionary.keys():
-            if tkobj in self.tkobj_dictionary2.keys():
-                print('{}\n{}\n{}\n'.format(tkobj, self.tkobj_dictionary[tkobj], self.tkobj_dictionary2[tkobj]))
 
     def update_gui(self, gui, event):
         # print('%s[%s] %s -> %s' % (event.sm_name, event.sm_event, event.sim_event, event.sim_state))
@@ -414,56 +416,6 @@ class GuiView(mvc.View):
     def write(self, text):
         print(text)
 
-    def dump_tkinfo(self, level, tkobj):
-
-        parent = 'unknown'
-        name = 'noname'
-        height = 'unknown'
-        width = 'unknown'
-        sticky = '-'
-        row = '-'
-        col = '-'
-        grid_size = '(c, r)'
-
-        if hasattr(tkobj, 'winfo_width'):
-            width = tkobj.winfo_width()
-        if hasattr(tkobj, 'winfo_height'):
-            height = tkobj.winfo_height()
-
-        if hasattr(tkobj, 'grid_info'):
-            grid_info = tkobj.grid_info()
-            row = grid_info['row']
-            col = grid_info['column']
-            sticky = grid_info['sticky']
-            grid_size = tkobj.grid_size()
-        if hasattr(tkobj, 'master'):
-            if hasattr(tkobj.master, '_name'):
-                parent = tkobj.master._name
-
-        if hasattr(tkobj, '_name'):
-            name = tkobj._name
-            if name not in self.tkobj_dictionary:
-                self.tkobj_dictionary[name] = {'width': width, 'height': height}
-            else:
-                if width != self.tkobj_dictionary[name]['width'] or height != self.tkobj_dictionary[name]['height']:
-                    self.tkobj_dictionary2[name] = {'width': width, 'height': height}
-
-        level_ = '+'*level
-        level_ = level_ + ' '*(6-level)
-
-        print('Level{}{} wininfo [{:4}/{:4}] row/column: {}/{} sticky: {:4} grid: {} name: {:24} parent: {:24}'
-              .format(level, level_, width, height, row, col, sticky, grid_size, name, parent))
-
-        # recurse through all children
-        for child in tkobj.children.keys():
-            self.dump_tkinfo(level + 1, tkobj.children[child])
-
-    def dict_info(self, dict_):
-        for key in dict(dict_).keys():
-            value_ = dict_[key]
-            type_ = str(type(value_))
-            print('{:20} : {:10} {}'.format(key, type_, value_))
-
     def tk_run(self):
         """ GUI view running - setup basic framework """
         self.root = Tk()
@@ -480,7 +432,7 @@ class GuiView(mvc.View):
         #   * 1 row, weight=1
         #   * 'n' columns, weight=1
         #   * columns are configured by the animations that occupy them
-        self.mainframe = ttk.Frame(self.root, relief='sunken', padding="10 10 10 10", name='mainframe')
+        self.mainframe = ttk.Frame(self.root, relief='sunken', padding="8 8 8 8", name='mainframe')
         self.mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
         self.mainframe.grid_rowconfigure(0, weight=1)
 
@@ -512,13 +464,6 @@ class GuiView(mvc.View):
         ani_barbers.add_waiting_room()
         for b in ani_barbers.ani_buttons.keys():
             ani_barbers.ani_buttons[b].state(['disabled'])
-
-        print('==========================================================================================')
-        self.dict_info(self.root)
-        print('=========================================')
-        self.dict_info(self.mainframe)
-        print('=========================================')
-        self.dict_info(self.mainframe.children['ani_frame-0-0'])
 
         # all setup so run
         self.root.mainloop()

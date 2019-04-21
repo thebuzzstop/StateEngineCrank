@@ -4,6 +4,8 @@
 from abc import ABC, abstractmethod
 import threading
 import datetime
+import copy
+import enum
 
 # Project Imports
 import Defines
@@ -21,6 +23,9 @@ class Borg(object):
 
 class Event(Borg):
     """ MVC Events - Model and View """
+
+    class Events(enum.Enum):
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS = range(7)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -47,6 +52,7 @@ class Event(Borg):
             self.register_event('mvc', 'Pause', '*', text='Pause execution, retain current state')
             self.register_event('mvc', 'Resume', '*', text='Resume execution')
             self.register_event('mvc', 'Logger', '*', text='Log entry')
+            self.register_event('mvc', 'Loops', '*', text='Loop count', data=0)
 
     def register_class(self, class_name):
         """ Register a class name for the events database
@@ -180,6 +186,22 @@ class MVC(ABC, threading.Thread):
         self._stop_event.set()
         threading.Thread.join(self, timeout)
 
+    def prepare(self, event, **kwargs):
+        """ Prepare an event for logging and/or notification
+            1) Make a shallow copy of this event so we don't modify the original
+            2) Add a datetime if one is not present
+            3) Add 'text' if present in kwargs
+            4) Add 'data' if present in kwargs
+        """
+        event_ = copy.copy(event)
+        if 'datetime' not in event_.keys():
+            event_['datetime'] = datetime.datetime.now()
+        if 'text' in kwargs.keys() and kwargs['text'] is not None:
+            event_['text'] = kwargs['text']
+        if 'data' in kwargs.keys() and kwargs['data'] is not None:
+            event_['data'] = kwargs['data']
+        return event_
+
 
 class Logger(object):
     """ Logger class for simplified logging to console """
@@ -233,21 +255,23 @@ class Controller(MVC, Logger):
         else:
             raise exceptions.InvalidMVC
 
-    def notify(self, event):
+    def notify(self, event, **kwargs):
         """ Called to send notification of the occurrence of event
-            We deliver 'model' events to Views.
-            We deliver 'view' events to Models.
-            We deliver '*' events to Views & Models
+            We deliver:
+                * 'model' events to Views.
+                * 'view' events to Models.
+                * '*' events to Views & Models
 
             :param event: Event to be sent
         """
-        event_type = event['type'].lower()
+        event_ = self.prepare(event, **kwargs)
+        event_type = event_['type'].lower()
         if event_type is 'model' or event_type is '*':
             for v in self.views:
-                v.update(event)
+                v.update(event_)
         if event_type is 'view' or event_type is '*':
             for m in self.models:
-                m.update(event)
+                m.update(event_)
 
     @abstractmethod
     def run(self):
@@ -274,13 +298,14 @@ class Model(MVC, Logger):
         else:
             raise exceptions.InvalidView(view)
 
-    def notify(self, event):
+    def notify(self, event, **kwargs):
         """ Called by us to notify Views about a Model event
 
             :param event: Model event to be sent
         """
+        event_ = self.prepare(event, **kwargs)
         for vk in self.views.keys():
-            self.views[vk].update(event)
+            self.views[vk].update(event_)
 
     @abstractmethod
     def update(self, event):
@@ -314,13 +339,14 @@ class View(MVC, Logger):
         else:
             raise exceptions.InvalidModel(model)
 
-    def notify(self, event):
+    def notify(self, event, **kwargs):
         """ Called by us to notify Models about a View event
 
             :param event: View event to be sent
         """
+        event_ = self.prepare(event, **kwargs)
         for m in self.models:
-            m.update(event)
+            m.update(event_)
 
     @abstractmethod
     def update(self, event):
