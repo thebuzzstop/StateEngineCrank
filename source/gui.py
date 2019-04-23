@@ -4,6 +4,7 @@
 import threading
 from tkinter import *
 from tkinter import ttk
+import tkinter.font as tkFont
 
 import time
 import math
@@ -12,6 +13,7 @@ import math
 import Defines
 import mvc
 import exceptions
+from StateEngineCrank.modules.PyState import StateMachineEvent as smEvent
 
 
 class Animation(mvc.View):
@@ -55,6 +57,7 @@ class Animation(mvc.View):
 
         # Calculate the center of the animation canvas
         self.ani_center = (self.common['animation']['width']/2, self.common['animation']['height']/2)
+        self.canvas_x_mid, self.canvas_y_mid = self.ani_center
 
         # --------------------------------------------------------
         # Buttons and controls start a new frame
@@ -87,7 +90,9 @@ class Animation(mvc.View):
         # >>>> Scrollbar: ani_console_vscrollbar
         # >> Scrollbar: ani_console_hscrollbar (parent: ani_console_frame)
         # --------------------------------------------------------------------------------------
-        self.ani_console_frame = ttk.LabelFrame(self.ani_frame, text='Console Log', padding="4 4 4 4")
+        self.ani_console_frame = ttk.LabelFrame(self.ani_frame,
+                                                text='Console Log',
+                                                padding="4 4 4 4")
         self.ani_console_frame.pack(expand=1, fill=BOTH)
         self.ani_console_frame['borderwidth'] = 4
         self.ani_console_frame['relief'] = 'raised'
@@ -96,7 +101,10 @@ class Animation(mvc.View):
         # parent is ani_console_frame
         self.ani_console_vframe = ttk.Frame(self.ani_console_frame)
         self.ani_console_vframe.pack(expand=1, fill=BOTH)
+        self.ani_console_font = tkFont.Font(family='Courier')
+        self.ani_console_font.configure(size=8)
         self.ani_console_text = Text(self.ani_console_vframe,
+                                     font=self.ani_console_font,
                                      wrap=NONE,
                                      height=self.common['console']['height'],
                                      width=self.common['console']['width'])
@@ -126,6 +134,7 @@ class Animation(mvc.View):
             self.mvc_events.register_class(config['event.class'])
         except exceptions.ClassAlreadyRegistered:
             pass
+        self.mvc_events.register_actor(config['event.class'], self.name)
         self.mvc_events.register_event(config['event.class'], 'Start', event_type='view', text='Start')
         self.mvc_events.register_event(config['event.class'], 'Step', event_type='view', text='Step')
         self.mvc_events.register_event(config['event.class'], 'Stop', event_type='view', text='Stop')
@@ -142,85 +151,19 @@ class Animation(mvc.View):
         pass
 
     def _button_start(self):
-        self.parent.update(self.mvc_events.events[self.config['event.class']]['Start'])
+        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Start', self.name))
 
     def _button_step(self):
-        self.parent.update(self.mvc_events.events[self.config['event.class']]['Step'])
+        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Step', self.name))
 
     def _button_stop(self):
-        self.parent.update(self.mvc_events.events[self.config['event.class']]['Stop'])
+        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Stop', self.name))
 
     def _button_pause(self):
-        self.parent.update(self.mvc_events.events[self.config['event.class']]['Pause'])
+        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Pause', self.name))
 
     def _button_resume(self):
-        self.parent.update(self.mvc_events.events[self.config['event.class']]['Resume'])
-
-
-class DiningPhilosophers(Animation):
-    """ Logic to Manage Dining Philosophers Simulation Animation """
-
-    def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
-        super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
-        self.my_parent = parent
-        self.philosophers = self.config['philosophers']
-        self.canvas_x_mid, self.canvas_y_mid = self.ani_center
-        self.delta_angle_degrees = 360 / self.philosophers
-
-        self.ani_width = self.common['animation']['width']
-        self.ani_height = self.common['animation']['height']
-        self.table_radius = self.config['table.radius']
-        self.chair_radius = self.config['chair.radius']
-        self.fork_radius = self.config['fork.radius']
-
-        self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * self.chair_radius) / 4
-        self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * self.chair_radius) / 4
-        self.gap = min(self.x_gap, self.y_gap)
-
-    def add_table(self):
-        """ Add the main dining table """
-        self.circle_at(0, 0, self.table_radius, self.config['table.color'])
-
-    def circle_at(self, x, y, r, c):
-        """ Draw a circle at [x,y] coordinates, radius 'r'
-
-            :param x: x-coordinate
-            :param y: y-coordinate
-            :param r: radius
-            :param c: fill color
-        """
-        canvas_x1, canvas_y1 = self.canvas_xy(x-r, y+r)
-        canvas_x2, canvas_y2 = self.canvas_xy(x+r, y-r)
-
-        self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
-        self.ani_canvas.pack()
-
-    def add_chairs(self):
-        """ Add chairs around the dining table """
-        radius = self.table_radius + self.gap + self.chair_radius
-        for chair in range(self.philosophers):
-            angle = chair * self.delta_angle_degrees
-            chair_x, chair_y = self.transform_2xy(radius, angle)
-            self.circle_at(chair_x, chair_y, self.chair_radius, self.config['chair.color'])
-
-    def add_forks(self):
-        """ Add forks around the table """
-        angle_offset = self.delta_angle_degrees/2
-        radius = self.table_radius - self.fork_radius*2
-        for fork in range(self.philosophers):
-            angle = angle_offset + fork * self.delta_angle_degrees
-            fork_x, fork_y = self.transform_2xy(radius, angle)
-            self.circle_at(fork_x, fork_y, self.fork_radius, self.config['fork.color'])
-
-    def add_philosophers(self):
-        """ Add philosophers around the table """
-        pass
-
-    def add_waiter(self):
-        """ Add the waiter graphic to the simulation """
-        waiter_x = -(self.ani_width/2 - self.gap - self.config['waiter.radius'])
-        waiter_y = self.ani_height/2 - self.gap - self.config['waiter.radius']
-        self.circle_at(0, 0, self.config['waiter.radius'], self.config['waiter.color'])
+        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Resume', self.name))
 
     def canvas_xy(self, animation_x, animation_y):
         """ Convert an animation x-y coordinate to canvas x-y coordinate
@@ -240,6 +183,30 @@ class DiningPhilosophers(Animation):
         """
         return animation_x+self.canvas_x_mid, animation_y+self.canvas_y_mid
 
+    def circle_at(self, x, y, r, c):
+        """ Draw a circle at [x,y] coordinates, radius 'r'
+
+            :param x: x-coordinate
+            :param y: y-coordinate
+            :param r: radius
+            :param c: fill color
+        """
+        canvas_x1, canvas_y1 = self.canvas_xy(x-r, y+r)
+        canvas_x2, canvas_y2 = self.canvas_xy(x+r, y-r)
+        self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
+        self.ani_canvas.pack()
+
+    def text_at(self, x, y, t, c):
+        """ Draw text at [x,y] coordinates
+
+            :param x: x-coordinate
+            :param y: y-coordinate
+            :param t: text
+            :param c: color
+        """
+        self.ani_canvas.create_text(self.canvas_xy(x, y), text=t, fill=c)
+        self.ani_canvas.pack()
+
     @staticmethod
     def transform_2xy(radius, angle):
         """ Perform transformation from radius, angle to x & y coordinates
@@ -251,6 +218,73 @@ class DiningPhilosophers(Animation):
         x = radius * math.sin(math.radians(angle))
         y = radius * math.cos(math.radians(angle))
         return x, y
+
+
+class DiningPhilosophers(Animation):
+    """ Logic to Manage Dining Philosophers Simulation Animation """
+
+    def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
+        super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
+        self.my_parent = parent
+        self.num_philosophers = self.config['philosophers']
+        self.delta_angle_degrees = 360 / self.num_philosophers
+
+        self.ani_width = self.common['animation']['width']
+        self.ani_height = self.common['animation']['height']
+        self.table_radius = self.config['table.radius']
+        self.chair_radius = self.config['chair.radius']
+        self.fork_radius = self.config['fork.radius']
+
+        self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * self.chair_radius) / 4
+        self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * self.chair_radius) / 4
+        self.gap = min(self.x_gap, self.y_gap)
+
+        self.philosopher_coords = []
+        self.fork_coords = []
+        self.chair_coords = []
+        self.waiter_coords = []
+
+    def add_table(self):
+        """ Add the main dining table """
+        self.circle_at(0, 0, self.table_radius, self.config['table.color'])
+
+    def add_chairs(self):
+        """ Add chairs around the dining table """
+        radius = self.table_radius + self.gap + self.chair_radius
+        for chair in range(self.num_philosophers):
+            angle = chair * self.delta_angle_degrees
+            cx, cy = self.transform_2xy(radius, angle)
+            self.chair_coords.append([cx, cy])
+            self.circle_at(cx, cy, self.chair_radius, self.config['chair.color'])
+
+    def add_philosophers(self):
+        """ Add philosophers around the table """
+        radius = self.table_radius + self.gap + self.chair_radius
+        for p in range(self.num_philosophers):
+            angle = p * self.delta_angle_degrees
+            px, py = self.transform_2xy(radius, angle)
+            self.philosopher_coords.append([px, py])
+            self.text_at(px, py, 'P%s' % p, 'white')
+
+    def add_forks(self):
+        """ Add forks around the table """
+        angle_offset = self.delta_angle_degrees/2
+        radius = self.table_radius - self.fork_radius*2
+        for f in range(self.num_philosophers):
+            angle = angle_offset + f * self.delta_angle_degrees
+            fx, fy = self.transform_2xy(radius, angle)
+            self.fork_coords.append([fx, fy])
+            self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
+            self.text_at(fx, fy, 'F', 'white')
+
+    def add_waiter(self):
+        """ Add the waiter graphic to the simulation """
+        waiter_x = -(self.ani_width/2 - self.gap - self.config['waiter.radius'])
+        waiter_y = self.ani_height/2 - self.gap - self.config['waiter.radius']
+        self.circle_at(0, 0, self.config['waiter.radius'], self.config['waiter.color'])
+        self.waiter_coords.append([0, 0])
+        self.ani_canvas.create_text(self.ani_center, text='Waiter', fill='white')
+        self.ani_canvas.pack()
 
     def update(self, event):
         """ Function to process all animation events
@@ -367,6 +401,31 @@ class GuiView(mvc.View):
         self.tkobj_dictionary2 = {}
         self.tkobj_deltas = []
 
+        # create an event lookup table of all registered events
+        # we will use this to lookup screen for events we want to process
+        self.events = mvc.Event()
+
+        # scan for StateMachine events
+        self.sme = smEvent()
+        self.sm_events = {}
+        for sme_ in smEvent.SmEvents:
+            sme_ = str(sme_)
+            if sme_.startswith('SmEvents.'):
+                sme_ = sme_[len('SmEvents.'):]
+            event = self.events.lookup_event('SM', sme_)
+            if event is None:
+                raise 'SM Event not found : {}'.format(sme_)
+            self.sm_events[event['event']] = event
+
+        # scan for Waiter events
+        self.waiter_events = {}
+        for class_ in self.events.events.keys():
+            for event_ in self.events.events[class_].keys():
+                event__ = self.events.events[class_][event_]
+                if event__['class'].lower() == 'waiter':
+                    self.waiter_events[event__['event']] = event__
+        print()
+
     def update(self, event):
         """ Called to let us know of an event
 
@@ -386,9 +445,11 @@ class GuiView(mvc.View):
             print(event)
 
     def update_gui(self, gui, event):
-        # print('%s[%s] %s -> %s' % (event.sm_name, event.sm_event, event.sim_event, event.sim_state))
         if gui is 'waiter':
-            self.update_dining_console(event)
+            self.update_gui_waiter(event)
+
+    def update_gui_waiter(self, event):
+        print('waiter: %s' % event)
 
     def update_dining_console(self, event):
         pass

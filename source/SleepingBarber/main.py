@@ -9,13 +9,13 @@ import time
 
 # Project imports
 from mvc import Model
-from Common import Config as Config
-from Common import Statistics as Statistics
-from Barber import UserCode as Barber
-from Barber import Events as BarberEvents
-from Customer import UserCode as Customer
-from Customer import Events as CustomerEvents
-from WaitingRoom import WaitingRoom
+from SleepingBarber.Common import Config as Config
+from SleepingBarber.Common import Statistics as Statistics
+from SleepingBarber.Barber import UserCode as Barber
+from SleepingBarber.Barber import Events as BarberEvents
+from SleepingBarber.Customer import UserCode as Customer
+from SleepingBarber.Customer import Events as CustomerEvents
+from SleepingBarber.WaitingRoom import WaitingRoom
 
 
 class CustomerGenerator(Model):

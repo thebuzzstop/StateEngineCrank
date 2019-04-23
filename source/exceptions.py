@@ -15,7 +15,6 @@ class MyException(Exception):
         msg = 'Filename: {0}\nLine: {1} Function: {2}'.format(filename, line, func)
         if text is not None:
             msg = '[Error] {0}\n{1}'.format(text, msg)
-        print(msg)
 
 
 class InvalidMVC(MyException):
@@ -57,6 +56,11 @@ class EventAlreadyRegistered(MyException):
     pass
 
 
+class ActorAlreadyRegistered(MyException):
+    """ Event actor is already registered """
+    pass
+
+
 class ClassNotRegistered(MyException):
     """ Class name is not registered """
     pass
@@ -64,4 +68,9 @@ class ClassNotRegistered(MyException):
 
 class EventNotRegistered(MyException):
     """ Event name is not registered """
+    pass
+
+
+class ActorNotRegistered(MyException):
+    """ Event actor is not registered """
     pass

@@ -36,10 +36,10 @@ from enum import Enum
 
 # Project imports
 from mvc import Model
-from modules.PyState import StateMachine
-from Common import Statistics as Statistics
-import Barber
-import WaitingRoom
+from StateEngineCrank.modules.PyState import StateMachine
+from SleepingBarber.Common import Statistics as Statistics
+import SleepingBarber.Barber
+import SleepingBarber.WaitingRoom
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -103,7 +103,7 @@ class UserCode(StateMachine, Model):
         self.cutting_time = 0               #: cutting time - simulation time (seconds)
 
         # simulation time spent in the waiting room
-        self.waiting_room = WaitingRoom.WaitingRoom()   #: establish access to waitingroom
+        self.waiting_room = SleepingBarber.WaitingRoom.WaitingRoom()   #: establish access to waitingroom
         self.waiting_time_start = None      #: waiting clock time - start
         self.waiting_time_finish = None     #: waiting clock time - finish
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
@@ -183,10 +183,10 @@ class UserCode(StateMachine, Model):
         for barber in self.barbers:
             # if we find one sleeping then issue our start and
             # send the barber a 'customer enter' event
-            if barber.current_state == Barber.States.Sleeping:
+            if barber.current_state == SleepingBarber.Barber.States.Sleeping:
                 self.post_event(Events.EvStart)
                 barber.current_customer = self
-                barber.post_event(Barber.Events.EvCustomerEnter)
+                barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
                 return
         # no sleeping barbers so issue our start and hopefully
         # we end up in the waiting room
@@ -237,7 +237,7 @@ class UserCode(StateMachine, Model):
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
-                if barber.current_state is Barber.States.Sleeping:
+                if barber.current_state is SleepingBarber.Barber.States.Sleeping:
                     return True
             return False
 
@@ -254,7 +254,7 @@ class UserCode(StateMachine, Model):
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
-                if barber.current_state is Barber.States.Sleeping:
+                if barber.current_state is SleepingBarber.Barber.States.Sleeping:
                     return False
             return self.waiting_room.full()
 
@@ -272,7 +272,7 @@ class UserCode(StateMachine, Model):
         """
         with self.waiting_room.lock:
             for barber in self.barbers:
-                if barber.current_state is Barber.States.Sleeping:
+                if barber.current_state is SleepingBarber.Barber.States.Sleeping:
                     return False
             return not self.waiting_room.full()
 

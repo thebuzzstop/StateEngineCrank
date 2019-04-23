@@ -38,11 +38,11 @@ from enum import Enum
 
 # Project imports
 from mvc import Model
-from modules.PyState import StateMachine
-from Common import Config as Config
-from Common import Statistics as Statistics
-import Customer
-import WaitingRoom
+from StateEngineCrank.modules.PyState import StateMachine
+from SleepingBarber.Common import Config as Config
+from SleepingBarber.Common import Statistics as Statistics
+import SleepingBarber.Customer as Customer
+import SleepingBarber.WaitingRoom as WaitingRoom
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======

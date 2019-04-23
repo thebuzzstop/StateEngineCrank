@@ -41,7 +41,9 @@ class Event(Borg):
         """
         Borg.__init__(self)
         if len(self._shared_state) is 0:
-            self.events = {}
+            self.events = {}        #: dictionary of events
+            self.event_by_id = []   #: list of events, used for lookups by ID
+            self.actors = {}        #: dictionary of actors (i.e. posters of events)
             self.event_counter = 0
 
             # register some well-known events
@@ -100,11 +102,52 @@ class Event(Borg):
         self.events[class_name][event_name] = \
             {'class': class_name, 'event': self.event_counter, 'type': event_type, 'text': text, 'data': data}
 
-    def post(self, class_name, event_name, text=None, data=None):
+        # append the event to our 'event_by_id' lookup table
+        self.event_by_id.append(self.events[class_name][event_name])
+
+    def register_actor(self, class_name, actor_name):
+        """ Register an actor for the events database
+
+            Actors are participants that post events in a simulation.
+            Actors may register for more than one event class.
+
+            :param class_name: Class of events
+            :param actor_name: Name of this actor
+        """
+        if class_name not in self.events.keys():
+            raise exceptions.ClassNotRegistered
+        if actor_name in self.actors.keys():
+            if class_name in self.actors[actor_name]:
+                raise exceptions.ActorAlreadyRegistered
+            else:
+                # append class to actor class list
+                self.actors[actor_name].append(class_name)
+        else:
+            # create a dictionary entry for the new actor
+            self.actors[actor_name] = [class_name]
+
+    def lookup_event(self, class_name, event_name):
+        if class_name not in self.events.keys():
+            return None
+        if not isinstance(event_name, str):
+            event_name = str(event_name)
+        for event in self.events[class_name].keys():
+            if event_name == self.events[class_name][event]['text']:
+                return self.events[class_name][event]
+        return None
+
+    def lookup_by_id(self, event_id):
+        if event_id > 0 and event_id < len(self.event_by_id):
+            return self.event_by_id[event_id-1]
+        else:
+            return None
+
+    def post(self, class_name, event_name, actor_name, text=None, data=None):
         """ Prepare an event for posting
 
             :param class_name: Class name for this event, must be registered
             :param event_name: Event name for this event, must be registered
+            :param actor_name: Actor name for this event, must be registered
             :param text: Optional text for this event
             :param data: Optional data for this event
             :raises: ClassNotRegistered, EventNotRegistered
@@ -113,17 +156,30 @@ class Event(Borg):
             raise exceptions.ClassNotRegistered
         if event_name not in self.events[class_name].keys():
             raise exceptions.EventNotRegistered
+        if actor_name not in self.actors.keys():
+            raise exceptions.ActorNotRegistered
+
+        # verify actor is registered for this event class
+        if class_name not in self.actors[actor_name]:
+            raise exceptions.ActorNotRegistered
+
+        # create a copy of the event
+        event = copy.copy(self.events[class_name][event_name])
+        event['actor'] = actor_name
 
         # add event timestamp information
-        self.events[class_name][event_name]['datetime'] = datetime.datetime.now()
+        event['datetime'] = datetime.datetime.now()
 
         # add conditional information
         if text is not None:
-            self.events[class_name][event_name]['text'] = text
+            event['text'] = text
         if data is not None:
-            self.events[class_name][event_name]['data'] = data
-
-        return self.events[class_name][event_name]
+            event['data'] = data
+        if hasattr(self, 'name'):
+            event['origin'] = self.name
+        if hasattr(self, 'id'):
+            event['id'] = self.id
+        return event
 
 
 class MVC(ABC, threading.Thread):
@@ -200,6 +256,10 @@ class MVC(ABC, threading.Thread):
             event_['text'] = kwargs['text']
         if 'data' in kwargs.keys() and kwargs['data'] is not None:
             event_['data'] = kwargs['data']
+        if 'origin' not in event_.keys() and hasattr(self, 'name'):
+            event_['origin'] = self.name
+        if 'id' not in event_.keys() and hasattr(self, 'id'):
+            event_['id'] = self.id
         return event_
 
 

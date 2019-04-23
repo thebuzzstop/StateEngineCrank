@@ -42,7 +42,7 @@ import time
 from typing import List
 
 # Project imports
-from modules.PyState import StateMachine
+from StateEngineCrank.modules.PyState import StateMachine
 import mvc
 import gui
 import exceptions
@@ -83,7 +83,7 @@ class Config(object):
     Think_Min = 10          #: minimum number of seconds to think
     Think_Max = 30          #: maximum number of seconds to think
     Philosophers = 9        #: number of philosophers dining
-    Dining_Loops = 500      #: number of main loops for dining
+    Dining_Loops = 5000     #: number of main loops for dining
 
 
 class ForkStatus(Enum):
@@ -103,10 +103,10 @@ class Waiter(mvc.Model):
         self.mvc.register_event(self.name, 'Starting', 'Model')
         self.mvc.register_event(self.name, 'Running','Model')
         self.mvc.register_event(self.name, 'In','Model')
-        self.mvc.register_event(self.name, 'Out','Model')
         self.mvc.register_event(self.name, 'Acquire','Model')
         self.mvc.register_event(self.name, 'LeftFork','Model')
         self.mvc.register_event(self.name, 'RightFork','Model')
+        self.mvc.register_event(self.name, 'Out','Model')
         self.mvc.register_event(self.name, 'Release','Model')
         self.mvc.register_event(self.name, 'Stopping','Model')
 
@@ -141,24 +141,22 @@ class Waiter(mvc.Model):
             :param right_fork: ID of right fork required to eat
         """
         self.id_ = id_
-        self.logger('SM[{}] waiter[in]'.format(id_))
         self.notify(self.mvc.events[self.name]['In'], data=id_)
         self.lock.acquire()
-        self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
+        self.notify(self.mvc.events[self.name]['Acquire'], data=id_)
         while forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
-        self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
+        self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
         while forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
+        self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
         self.notify(self.mvc.events[self.name]['Out'], data=id_)
-        self.logger('SM[%s] waiter[out]')
 
     def thank_you(self, philosopher_id):
         """ Philosopher thank you to the waiter
 
             We use this opportunity to release the Waiter lock
         """
-        self.logger('SM[%s] waiter release' % philosopher_id)
         self.notify(self.mvc.events[self.name]['Release'], data=philosopher_id)
         self.lock.release()
 
@@ -203,12 +201,6 @@ class UserCode(StateMachine, mvc.Model):
         self.thinking_seconds = 0   #: number of seconds spent thinking
         self.hungry_seconds = 0     #: number of seconds spent hungry
         self.event_timer = 0        #: timer used to time eating & thinking
-
-        self.mvc = mvc.Event()
-        self.mvc.register_class(name)
-        for e in Events:
-            self.mvc.register_event(class_name=name, event_name=e.name, event_type='model',
-                                    text='%s[%s][%s]' % (name, e.name, e.value), data=e.value)
 
         self.initial_state = None   #: starting state for a philosopher
         if random.randint(0, 1) == 0:
@@ -260,7 +252,6 @@ class UserCode(StateMachine, mvc.Model):
             Called when the *Eating* state is entered.
         """
         self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
-        self.logger('SM[%s] Eating (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -270,7 +261,6 @@ class UserCode(StateMachine, mvc.Model):
             Called once every state machine iteration to perform
             processing for the *Finish* state.
         """
-        self.logger('SM[%s] Finished' % self.id)
         self.running = False
 
     # ===========================================================================
@@ -280,13 +270,11 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the *Hungry* state is entered.
         """
-        self.logger('SM[%s] Hungry!' % self.id)
         tstart = time.time()
         waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
         thungry = tend-tstart
         self.hungry_seconds += thungry
-        self.logger('SM[%s] Hungry (%s)' % (self.id, round(thungry)))
         self.event(Events.EvHavePermission)
 
     # =========================================================
@@ -319,7 +307,6 @@ class UserCode(StateMachine, mvc.Model):
             Called when the *Thinking* state is entered.
         """
         self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
-        self.logger('SM[%s] Thinking (%s)' % (self.id, self.event_timer))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -437,6 +424,12 @@ class DiningPhilosophers(mvc.Model):
             self.mvc_events.register_class(self.name)
         except exceptions.ClassAlreadyRegistered:
             pass
+
+        #: register philosopher statemachine events
+        for e in Events:
+            self.mvc_events.register_event(class_name=self.name, event_name=e.name, event_type='model',
+                                           text='%s[%s][%s]' % (self.name, e.name, e.value), data=e.value)
+        #: register philosopher simulation events
         self.mvc_events.register_event(class_name=self.name, event_name='Iterations', event_type='*')
         self.mvc_events.register_event(class_name=self.name, event_name='AllStopped', event_type='*',
                                        text='All philosophers stopped')
@@ -447,7 +440,9 @@ class DiningPhilosophers(mvc.Model):
 
         # Instantiate and initialize all philosophers
         for id_ in range(Config.Philosophers):
-            self.philosophers.append(Philosopher(philosopher_id=id_))
+            philosopher = Philosopher(philosopher_id=id_)
+            self.philosophers.append(philosopher)
+            self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
 
     def register(self, view):
         self.views[view.name] = view
