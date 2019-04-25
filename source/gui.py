@@ -151,19 +151,24 @@ class Animation(mvc.View):
         pass
 
     def _button_start(self):
-        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Start', self.name))
+        self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
+                                                event_name='Start', actor_name=self.name))
 
     def _button_step(self):
-        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Step', self.name))
+        self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
+                                                event_name='Step', actor_name=self.name))
 
     def _button_stop(self):
-        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Stop', self.name))
+        self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
+                                                event_name='Stop', actor_name=self.name))
 
     def _button_pause(self):
-        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Pause', self.name))
+        self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
+                                                event_name='Pause', actor_name=self.name))
 
     def _button_resume(self):
-        self.parent.update(self.mvc_events.post(self.config['event.class'], 'Resume', self.name))
+        self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
+                                                event_name='Resume', actor_name=self.name))
 
     def canvas_xy(self, animation_x, animation_y):
         """ Convert an animation x-y coordinate to canvas x-y coordinate
@@ -291,9 +296,19 @@ class DiningPhilosophers(Animation):
 
             :param event: Animation event (mvc.Event)
         """
-        if hasattr(self, 'parent'):
-            self.my_parent.update(event)
-        self.notify(event)
+        if 'actor' in event.keys():
+            if event['actor'] == self.name:
+                if hasattr(self, 'parent'):
+                    self.my_parent.update(event)
+                self.notify(event)
+        elif event['class'].lower() == 'waiter':
+            self.update_waiter(event)
+        # process a non-actor event
+        else:
+            pass
+
+    def update_waiter(self, event):
+        print(event)
 
 
 class SleepingBarbers(Animation):
@@ -397,9 +412,8 @@ class GuiView(mvc.View):
         self.root = None
         self.mainframe = None
         self.gui_thread = None
-        self.tkobj_dictionary = {}
-        self.tkobj_dictionary2 = {}
-        self.tkobj_deltas = []
+        self.ani_barbers = None
+        self.ani_dining = None
 
         # create an event lookup table of all registered events
         # we will use this to lookup screen for events we want to process
@@ -424,7 +438,6 @@ class GuiView(mvc.View):
                 event__ = self.events.events[class_][event_]
                 if event__['class'].lower() == 'waiter':
                     self.waiter_events[event__['event']] = event__
-        print()
 
     def update(self, event):
         """ Called to let us know of an event
@@ -434,7 +447,7 @@ class GuiView(mvc.View):
         if event['class'].lower() == 'philosophers':
             self.models['philosophers'].update(event)
         elif event['class'].lower() == 'waiter':
-            self.update_gui('waiter', event)
+            self.ani_dining.update(event)
         elif event['class'].lower() == 'barbers':
             self.models['barbers'].update(event)
         elif event['class'].lower() == 'mvc':
@@ -445,11 +458,7 @@ class GuiView(mvc.View):
             print(event)
 
     def update_gui(self, gui, event):
-        if gui is 'waiter':
-            self.update_gui_waiter(event)
-
-    def update_gui_waiter(self, event):
-        print('waiter: %s' % event)
+        print(gui, event)
 
     def update_dining_console(self, event):
         pass
@@ -498,13 +507,19 @@ class GuiView(mvc.View):
         self.mainframe.grid_rowconfigure(0, weight=1)
 
         # instantiate our GUI animation views
-        ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,
-                                        config=self.philosophers_config, common=self.common_config)
-        dining_gui_console = GuiConsoleView('philosophers', ani_dining)
+        self.ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,
+                                             config=self.philosophers_config, common=self.common_config)
+        dining_gui_console = GuiConsoleView('philosophers', self.ani_dining)
 
-        ani_barbers = SleepingBarbers(parent=self, root=self.root, mainframe=self.mainframe,
-                                      config=self.barbers_config, common=self.common_config)
-        barbers_gui_console = GuiConsoleView('barbers', ani_barbers)
+        self.ani_barbers = SleepingBarbers(parent=self, root=self.root, mainframe=self.mainframe,
+                                           config=self.barbers_config, common=self.common_config)
+        barbers_gui_console = GuiConsoleView('barbers', self.ani_barbers)
+
+        # register our animation views
+        if self.philosophers_config['model'] in self.models:
+            self.models[self.philosophers_config['model']].register(self.ani_dining)
+        if self.barbers_config['model'] in self.models:
+            self.models[self.barbers_config['model']].register(self.ani_barbers)
 
         # register our console views
         if self.philosophers_config['model'] in self.models:
@@ -513,18 +528,18 @@ class GuiView(mvc.View):
             self.models[self.barbers_config['model']].register(barbers_gui_console)
 
         # Populate DiningPhilosophers animation graphics
-        ani_dining.add_table()
-        ani_dining.add_chairs()
-        ani_dining.add_forks()
-        ani_dining.add_waiter()
-        ani_dining.add_philosophers()
+        self.ani_dining.add_table()
+        self.ani_dining.add_chairs()
+        self.ani_dining.add_forks()
+        self.ani_dining.add_waiter()
+        self.ani_dining.add_philosophers()
 
         # Populate SleepingBarbers animation graphics
-        ani_barbers.draw_barbershop()
-        ani_barbers.add_barbers()
-        ani_barbers.add_waiting_room()
-        for b in ani_barbers.ani_buttons.keys():
-            ani_barbers.ani_buttons[b].state(['disabled'])
+        self.ani_barbers.draw_barbershop()
+        self.ani_barbers.add_barbers()
+        self.ani_barbers.add_waiting_room()
+        for b in self.ani_barbers.ani_buttons.keys():
+            self.ani_barbers.ani_buttons[b].state(['disabled'])
 
         # all setup so run
         self.root.mainloop()

@@ -44,7 +44,6 @@ from typing import List
 # Project imports
 from StateEngineCrank.modules.PyState import StateMachine
 import mvc
-import gui
 import exceptions
 
 # ==============================================================================
@@ -110,6 +109,9 @@ class Waiter(mvc.Model):
         self.mvc.register_event(self.name, 'Release','Model')
         self.mvc.register_event(self.name, 'Stopping','Model')
 
+        #: Forks - 1 for each philosophers, initialized 'free'
+        self.forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
+
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
         pass
@@ -144,10 +146,10 @@ class Waiter(mvc.Model):
         self.notify(self.mvc.events[self.name]['In'], data=id_)
         self.lock.acquire()
         self.notify(self.mvc.events[self.name]['Acquire'], data=id_)
-        while forks[left_fork] is ForkStatus.InUse:
+        while self.forks[left_fork] is ForkStatus.InUse:
             time.sleep(0.1)
         self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
-        while forks[right_fork] is ForkStatus.InUse:
+        while self.forks[right_fork] is ForkStatus.InUse:
             time.sleep(0.1)
         self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
         self.notify(self.mvc.events[self.name]['Out'], data=id_)
@@ -160,9 +162,6 @@ class Waiter(mvc.Model):
         self.notify(self.mvc.events[self.name]['Release'], data=philosopher_id)
         self.lock.release()
 
-
-#: Forks - 1 for each philosophers, initialized 'free'
-forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
 
 #: Waiter who grants requests for access to forks
 waiter = Waiter()
@@ -241,8 +240,8 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the *Eating* state is exited.
         """
-        forks[self.left_fork] = ForkStatus.Free
-        forks[self.right_fork] = ForkStatus.Free
+        waiter.forks[self.left_fork] = ForkStatus.Free
+        waiter.forks[self.right_fork] = ForkStatus.Free
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -284,8 +283,8 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the state transition *PickUpForks* is taken.
         """
-        forks[self.left_fork] = ForkStatus.InUse
-        forks[self.right_fork] = ForkStatus.InUse
+        waiter.forks[self.left_fork] = ForkStatus.InUse
+        waiter.forks[self.right_fork] = ForkStatus.InUse
         # thanking the waiter releases the Waiter's lock
         waiter.thank_you(self.id)
 
@@ -469,6 +468,8 @@ class DiningPhilosophers(mvc.Model):
         elif event['event'] is self.mvc_events.events[self.name]['Logger']['event']:
             self.logger('Event: %s / %s' % (event.text, event.data))
 
+    def forks(self):
+        return
     def run(self):
         """ DiningPhilosophers Main program
 

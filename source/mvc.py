@@ -256,8 +256,8 @@ class MVC(ABC, threading.Thread):
             event_['text'] = kwargs['text']
         if 'data' in kwargs.keys() and kwargs['data'] is not None:
             event_['data'] = kwargs['data']
-        if 'origin' not in event_.keys() and hasattr(self, 'name'):
-            event_['origin'] = self.name
+        if 'actor' not in event_.keys() and hasattr(self, 'name'):
+            event_['actor'] = self.name
         if 'id' not in event_.keys() and hasattr(self, 'id'):
             event_['id'] = self.id
         return event_
