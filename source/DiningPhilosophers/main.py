@@ -468,8 +468,11 @@ class DiningPhilosophers(mvc.Model):
         elif event['event'] is self.mvc_events.events[self.name]['Logger']['event']:
             self.logger('Event: %s / %s' % (event.text, event.data))
 
-    def forks(self):
-        return
+    def forks(self, philosopher_id):
+        left = self.philosophers[philosopher_id].left_fork
+        right = self.philosophers[philosopher_id].right_fork
+        return left, right
+
     def run(self):
         """ DiningPhilosophers Main program
 

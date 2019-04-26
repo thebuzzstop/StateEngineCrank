@@ -14,6 +14,7 @@ import Defines
 import mvc
 import exceptions
 from StateEngineCrank.modules.PyState import StateMachineEvent as smEvent
+from DiningPhilosophers.main import DiningPhilosophers as Philosophers
 
 
 class Animation(mvc.View):
@@ -231,6 +232,7 @@ class DiningPhilosophers(Animation):
     def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
         super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
         self.my_parent = parent
+        self.my_model = self.config['model']
         self.num_philosophers = self.config['philosophers']
         self.delta_angle_degrees = 360 / self.num_philosophers
 
@@ -248,6 +250,15 @@ class DiningPhilosophers(Animation):
         self.fork_coords = []
         self.chair_coords = []
         self.waiter_coords = []
+
+        self.waiter_event_dispatch = {
+            'In': self.waiter_in,
+            'Out': self.waiter_out,
+            'Acquire': self.waiter_acquire,
+            'Release': self.waiter_release,
+            'LeftFork': self.waiter_left_fork,
+            'RightFork': self.waiter_right_fork
+        }
 
     def add_table(self):
         """ Add the main dining table """
@@ -296,19 +307,50 @@ class DiningPhilosophers(Animation):
 
             :param event: Animation event (mvc.Event)
         """
-        if 'actor' in event.keys():
+        if event['class'].lower() == 'waiter':
+            self.waiter_event_dispatch[event['text']](event)
+        elif 'actor' in event.keys():
             if event['actor'] == self.name:
                 if hasattr(self, 'parent'):
                     self.my_parent.update(event)
                 self.notify(event)
-        elif event['class'].lower() == 'waiter':
-            self.update_waiter(event)
+            elif event['actor'].lower() == 'waiter':
+                self.waiter_event_dispatch[event['text']](event)
         # process a non-actor event
         else:
             pass
 
-    def update_waiter(self, event):
-        print(event)
+    def waiter_in(self, event):
+        philosopher = event['data']
+        print('In: %s' % event)
+
+    def waiter_out(self, event):
+        philosopher = event['data']
+        print('Out: %s' % event)
+
+    def waiter_acquire(self, event):
+        philosopher = event['data']
+        print('Acquire: %s' % event)
+
+    def waiter_release(self, event):
+        philosopher = event['data']
+        print('Release: %s' % event)
+
+    def waiter_left_fork(self, event):
+        philosopher_id = event['data']
+        model = self.models[self.my_model]
+        left, right = model.forks(philosopher_id)
+        fx, fy = self.fork_coords[left]
+        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
+        self.text_at(fx, fy, '%s' % philosopher_id, 'white')
+
+    def waiter_right_fork(self, event):
+        philosopher_id = event['data']
+        model = self.models[self.my_model]
+        left, right = model.forks(philosopher_id)
+        fx, fy = self.fork_coords[right]
+        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
+        self.text_at(fx, fy, '%s' % philosopher_id, 'white')
 
 
 class SleepingBarbers(Animation):
@@ -526,6 +568,12 @@ class GuiView(mvc.View):
             self.models[self.philosophers_config['model']].register(dining_gui_console)
         if self.barbers_config['model'] in self.models:
             self.models[self.barbers_config['model']].register(barbers_gui_console)
+
+        # register models with the animation views
+        if self.philosophers_config['model'] in self.models:
+            self.ani_dining.register(self.models[self.philosophers_config['model']])
+        if self.barbers_config['model'] in self.models:
+            self.ani_barbers.register(self.models[self.barbers_config['model']])
 
         # Populate DiningPhilosophers animation graphics
         self.ani_dining.add_table()
