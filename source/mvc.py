@@ -405,8 +405,8 @@ class View(MVC, Logger):
             :param event: View event to be sent
         """
         event_ = self.prepare(event, **kwargs)
-        for m in self.models:
-            m.update(event_)
+        for mk in self.models.keys():
+            self.models[mk].update(event_)
 
     @abstractmethod
     def update(self, event):

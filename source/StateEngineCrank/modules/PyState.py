@@ -163,7 +163,7 @@ class StateMachine(mvc.Model):
         # notify any who are registered with us for events
         text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
         self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                               event_name='POST_EVENT', text=text))
+                                               event_name='POST_EVENT', text=text, data=event))
 
         # lookup current state in transitions table and check for any transitions
         # associated with the newly received event

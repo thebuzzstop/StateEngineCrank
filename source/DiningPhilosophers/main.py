@@ -82,12 +82,17 @@ class Config(object):
     Think_Min = 10          #: minimum number of seconds to think
     Think_Max = 30          #: maximum number of seconds to think
     Philosophers = 9        #: number of philosophers dining
-    Dining_Loops = 5000     #: number of main loops for dining
+    Dining_Loops = 10000    #: number of main loops for dining
 
 
 class ForkStatus(Enum):
     Free = 0            #: Fork is free for use
     InUse = 1           #: Fork is currently in use by a philosopher
+
+
+class ForkId(Enum):
+    Left = 0
+    Right = 1
 
 
 class Waiter(mvc.Model):
@@ -144,15 +149,28 @@ class Waiter(mvc.Model):
         """
         self.id_ = id_
         self.notify(self.mvc.events[self.name]['In'], data=id_)
-        self.lock.acquire()
-        self.notify(self.mvc.events[self.name]['Acquire'], data=id_)
-        while self.forks[left_fork] is ForkStatus.InUse:
-            time.sleep(0.1)
-        self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
-        while self.forks[right_fork] is ForkStatus.InUse:
-            time.sleep(0.1)
-        self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
-        self.notify(self.mvc.events[self.name]['Out'], data=id_)
+
+        # loop until we successfully get both forks
+        got_forks = False
+        while not got_forks:
+            # wait until both forks are free
+            while self.forks[left_fork] is ForkStatus.InUse or self.forks[right_fork] is ForkStatus.InUse:
+                time.sleep(1)
+            # acquire the waiters lock
+            if not self.lock.acquire(blocking=False):
+                continue
+            # we have the waiters lock, see if both forks are still free
+            if self.forks[left_fork] is ForkStatus.Free or self.forks[right_fork] is ForkStatus.Free:
+                # we have the waiters attention and both forks are free
+                got_forks = True
+                self.notify(self.mvc.events[self.name]['LeftFork'], data=id_)
+                self.notify(self.mvc.events[self.name]['RightFork'], data=id_)
+                self.notify(self.mvc.events[self.name]['Out'], data=id_)
+            else:
+                # both forks are not free, release the lock and try again
+                self.lock.release()
+                continue
+            time.sleep(1)
 
     def thank_you(self, philosopher_id):
         """ Philosopher thank you to the waiter

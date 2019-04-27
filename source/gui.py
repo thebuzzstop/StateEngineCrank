@@ -15,6 +15,8 @@ import mvc
 import exceptions
 from StateEngineCrank.modules.PyState import StateMachineEvent as smEvent
 from DiningPhilosophers.main import DiningPhilosophers as Philosophers
+from DiningPhilosophers.main import Events as diningEvents
+from DiningPhilosophers.main import ForkId
 
 
 class Animation(mvc.View):
@@ -246,6 +248,13 @@ class DiningPhilosophers(Animation):
         self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * self.chair_radius) / 4
         self.gap = min(self.x_gap, self.y_gap)
 
+        #: radius of the circle which contains the chairs
+        self.chair_circle_radius = self.table_radius + self.gap + self.chair_radius
+        #: radius of the circle which contains the forks
+        self.fork_circle_radius = self.table_radius - self.fork_radius*2
+        #: angular offset for forks to position them between philosophers
+        self.fork_angle_offset = -self.delta_angle_degrees/2
+
         self.philosopher_coords = []
         self.fork_coords = []
         self.chair_coords = []
@@ -260,38 +269,57 @@ class DiningPhilosophers(Animation):
             'RightFork': self.waiter_right_fork
         }
 
+        self.sm_event_dispatch = {
+            diningEvents.EvStart: self.dining_start,
+            diningEvents.EvStop: self.dining_stop,
+            diningEvents.EvHungry: self.dining_hungry,
+            diningEvents.EvHavePermission: self.dining_have_permission,
+            diningEvents.EvFull: self.dining_full
+        }
+
     def add_table(self):
         """ Add the main dining table """
         self.circle_at(0, 0, self.table_radius, self.config['table.color'])
 
+    def draw_chair(self, chair):
+        angle = chair * self.delta_angle_degrees
+        cx, cy = self.transform_2xy(self.chair_circle_radius, angle)
+        self.circle_at(cx, cy, self.chair_radius, self.config['chair.color'])
+        return cx, cy
+
     def add_chairs(self):
         """ Add chairs around the dining table """
-        radius = self.table_radius + self.gap + self.chair_radius
         for chair in range(self.num_philosophers):
-            angle = chair * self.delta_angle_degrees
-            cx, cy = self.transform_2xy(radius, angle)
+            cx, cy = self.draw_chair(chair)
             self.chair_coords.append([cx, cy])
-            self.circle_at(cx, cy, self.chair_radius, self.config['chair.color'])
+
+    def draw_philosopher(self, pid, color, text=None):
+        angle = pid * self.delta_angle_degrees
+        px, py = self.transform_2xy(self.chair_circle_radius, angle)
+        if text is None:
+            self.text_at(px, py, 'P%s' % pid, color)
+        else:
+            self.text_at(px, py, ('P%s-%s' % (pid, text)), color)
+        return px, py
 
     def add_philosophers(self):
         """ Add philosophers around the table """
-        radius = self.table_radius + self.gap + self.chair_radius
         for p in range(self.num_philosophers):
-            angle = p * self.delta_angle_degrees
-            px, py = self.transform_2xy(radius, angle)
+            px, py = self.draw_philosopher(p, 'lightgrey')
             self.philosopher_coords.append([px, py])
-            self.text_at(px, py, 'P%s' % p, 'white')
+
+    def draw_fork(self, fork):
+        angle = self.fork_angle_offset + fork * self.delta_angle_degrees
+        fx, fy = self.transform_2xy(self.fork_circle_radius, angle)
+        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
+        self.text_at(fx, fy, 'F', 'white')
+        return fx, fy
 
     def add_forks(self):
         """ Add forks around the table """
-        angle_offset = self.delta_angle_degrees/2
-        radius = self.table_radius - self.fork_radius*2
         for f in range(self.num_philosophers):
-            angle = angle_offset + f * self.delta_angle_degrees
-            fx, fy = self.transform_2xy(radius, angle)
+            fx, fy = self.draw_fork(f)
             self.fork_coords.append([fx, fy])
-            self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
-            self.text_at(fx, fy, 'F', 'white')
 
     def add_waiter(self):
         """ Add the waiter graphic to the simulation """
@@ -309,6 +337,9 @@ class DiningPhilosophers(Animation):
         """
         if event['class'].lower() == 'waiter':
             self.waiter_event_dispatch[event['text']](event)
+        elif event['class'].lower() == 'sm':
+            if 'data' in event.keys() and event['data'] is not None:
+                self.sm_event_dispatch[event['data']](event)
         elif 'actor' in event.keys():
             if event['actor'] == self.name:
                 if hasattr(self, 'parent'):
@@ -316,9 +347,33 @@ class DiningPhilosophers(Animation):
                 self.notify(event)
             elif event['actor'].lower() == 'waiter':
                 self.waiter_event_dispatch[event['text']](event)
+
         # process a non-actor event
         else:
             pass
+
+    def dining_start(self, event):
+        self.draw_chair(event['id'])
+        self.draw_philosopher(event['id'], self.config['start.color'])
+
+    def dining_stop(self, event):
+        self.draw_chair(event['id'])
+        self.draw_philosopher(event['id'], self.config['stop.color'])
+
+    def dining_hungry(self, event):
+        self.draw_chair(event['id'])
+        self.draw_philosopher(event['id'], self.config['hungry.color'], text='H')
+
+    def dining_have_permission(self, event):
+        self.draw_chair(event['id'])
+        self.draw_philosopher(event['id'], self.config['eating.color'], text='E')
+
+    def dining_full(self, event):
+        self.draw_chair(event['id'])
+        self.draw_philosopher(event['id'], self.config['thinking.color'], text='T')
+        left, right = self.models['philosophers'].forks(event['id'])
+        self.draw_fork(left)
+        self.draw_fork(right)
 
     def waiter_in(self, event):
         philosopher = event['data']
@@ -329,26 +384,30 @@ class DiningPhilosophers(Animation):
         print('Out: %s' % event)
 
     def waiter_acquire(self, event):
-        philosopher = event['data']
-        print('Acquire: %s' % event)
+        philosopher_id = event['data']
+        fx, fy = self.waiter_coords[0]
+        self.circle_at(fx, fy, self.config['waiter.radius'], self.config['waiter.color'])
+        self.text_at(fx, fy, 'Wait[%s]' % philosopher_id, 'yellow')
 
     def waiter_release(self, event):
-        philosopher = event['data']
-        print('Release: %s' % event)
+        fx, fy = self.waiter_coords[0]
+        self.circle_at(fx, fy, self.config['waiter.radius'], self.config['waiter.color'])
+        self.text_at(fx, fy, 'Waiter', 'white')
 
     def waiter_left_fork(self, event):
-        philosopher_id = event['data']
-        model = self.models[self.my_model]
-        left, right = model.forks(philosopher_id)
-        fx, fy = self.fork_coords[left]
-        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
-        self.text_at(fx, fy, '%s' % philosopher_id, 'white')
+        self.waiter_fork_(event, ForkId.Left)
 
     def waiter_right_fork(self, event):
+        self.waiter_fork_(event, ForkId.Right)
+
+    def waiter_fork_(self, event, fork):
         philosopher_id = event['data']
         model = self.models[self.my_model]
         left, right = model.forks(philosopher_id)
-        fx, fy = self.fork_coords[right]
+        if fork is ForkId.Left:
+            fx, fy = self.fork_coords[left]
+        else:
+            fx, fy = self.fork_coords[right]
         self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
         self.text_at(fx, fy, '%s' % philosopher_id, 'white')
 
@@ -425,6 +484,12 @@ class GuiView(mvc.View):
         'animation.text': 'The Dining Room',
         'console.text': 'Hello, Dining Philosophers',
         'event.class': 'philosophers',
+
+        'start.color': 'white',
+        'stop.color': 'lightgrey',
+        'hungry.color': 'yellow',
+        'eating.color': 'lightgreen',
+        'thinking.color': 'lightblue',
 
         'philosophers': 9,
         'fork.radius': 10,
