@@ -14,8 +14,9 @@ import Defines
 import mvc
 import exceptions
 from StateEngineCrank.modules.PyState import StateMachineEvent as smEvent
-from DiningPhilosophers.main import DiningPhilosophers as Philosophers
+from DiningPhilosophers.main import Waiter as Waiter
 from DiningPhilosophers.main import Events as diningEvents
+from DiningPhilosophers.main import States as diningStates
 from DiningPhilosophers.main import ForkId
 
 
@@ -138,12 +139,8 @@ class Animation(mvc.View):
         except exceptions.ClassAlreadyRegistered:
             pass
         self.mvc_events.register_actor(config['event.class'], self.name)
-        self.mvc_events.register_event(config['event.class'], 'Start', event_type='view', text='Start')
-        self.mvc_events.register_event(config['event.class'], 'Step', event_type='view', text='Step')
-        self.mvc_events.register_event(config['event.class'], 'Stop', event_type='view', text='Stop')
-        self.mvc_events.register_event(config['event.class'], 'Pause', event_type='view', text='Pause')
-        self.mvc_events.register_event(config['event.class'], 'Resume', event_type='view', text='Resume')
-        self.mvc_events.register_event(config['event.class'], 'Logger', event_type='view', text='Logger')
+        for event_ in mvc.Event.Events:
+            self.mvc_events.register_event(config['event.class'], event=event_, event_type='view', text=event_.name)
 
     def run(self):
         """ Satisfy base class requirements """
@@ -155,23 +152,23 @@ class Animation(mvc.View):
 
     def _button_start(self):
         self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
-                                                event_name='Start', actor_name=self.name))
+                                                event=mvc.Event.Events.START, actor_name=self.name))
 
     def _button_step(self):
         self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
-                                                event_name='Step', actor_name=self.name))
+                                                event=mvc.Event.Events.STEP, actor_name=self.name))
 
     def _button_stop(self):
         self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
-                                                event_name='Stop', actor_name=self.name))
+                                                event=mvc.Event.Events.STOP, actor_name=self.name))
 
     def _button_pause(self):
         self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
-                                                event_name='Pause', actor_name=self.name))
+                                                event=mvc.Event.Events.PAUSE, actor_name=self.name))
 
     def _button_resume(self):
         self.parent.update(self.mvc_events.post(class_name=self.config['event.class'],
-                                                event_name='Resume', actor_name=self.name))
+                                                event=mvc.Event.Events.RESUME, actor_name=self.name))
 
     def canvas_xy(self, animation_x, animation_y):
         """ Convert an animation x-y coordinate to canvas x-y coordinate
@@ -261,36 +258,42 @@ class DiningPhilosophers(Animation):
         self.waiter_coords = []
 
         self.waiter_event_dispatch = {
-            'In': self.waiter_in,
-            'Out': self.waiter_out,
-            'Acquire': self.waiter_acquire,
-            'Release': self.waiter_release,
-            'LeftFork': self.waiter_left_fork,
-            'RightFork': self.waiter_right_fork
+            Waiter.WaiterEvents.IN: self.waiter_in,
+            Waiter.WaiterEvents.OUT: self.waiter_out,
+            Waiter.WaiterEvents.ACQUIRE: self.waiter_acquire,
+            Waiter.WaiterEvents.RELEASE: self.waiter_release,
+            Waiter.WaiterEvents.LEFTFORK: self.waiter_left_fork,
+            Waiter.WaiterEvents.RIGHTFORK: self.waiter_right_fork
         }
 
-        self.sm_event_dispatch = {
+        self.sm_dispatch = {
             diningEvents.EvStart: self.dining_start,
             diningEvents.EvStop: self.dining_stop,
             diningEvents.EvHungry: self.dining_hungry,
             diningEvents.EvHavePermission: self.dining_have_permission,
-            diningEvents.EvFull: self.dining_full
+            diningEvents.EvFull: self.dining_full,
+
+            diningStates.StartUp: self.dining_state_startup,
+            diningStates.Thinking: self.dining_state_thinking,
+            diningStates.Eating: self.dining_state_eating,
+            diningStates.Hungry: self.dining_state_hungry,
+            diningStates.Finish: self.dining_state_finish,
         }
 
     def add_table(self):
         """ Add the main dining table """
         self.circle_at(0, 0, self.table_radius, self.config['table.color'])
 
-    def draw_chair(self, chair):
+    def draw_chair(self, chair, color):
         angle = chair * self.delta_angle_degrees
         cx, cy = self.transform_2xy(self.chair_circle_radius, angle)
-        self.circle_at(cx, cy, self.chair_radius, self.config['chair.color'])
+        self.circle_at(cx, cy, self.chair_radius, color)
         return cx, cy
 
     def add_chairs(self):
         """ Add chairs around the dining table """
         for chair in range(self.num_philosophers):
-            cx, cy = self.draw_chair(chair)
+            cx, cy = self.draw_chair(chair, self.config['init.color'][0])
             self.chair_coords.append([cx, cy])
 
     def draw_philosopher(self, pid, color, text=None):
@@ -305,7 +308,7 @@ class DiningPhilosophers(Animation):
     def add_philosophers(self):
         """ Add philosophers around the table """
         for p in range(self.num_philosophers):
-            px, py = self.draw_philosopher(p, 'lightgrey')
+            px, py = self.draw_philosopher(p, self.config['init.color'][1])
             self.philosopher_coords.append([px, py])
 
     def draw_fork(self, fork):
@@ -336,52 +339,91 @@ class DiningPhilosophers(Animation):
             :param event: Animation event (mvc.Event)
         """
         if event['class'].lower() == 'waiter':
-            self.waiter_event_dispatch[event['text']](event)
+            self.waiter_event_dispatch[event['event']](event)
         elif event['class'].lower() == 'sm':
             if 'data' in event.keys() and event['data'] is not None:
-                self.sm_event_dispatch[event['data']](event)
+                if event['data'] in self.sm_dispatch.keys():
+                    self.sm_dispatch[event['data']](event)
+                else:
+                    self.logger('Unknown SM data: %s' % event['data'])
         elif 'actor' in event.keys():
             if event['actor'] == self.name:
                 if hasattr(self, 'parent'):
                     self.my_parent.update(event)
                 self.notify(event)
             elif event['actor'].lower() == 'waiter':
-                self.waiter_event_dispatch[event['text']](event)
+                self.waiter_event_dispatch[event['event']](event)
 
         # process a non-actor event
         else:
             pass
 
+    # ----------------------------------------------------
+    # Event processing support functions
+    # ----------------------------------------------------
     def dining_start(self, event):
-        self.draw_chair(event['id'])
-        self.draw_philosopher(event['id'], self.config['start.color'])
+        pass
 
     def dining_stop(self, event):
-        self.draw_chair(event['id'])
-        self.draw_philosopher(event['id'], self.config['stop.color'])
+        pass
 
     def dining_hungry(self, event):
-        self.draw_chair(event['id'])
-        self.draw_philosopher(event['id'], self.config['hungry.color'], text='H')
+        pass
 
     def dining_have_permission(self, event):
-        self.draw_chair(event['id'])
-        self.draw_philosopher(event['id'], self.config['eating.color'], text='E')
+        pass
 
     def dining_full(self, event):
-        self.draw_chair(event['id'])
-        self.draw_philosopher(event['id'], self.config['thinking.color'], text='T')
-        left, right = self.models['philosophers'].forks(event['id'])
-        self.draw_fork(left)
-        self.draw_fork(right)
+        pass
 
+    # ----------------------------------------------------
+    # State transition support functions
+    # ----------------------------------------------------
+    def dining_state_startup(self, event):
+        pass
+
+    def dining_state_thinking(self, event):
+        if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
+            self.draw_chair(event['user.id'], self.config['thinking.color'][0])
+            self.draw_philosopher(event['user.id'], self.config['thinking.color'][1], text='T')
+            left, right = self.models['philosophers'].forks(event['user.id'])
+            self.draw_fork(left)
+            self.draw_fork(right)
+        else:
+            raise('unexpected event handling')
+
+    def dining_state_eating(self, event):
+        if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
+            self.draw_chair(event['user.id'], self.config['eating.color'][0])
+            self.draw_philosopher(event['user.id'], self.config['eating.color'][1], text='E')
+        else:
+            raise('unexpected event handling')
+
+    def dining_state_hungry(self, event):
+        if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
+            self.draw_chair(event['user.id'], self.config['hungry.color'][0])
+            self.draw_philosopher(event['user.id'], self.config['hungry.color'][1], text='H')
+        else:
+            raise('unexpected event handling')
+
+    def dining_state_finish(self, event):
+        if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
+            self.draw_chair(event['user.id'], self.config['stop.color'][0])
+            self.draw_philosopher(event['user.id'], self.config['stop.color'][1])
+            left, right = self.models['philosophers'].forks(event['user.id'])
+            self.draw_fork(left)
+            self.draw_fork(right)
+        else:
+            raise('unexpected event handling')
+
+    # ----------------------------------------------------
+    # Waiter support functions
+    # ----------------------------------------------------
     def waiter_in(self, event):
-        philosopher = event['data']
-        print('In: %s' % event)
+        pass
 
     def waiter_out(self, event):
-        philosopher = event['data']
-        print('Out: %s' % event)
+        pass
 
     def waiter_acquire(self, event):
         philosopher_id = event['data']
@@ -446,11 +488,14 @@ class GuiConsoleView(mvc.View):
 
     def update(self, event):
         ts = event['datetime'].strftime('%H:%M:%S:%f')
-        msg = '{} [{}]'.format(ts, event['class'])
-        if 'text' in event.keys() and event['text'] is not None:
-            msg = '{} {}'.format(msg, event['text'])
-        if 'data' in event.keys() and event['data'] is not None:
-            msg = '{} {}'.format(msg, event['data'])
+        if event['class'].lower() == 'waiter':
+            msg = '{} [{}] {} {}'.format(ts, event['class'], event['data'], event['event'].name)
+        else:
+            msg = '{} [{}]'.format(ts, event['class'])
+            if 'text' in event.keys() and event['text'] is not None:
+                msg = '{} {}'.format(msg, event['text'])
+            if 'data' in event.keys() and event['data'] is not None:
+                msg = '{} {}'.format(msg, event['data'])
         self.widget.ani_console_text.insert(END, msg+'\n')
         self.widget.ani_console_text.see(END)
 
@@ -485,11 +530,12 @@ class GuiView(mvc.View):
         'console.text': 'Hello, Dining Philosophers',
         'event.class': 'philosophers',
 
-        'start.color': 'white',
-        'stop.color': 'lightgrey',
-        'hungry.color': 'yellow',
-        'eating.color': 'lightgreen',
-        'thinking.color': 'lightblue',
+        'init.color': ['grey', 'white'],
+        'start.color': ['lightgrey', 'yellow'],
+        'stop.color': ['lightgrey', 'red'],
+        'hungry.color': ['red', 'yellow'],
+        'eating.color': ['green', 'white'],
+        'thinking.color': ['blue', 'white'],
 
         'philosophers': 9,
         'fork.radius': 10,
@@ -497,7 +543,6 @@ class GuiView(mvc.View):
         'table.radius': 75,
         'table.color': 'grey',
         'chair.radius': 20,
-        'chair.color': 'grey',
         'waiter.radius': 25,
         'waiter.color': 'blue',
     }
@@ -527,16 +572,12 @@ class GuiView(mvc.View):
         self.events = mvc.Event()
 
         # scan for StateMachine events
-        self.sme = smEvent()
         self.sm_events = {}
         for sme_ in smEvent.SmEvents:
-            sme_ = str(sme_)
-            if sme_.startswith('SmEvents.'):
-                sme_ = sme_[len('SmEvents.'):]
             event = self.events.lookup_event('SM', sme_)
             if event is None:
                 raise 'SM Event not found : {}'.format(sme_)
-            self.sm_events[event['event']] = event
+            self.sm_events[sme_] = event
 
         # scan for Waiter events
         self.waiter_events = {}

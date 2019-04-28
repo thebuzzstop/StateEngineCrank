@@ -37,7 +37,7 @@ class StateMachineEvent(Borg):
             self.events = mvc.Event()
             self.events.register_class(self.class_name)
             for sme in StateMachineEvent.SmEvents:
-                self.events.register_event(class_name=self.class_name, actor_name=None, event_name=str(sme.name),
+                self.events.register_event(class_name=self.class_name, actor_name=None, event=sme,
                                            event_type='model', text=str(sme.name))
 
 
@@ -102,7 +102,7 @@ class StateMachine(mvc.Model):
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
-        self.logger('%s-SM StateMachine thread start' % self.name)
+        self.logger('%s StateMachine thread start' % self.name)
         self.start()
 
     def run(self):
@@ -112,24 +112,24 @@ class StateMachine(mvc.Model):
             * Stops running when the **running** boolean is False
         """
         # wait until our state machine has been activated
-        self.logger('%s-SM StateMachine activating [%s]' % (self.name, self.current_state))
+        self.logger('%s StateMachine activating [%s]' % (self.name, self.current_state))
         while not self.running:
             time.sleep(0.1)
-        self.logger('%s-SM StateMachine activated [%s]' % (self.name, self.current_state))
+        self.logger('%s StateMachine activated [%s]' % (self.name, self.current_state))
 
         # check for an enter function
         if self.enter_func is not None:
-            self.logger('%s-SM StateMachine Enter Function [%s]' % (self.name, self.current_state))
+            self.logger('%s StateMachine Enter Function [%s]' % (self.name, self.current_state))
             self.enter_func(self)
-            # self.logger('%s-SM StateMachine Enter+ Function [%s]' % (self.name, self.current_state))
+            # self.logger('%s StateMachine Enter+ Function [%s]' % (self.name, self.current_state))
 
-        self.logger('%s-SM StateMachine running [%s]' % (self.name, self.current_state))
+        self.logger('%s StateMachine running [%s]' % (self.name, self.current_state))
         while self.running:
             if not self.event_queue.empty():
                 self.event(self.event_queue.get_nowait())
             else:
                 self.do()
-        self.logger('%s-SM StateMachine exiting [%s]' % (self.name, self.current_state))
+        self.logger('%s StateMachine exiting [%s]' % (self.name, self.current_state))
 
     def do(self):
         """ Execute current state **do** function if it exists """
@@ -161,9 +161,9 @@ class StateMachine(mvc.Model):
             return
 
         # notify any who are registered with us for events
-        text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                               event_name='POST_EVENT', text=text, data=event))
+        text = '%s %s [%s]' % (self.name, event, self.current_state)
+        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                               event=StateMachineEvent.SmEvents.POST_EVENT, text=text, data=event))
 
         # lookup current state in transitions table and check for any transitions
         # associated with the newly received event
@@ -183,74 +183,74 @@ class StateMachine(mvc.Model):
             # State guard function
             guard_func = transition_table[event]['guard']
             if guard_func is not None:
-                text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-                self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                       event_name='GUARD_FUNCTION', text=text))
+                text = '%s %s [%s]' % (self.name, event, self.current_state)
+                self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                       event=StateMachineEvent.SmEvents.GUARD_FUNCTION, text=text))
                 if not guard_func(self):
-                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                           event_name='GUARD_FALSE', text=text))
+                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                           event=StateMachineEvent.SmEvents.GUARD_FALSE, text=text))
                     return
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='GUARD_TRUE', text=text))
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.GUARD_TRUE, text=text))
             transition = transition_table[event]
 
         # Test if event entry is a list of transitions
         elif isinstance(transition_table[event], list):
             for trans in transition_table[event]:
                 guard_func = trans['guard']
-                text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
+                text = '%s %s [%s]' % (self.name, event, self.current_state)
                 if guard_func is not None:
-                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                           event_name='GUARD_FUNCTION', text=text))
+                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                           event=StateMachineEvent.SmEvents.GUARD_FUNCTION, text=text))
                     if guard_func(self):
                         transition = trans
-                        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                               event_name='GUARD_TRUE', text=text))
+                        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                               event=StateMachineEvent.SmEvents.GUARD_TRUE, text=text))
                         break
-                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                           event_name='GUARD_FALSE', text=text))
+                    self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                           event=StateMachineEvent.SmEvents.GUARD_FALSE, text=text))
 
         # No entry in table for this event
         else:
-            text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='EVENT_NOT_FOUND', text=text))
+            text = '%s %s [%s]' % (self.name, event, self.current_state)
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.EVENT_NOT_FOUND, text=text))
             return
 
         # Just exit if we did not find a valid transition
         if transition is None:
-            text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='NO_TRANSITION', text=text))
+            text = '%s %s [%s]' % (self.name, event, self.current_state)
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.NO_TRANSITION, text=text))
             return
 
         # Execute state exit function if it is not None
         exit_func = self.state_function_table[self.current_state]['exit']
         if exit_func is not None:
-            text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='EXIT_FUNCTION', text=text))
+            text = '%s %s [%s]' % (self.name, event, self.current_state)
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.EXIT_FUNCTION, text=text))
             exit_func(self)
 
         # Execute state transition function if it is not None
         if transition['transition'] is not None:
-            text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='TRANSITION_FUNCTION', text=text))
+            text = '%s %s [%s]' % (self.name, event, self.current_state)
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.TRANSITION_FUNCTION, text=text))
             transition['transition'](self)
 
         # Enter next state
         self.current_state = transition['state2']
-        text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                               event_name='STATE_TRANSITION', text=text))
+        text = '%s %s [%s]' % (self.name, event, self.current_state)
+        self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                               event=StateMachineEvent.SmEvents.STATE_TRANSITION, text=text, data=transition['state2']))
 
         # Execute state enter function if it is not None
         enter_func = self.state_function_table[self.current_state]['enter']
         if enter_func is not None:
-            text = '%s-SM %s [%s]' % (self.name, event, self.current_state)
-            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name,
-                                                   event_name='EXIT_FUNCTION', text=text))
+            text = '%s %s [%s]' % (self.name, event, self.current_state)
+            self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
+                                                   event=StateMachineEvent.SmEvents.ENTER_FUNCTION, text=text))
             enter_func(self)
 
         # Setup do function

@@ -25,7 +25,7 @@ class Event(Borg):
     """ MVC Events - Model and View """
 
     class Events(enum.Enum):
-        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS = range(7)
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, ITERATIONS, ALLSTOPPED, STATISTICS = range(10)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -48,13 +48,16 @@ class Event(Borg):
 
             # register some well-known events
             self.register_class('mvc')
-            self.register_event('mvc', 'Start', '*', text='Start execution, enter run-state')
-            self.register_event('mvc', 'Stop', '*', text='Stop execution, terminate program')
-            self.register_event('mvc', 'Step', '*', text='Single execution step')
-            self.register_event('mvc', 'Pause', '*', text='Pause execution, retain current state')
-            self.register_event('mvc', 'Resume', '*', text='Resume execution')
-            self.register_event('mvc', 'Logger', '*', text='Log entry')
-            self.register_event('mvc', 'Loops', '*', text='Loop count', data=0)
+            self.register_event('mvc', Event.Events.START, '*', text='Start execution, enter run-state')
+            self.register_event('mvc', Event.Events.STOP, '*', text='Stop execution, terminate program')
+            self.register_event('mvc', Event.Events.STEP, '*', text='Single execution step')
+            self.register_event('mvc', Event.Events.PAUSE, '*', text='Pause execution, retain current state')
+            self.register_event('mvc', Event.Events.RESUME, '*', text='Resume execution')
+            self.register_event('mvc', Event.Events.LOGGER, '*', text='Log entry')
+            self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
+            self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
+            self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
+            self.register_event('mvc', Event.Events.ITERATIONS, '*', text='Display iteration/loop count')
 
     def register_class(self, class_name):
         """ Register a class name for the events database
@@ -68,23 +71,29 @@ class Event(Borg):
         # create a dictionary entry for the new class
         self.events[class_name] = {}
 
-    def register_event(self, class_name, event_name, event_type, **kwargs):
+    def register_event(self, class_name, event, event_type, **kwargs):
         """ Register a class event
 
             :param class_name: Name of the class this event belongs to
-            :param event_name: Name of the event (text)
+            :param event: Event class name
             :param event_type: Type of event [model, view, controller]
             :param kwargs:
+                ['user.id'] Optional ID associated with this event
                 ['text'] Optional text associated with this event
                 ['data'] Optional data associated with this event
             :raises: ClassNotRegistered, EventAlreadyRegistered
         """
+        # Set UserId to user ID if present
+        user_id = None
+        if 'user_id' in kwargs.keys():
+            user_id = kwargs['user_id']
+
         # Set text to user text if present
         text = None
         if 'text' in kwargs.keys():
             text = kwargs['text']
-        elif isinstance(event_name, str):
-            text = event_name
+        elif isinstance(event, str):
+            text = event
 
         # Set data to user data if present
         data = None
@@ -94,16 +103,17 @@ class Event(Borg):
         # verify registrations
         if class_name not in self.events.keys():
             raise exceptions.ClassNotRegistered
-        if event_name in self.events[class_name].keys():
+        if event in self.events[class_name].keys():
             raise exceptions.EventAlreadyRegistered
 
         # register the event in our classes database
         self.event_counter += 1
-        self.events[class_name][event_name] = \
-            {'class': class_name, 'event': self.event_counter, 'type': event_type, 'text': text, 'data': data}
+        self.events[class_name][event] = \
+            {'class': class_name, 'event': event, 'event.id': self.event_counter, 'type': event_type,
+             'user.id': user_id, 'text': text, 'data': data}
 
         # append the event to our 'event_by_id' lookup table
-        self.event_by_id.append(self.events[class_name][event_name])
+        self.event_by_id.append(self.events[class_name][event])
 
     def register_actor(self, class_name, actor_name):
         """ Register an actor for the events database
@@ -126,35 +136,33 @@ class Event(Borg):
             # create a dictionary entry for the new actor
             self.actors[actor_name] = [class_name]
 
-    def lookup_event(self, class_name, event_name):
+    def lookup_event(self, class_name, event):
         if class_name not in self.events.keys():
             return None
-        if not isinstance(event_name, str):
-            event_name = str(event_name)
-        for event in self.events[class_name].keys():
-            if event_name == self.events[class_name][event]['text']:
-                return self.events[class_name][event]
+        if event in self.events[class_name].keys():
+            return self.events[class_name][event]
         return None
 
     def lookup_by_id(self, event_id):
-        if event_id > 0 and event_id < len(self.event_by_id):
+        if 0 < event_id < len(self.event_by_id):
             return self.event_by_id[event_id-1]
         else:
             return None
 
-    def post(self, class_name, event_name, actor_name, text=None, data=None):
+    def post(self, class_name, event, actor_name, user_id=None, text=None, data=None):
         """ Prepare an event for posting
 
             :param class_name: Class name for this event, must be registered
-            :param event_name: Event name for this event, must be registered
+            :param event: Event class name for this event, must be registered
             :param actor_name: Actor name for this event, must be registered
+            :param user_id: Optional ID for the poster of this event
             :param text: Optional text for this event
             :param data: Optional data for this event
             :raises: ClassNotRegistered, EventNotRegistered
         """
         if class_name not in self.events.keys():
             raise exceptions.ClassNotRegistered
-        if event_name not in self.events[class_name].keys():
+        if event not in self.events[class_name].keys():
             raise exceptions.EventNotRegistered
         if actor_name not in self.actors.keys():
             raise exceptions.ActorNotRegistered
@@ -164,22 +172,22 @@ class Event(Borg):
             raise exceptions.ActorNotRegistered
 
         # create a copy of the event
-        event = copy.copy(self.events[class_name][event_name])
-        event['actor'] = actor_name
+        event_ = copy.copy(self.events[class_name][event])
+        event_['actor'] = actor_name
 
         # add event timestamp information
-        event['datetime'] = datetime.datetime.now()
+        event_['datetime'] = datetime.datetime.now()
 
         # add conditional information
-        if text is not None:
-            event['text'] = text
-        if data is not None:
-            event['data'] = data
         if hasattr(self, 'name'):
-            event['origin'] = self.name
-        if hasattr(self, 'id'):
-            event['id'] = self.id
-        return event
+            event_['origin'] = self.name
+        if text is not None:
+            event_['text'] = text
+        if data is not None:
+            event_['data'] = data
+        if user_id is not None:
+            event_['user.id'] = user_id
+        return event_
 
 
 class MVC(ABC, threading.Thread):
@@ -258,8 +266,8 @@ class MVC(ABC, threading.Thread):
             event_['data'] = kwargs['data']
         if 'actor' not in event_.keys() and hasattr(self, 'name'):
             event_['actor'] = self.name
-        if 'id' not in event_.keys() and hasattr(self, 'id'):
-            event_['id'] = self.id
+        if 'user.id' not in event_.keys() and hasattr(self, 'id'):
+            event_['user.id'] = self.id
         return event_
 
 

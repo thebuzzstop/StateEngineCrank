@@ -42,7 +42,7 @@ class Main(Controller):
 
         # dictionary of models
         self.models = {
-            'philosophers': philosophers.DiningPhilosophers(),
+            'philosophers': philosophers.DiningPhilosophers(exit_when_done=False),
             'barbers': barbers.SleepingBarber()
         }
 
