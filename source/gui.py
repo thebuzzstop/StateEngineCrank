@@ -239,14 +239,17 @@ class DiningPhilosophers(Animation):
         self.ani_height = self.common['animation']['height']
         self.table_radius = self.config['table.radius']
         self.chair_radius = self.config['chair.radius']
+        self.timer_radius = self.config['timer.radius']
         self.fork_radius = self.config['fork.radius']
 
-        self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * self.chair_radius) / 4
-        self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * self.chair_radius) / 4
+        self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * (self.chair_radius+self.timer_radius)) / 6
+        self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * (self.chair_radius+self.timer_radius)) / 6
         self.gap = min(self.x_gap, self.y_gap)
 
         #: radius of the circle which contains the chairs
         self.chair_circle_radius = self.table_radius + self.gap + self.chair_radius
+        #: radius of the circle which contains the timers
+        self.timer_circle_radius = self.chair_circle_radius + self.chair_radius + self.gap + self.timer_radius
         #: radius of the circle which contains the forks
         self.fork_circle_radius = self.table_radius - self.fork_radius*2
         #: angular offset for forks to position them between philosophers
@@ -255,6 +258,7 @@ class DiningPhilosophers(Animation):
         self.philosopher_coords = []
         self.fork_coords = []
         self.chair_coords = []
+        self.timer_coords = []
         self.waiter_coords = []
 
         self.waiter_event_dispatch = {
@@ -295,6 +299,21 @@ class DiningPhilosophers(Animation):
         for chair in range(self.num_philosophers):
             cx, cy = self.draw_chair(chair, self.config['init.color'][0])
             self.chair_coords.append([cx, cy])
+
+    def draw_timer(self, timer, color, text=None):
+        angle = timer * self.delta_angle_degrees
+        tx, ty = self.transform_2xy(self.timer_circle_radius, angle)
+        if text is None:
+            text = '0'
+        self.circle_at(tx, ty, self.timer_radius, color[0])
+        self.text_at(tx, ty, '%s' % text, color[1])
+        return tx, ty
+
+    def add_timers(self):
+        """ Add timers around the dining table """
+        for timer in range(self.num_philosophers):
+            tx, ty = self.draw_timer(timer, self.config['init.color'])
+            self.timer_coords.append([tx, ty])
 
     def draw_philosopher(self, pid, color, text=None):
         angle = pid * self.delta_angle_degrees
@@ -338,14 +357,23 @@ class DiningPhilosophers(Animation):
 
             :param event: Animation event (mvc.Event)
         """
-        if event['class'].lower() == 'waiter':
-            self.waiter_event_dispatch[event['event']](event)
+        # MVC class events
+        if event['class'].lower() == 'mvc':
+            if event['event'] == mvc.Event.Events.TIMER:
+                self.timer_handler(event)
+        # SM class events
         elif event['class'].lower() == 'sm':
             if 'data' in event.keys() and event['data'] is not None:
                 if event['data'] in self.sm_dispatch.keys():
                     self.sm_dispatch[event['data']](event)
                 else:
                     self.logger('Unknown SM data: %s' % event['data'])
+
+        # Waiter class events
+        elif event['class'].lower() == 'waiter':
+            self.waiter_event_dispatch[event['event']](event)
+
+        # Actor events
         elif 'actor' in event.keys():
             if event['actor'] == self.name:
                 if hasattr(self, 'parent'):
@@ -353,7 +381,6 @@ class DiningPhilosophers(Animation):
                 self.notify(event)
             elif event['actor'].lower() == 'waiter':
                 self.waiter_event_dispatch[event['event']](event)
-
         # process a non-actor event
         else:
             pass
@@ -361,6 +388,12 @@ class DiningPhilosophers(Animation):
     # ----------------------------------------------------
     # Event processing support functions
     # ----------------------------------------------------
+    def timer_handler(self, event):
+        time = event['data'][0]
+        id = event['user.id']
+        color = self.config['init.color']
+        self.draw_timer(id, color, text=time)
+
     def dining_start(self, event):
         pass
 
@@ -487,6 +520,9 @@ class GuiConsoleView(mvc.View):
         self.widget = widget
 
     def update(self, event):
+        # don't log timer tick events to the console
+        if event['event'] == mvc.Event.Events.TIMER:
+            return
         ts = event['datetime'].strftime('%H:%M:%S:%f')
         if event['class'].lower() == 'waiter':
             msg = '{} [{}] {} {}'.format(ts, event['class'], event['data'], event['event'].name)
@@ -511,7 +547,7 @@ class GuiView(mvc.View):
 
     common_config = {
         'mainframe.stick': (N, S, E, W),
-        'animation': {'width': 320, 'height': 320},
+        'animation': {'width': 360, 'height': 360},
         'animation.stick': N,
         'buttons.stick': N,
         'console': {'width': 40, 'height': 10},
@@ -543,6 +579,7 @@ class GuiView(mvc.View):
         'table.radius': 75,
         'table.color': 'grey',
         'chair.radius': 20,
+        'timer.radius': 15,
         'waiter.radius': 25,
         'waiter.color': 'blue',
     }
@@ -687,6 +724,7 @@ class GuiView(mvc.View):
         self.ani_dining.add_forks()
         self.ani_dining.add_waiter()
         self.ani_dining.add_philosophers()
+        self.ani_dining.add_timers()
 
         # Populate SleepingBarbers animation graphics
         self.ani_barbers.draw_barbershop()

@@ -25,7 +25,7 @@ class Event(Borg):
     """ MVC Events - Model and View """
 
     class Events(enum.Enum):
-        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, ITERATIONS, ALLSTOPPED, STATISTICS = range(10)
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ITERATIONS, ALLSTOPPED, STATISTICS = range(11)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -58,6 +58,7 @@ class Event(Borg):
             self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
             self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
             self.register_event('mvc', Event.Events.ITERATIONS, '*', text='Display iteration/loop count')
+            self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
 
     def register_class(self, class_name):
         """ Register a class name for the events database

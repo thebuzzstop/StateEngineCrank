@@ -114,6 +114,8 @@ class Waiter(mvc.Model):
         self.id_ = None             #: last philosopher ID to make a request
         self.mvc = mvc.Event()      #: mvc Event registry
         self.mvc.register_class(class_name=self.name)
+        self.mvc.register_actor(class_name='mvc', actor_name=self.name)
+        self.mvc.register_event(self.name, mvc.Event.Events.TIMER, '*')
         self.mvc.register_event(self.name, Waiter.WaiterEvents.STARTING, 'Model')
         self.mvc.register_event(self.name, Waiter.WaiterEvents.RUNNING, 'Model')
         self.mvc.register_event(self.name, Waiter.WaiterEvents.IN, 'Model')
@@ -126,6 +128,7 @@ class Waiter(mvc.Model):
 
         #: Forks - 1 for each philosophers, initialized 'free'
         self.forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
+        self.hungry_timers = [0 for _ in range(Config.Philosophers)]
 
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
@@ -162,13 +165,25 @@ class Waiter(mvc.Model):
 
         # loop until we successfully get both forks
         got_forks = False
+        self.hungry_timers[philosopher_id] = 0
         while not got_forks:
             # wait until both forks are free
             while self.forks[left_fork] is ForkStatus.InUse or self.forks[right_fork] is ForkStatus.InUse:
                 time.sleep(1)
+                self.hungry_timers[philosopher_id] += 1
+                self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
+                                          event=mvc.Event.Events.TIMER,
+                                          data=[self.hungry_timers[philosopher_id], None]))
+
             # acquire the waiters lock
             if not self.lock.acquire(blocking=False):
+                time.sleep(1)
+                self.hungry_timers[philosopher_id] += 1
+                self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
+                                          event=mvc.Event.Events.TIMER,
+                                          data=[self.hungry_timers[philosopher_id], None]))
                 continue
+
             # we have the waiters lock, see if both forks are still free
             if self.forks[left_fork] is ForkStatus.Free or self.forks[right_fork] is ForkStatus.Free:
                 # we have the waiters attention and both forks are free
@@ -179,8 +194,11 @@ class Waiter(mvc.Model):
             else:
                 # both forks are not free, release the lock and try again
                 self.lock.release()
-                continue
-            time.sleep(1)
+                time.sleep(1)
+                self.hungry_timers[philosopher_id] += 1
+                self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
+                                          event=mvc.Event.Events.TIMER,
+                                          data=[self.hungry_timers[philosopher_id], None]))
 
     def thank_you(self, philosopher_id):
         """ Philosopher thank you to the waiter
@@ -258,6 +276,9 @@ class UserCode(StateMachine, mvc.Model):
         time.sleep(1)
         self.eating_seconds += 1
         self.event_timer -= 1
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.event_timer, self.current_state]))
         if self.event_timer == 0:
             self.event(Events.EvFull)
 
@@ -279,6 +300,9 @@ class UserCode(StateMachine, mvc.Model):
             Called when the *Eating* state is entered.
         """
         self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.event_timer, self.current_state]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -324,6 +348,9 @@ class UserCode(StateMachine, mvc.Model):
             Called when the *Thinking* state is entered.
         """
         self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.event_timer, self.current_state]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -336,28 +363,11 @@ class UserCode(StateMachine, mvc.Model):
         time.sleep(1)
         self.thinking_seconds += 1
         self.event_timer -= 1
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.event_timer, self.current_state]))
         if self.event_timer == 0:
             self.event(Events.EvHungry)
-
-    # ===========================================================================
-    # noinspection PyPep8Naming
-    def Think(self):
-        """ Guard function used to determine if a Philosophers initial state is *Thinking*
-
-            :returns: True : Philosopher's initial state is *Thinking*
-            :returns: False : Philosopher's initial state is NOT *Thinking*
-        """
-        return self.initial_state is States.Thinking
-
-    # ===========================================================================
-    # noinspection PyPep8Naming
-    def Eat(self):
-        """ Guard function used to determine if a Philosophers initial state is *Eating*
-
-            :returns: True : Philosopher's initial state is *Eating*
-            :returns: False : Philosopher's initial state is NOT *Eating*
-        """
-        return self.initial_state is States.Hungry
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -415,6 +425,7 @@ class UserCode(StateMachine, mvc.Model):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
@@ -502,7 +513,6 @@ class DiningPhilosophers(mvc.Model):
         for e in Events:
             self.mvc_events.register_event(class_name=self.name, event=e, event_type='model',
                                            text='%s[%s][%s]' % (self.name, e.name, e.value), data=e.value)
-
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
 
@@ -511,6 +521,7 @@ class DiningPhilosophers(mvc.Model):
             philosopher = Philosopher(philosopher_id=id_)
             self.philosophers.append(philosopher)
             self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
+            self.mvc_events.register_actor(class_name='mvc', actor_name=philosopher.name)
 
     def register(self, view):
         self.views[view.name] = view
@@ -542,6 +553,8 @@ class DiningPhilosophers(mvc.Model):
             self.logger('[{}]: {}'.format(event['class'], event['text']))
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ITERATIONS]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.TIMER]['event']:
+            pass
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.LOGGER]['event']:
             self.logger('Event: %s / %s' % (event['text'], event['data']))
         else:
