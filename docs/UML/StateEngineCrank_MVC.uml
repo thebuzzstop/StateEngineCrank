@@ -7,16 +7,43 @@ package "StateEngineCrank MVC" <<Frame>> {
     package MVC <<Frame>> {
         class Thread
 
-        abstract class MVC.Event {
+        class MVC.Events {
+            START, STOP, STEP, PAUSE,
+            RESUME, LOGGER, LOOPS,
+            TIMER, ITERATIONS, ALLSTOP,
+            STATISTICS
+        }
+
+        class MVC.Event {
             Used to communicate events
             between MVC elements
+            ===
+            events {} : dictionary of events
+            actors {} : dictionary of actors
+            event_by_id [] : list of events
+            ---
+            register_class(class_name)
+            register_event(class_name, event, event_type, **kwargs)
+            register_actor(class_name, actor_name)
+            ---
+            Event lookup_event(class_name, event)
+            Event lookup_by_id(event_id)
+            Event post(class_name, event, actor_name, user_id=None, text=None, data=None)
+        }
+
+        class MVC.Logger {
+            Logger class for simplified console logging
+            ---
+            logger(text) : Console logging support
         }
 
         abstract class MVC.MVC {
             name : MVC element name
+            starting : boolean : True when staring
             running : boolean : True when running
             stopping : boolean : True when stopping
             _stopevent : Event : Set to cause element to stop
+            parent : MVC Type : Parent object
             ---
             {abstract} run() : main thread execution target
             {abstract} update(event) : event notification (inbound)
@@ -26,6 +53,8 @@ package "StateEngineCrank MVC" <<Frame>> {
             ---
             set_running() : accessor to set the running flag
             set_stopping() : accessor to set the stopping flag
+            ---
+            Event prepare(event, **kwargs) : prepare event for logging/notification
         }
 
         abstract class MVC.Model {
@@ -33,9 +62,13 @@ package "StateEngineCrank MVC" <<Frame>> {
             ---
             {abstract} register(view) : register view with model
         }
-        MVC.Model --|> MVC.MVC
         MVC.MVC --|> MVC.Event
         MVC.MVC --|> Thread
+        MVC.Model --|> MVC.MVC
+        MVC.Model --|> MVC.Logger
+        MVC.View --|> MVC.Logger
+        MVC.Controller --|> MVC.Logger
+        MVC.Event --|> MVC.Events
 
         abstract class MVC.View {
             model{} : dictionary of models
@@ -51,6 +84,7 @@ package "StateEngineCrank MVC" <<Frame>> {
             {abstract} register(mv) : register a model or a view
         }
         MVC.Controller --|> MVC.MVC
+
     }
 
     package Model <<Frame>> {
@@ -175,5 +209,7 @@ package "StateEngineCrank MVC" <<Frame>> {
     Controller --* DiningPhilosophers
     Controller --* SleepingBarbers
     Controller --> View
+
+
 }
 @enduml
