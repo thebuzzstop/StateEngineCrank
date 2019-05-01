@@ -7,6 +7,13 @@ package "StateEngineCrank MVC" <<Frame>> {
     package MVC <<Frame>> {
         class Thread
 
+        class MVC.Logger {
+            Logger class for simplified console logging.
+            Will propagate to parent if parent has 'views'.
+            ---
+            logger(text) : Console logging support
+        }
+
         class MVC.Events {
             START, STOP, STEP, PAUSE,
             RESUME, LOGGER, LOOPS,
@@ -14,6 +21,15 @@ package "StateEngineCrank MVC" <<Frame>> {
             STATISTICS
         }
 
+        note top of MVC.Event
+        Basic Event Class
+        Anatomy of an event:
+          *  Event 'class' - a class of events
+          *  Event 'actor' - the entity raising the event
+          *  Event 'event' - the name of the event
+          *  Event 'data' - optional event specific data
+          *  Event 'text' - optional event specific text string
+        end note
         class MVC.Event {
             Used to communicate events
             between MVC elements
@@ -30,12 +46,7 @@ package "StateEngineCrank MVC" <<Frame>> {
             Event lookup_by_id(event_id)
             Event post(class_name, event, actor_name, user_id=None, text=None, data=None)
         }
-
-        class MVC.Logger {
-            Logger class for simplified console logging
-            ---
-            logger(text) : Console logging support
-        }
+        MVC.Event --> MVC.Events
 
         abstract class MVC.MVC {
             name : MVC element name
@@ -51,24 +62,25 @@ package "StateEngineCrank MVC" <<Frame>> {
             stop() : initiate stopping
             join() : called to terminate a thread
             ---
-            set_running() : accessor to set the running flag
-            set_stopping() : accessor to set the stopping flag
+            set_running() : Accessor to set the running flag
+            set_stopping() : Accessor to set the stopping flag
             ---
-            Event prepare(event, **kwargs) : prepare event for logging/notification
+            Event prepare(event, **kwargs) : Prepare event for logging/notification
         }
+        MVC.MVC --> MVC.Event
+        MVC.MVC --> Thread
 
         abstract class MVC.Model {
             views{} : dictionary of views
             ---
-            {abstract} register(view) : register view with model
+            {abstract} register(view) : Register view with model
+            {abstract} update(event) : Called by Views to tell us to update
+            {abstract} run() : Called to initiate running
+            ---
+            notify(event, **kwargs) : Called by us to notify Views about a Model Event
         }
-        MVC.MVC --|> MVC.Event
-        MVC.MVC --|> Thread
         MVC.Model --|> MVC.MVC
-        MVC.Model --|> MVC.Logger
-        MVC.View --|> MVC.Logger
-        MVC.Controller --|> MVC.Logger
-        MVC.Event --|> MVC.Events
+        MVC.Model --> MVC.Logger
 
         abstract class MVC.View {
             model{} : dictionary of models
@@ -76,15 +88,23 @@ package "StateEngineCrank MVC" <<Frame>> {
             {abstract} register(model) : register model with view
         }
         MVC.View --|> MVC.MVC
+        MVC.View --> MVC.Logger
 
         abstract class MVC.Controller {
             models{} : dictionary of models
             views{} : dictionary of views
             ---
-            {abstract} register(mv) : register a model or a view
+            register(mv) : Register a model or a view
+            notify(event, **kwargs) : Called to send notifications
         }
+        note top of MVC.Controller
+        We deliver:
+          * 'model' events to Views.
+          * 'view' events to Models.
+          * '*' events to Views and Models.
+        end note
         MVC.Controller --|> MVC.MVC
-
+        MVC.Controller --> MVC.Logger
     }
 
     package Model <<Frame>> {
@@ -209,7 +229,5 @@ package "StateEngineCrank MVC" <<Frame>> {
     Controller --* DiningPhilosophers
     Controller --* SleepingBarbers
     Controller --> View
-
-
 }
 @enduml

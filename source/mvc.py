@@ -21,6 +21,36 @@ class Borg(object):
         self.__dict__ = self._shared_state
 
 
+class Logger(object):
+    """ Logger class for simplified logging to console """
+
+    def __init__(self, parent):
+        self.logger_parent = parent
+        if not hasattr(self, 'name'):
+            if hasattr(parent, 'name'):
+                self.name = parent.name
+            else:
+                self.name = ''
+
+    def logger(self, text):
+        """ Function to support console logging
+
+            :param text: Text to be displayed
+        """
+        # if there are no views then just print
+        if not hasattr(self.logger_parent, 'views'):
+            print('logger[%s]: %s' % (self.name, text))
+
+        # parent has views
+        elif len(self.logger_parent.views.keys()) > 0:
+            for v in self.logger_parent.views.keys():
+                if hasattr(self.logger_parent.views[v], 'write'):
+                    self.logger_parent.views[v].write(text)
+        else:
+            # parent has no views
+            print('logger[%s]: %s' % (self.name, text))
+
+
 class Event(Borg):
     """ MVC Events - Model and View """
 
@@ -270,36 +300,6 @@ class MVC(ABC, threading.Thread):
         if 'user.id' not in event_.keys() and hasattr(self, 'id'):
             event_['user.id'] = self.id
         return event_
-
-
-class Logger(object):
-    """ Logger class for simplified logging to console """
-
-    def __init__(self, parent):
-        self.logger_parent = parent
-        if not hasattr(self, 'name'):
-            if hasattr(parent, 'name'):
-                self.name = parent.name
-            else:
-                self.name = ''
-
-    def logger(self, text):
-        """ Function to support console logging
-
-            :param text: Text to be displayed
-        """
-        # if there are no views then just print
-        if not hasattr(self.logger_parent, 'views'):
-            print('logger[%s]: %s' % (self.name, text))
-
-        # parent has views
-        elif len(self.logger_parent.views.keys()) > 0:
-            for v in self.logger_parent.views.keys():
-                if hasattr(self.logger_parent.views[v], 'write'):
-                    self.logger_parent.views[v].write(text)
-        else:
-            # parent has no views
-            print('logger[%s]: %s' % (self.name, text))
 
 
 class Controller(MVC, Logger):

@@ -1,0 +1,62 @@
+@startuml
+
+hide empty members
+
+package PyState <<Frame>> {
+
+    class SmEvents {
+        START_EXECUTION, STOP_EXECUTION,
+        POST_EVENT, VALID_EVENT, EVENT_NOT_FOUND,
+        GUARD_FUNCTION, GUARD_TRUE, GUARD_FALSE,
+        STATE_TRANSITION, TRANSITION_FUNCTION, NO_TRANSITION,
+        ENTER_FUNCTION, DO_FUNCTION, EXIT_FUNCTION
+    }
+
+    class StateFunction {
+        state : state identifier
+        enter : enter function
+        do : do function
+        exit : exit function
+    }
+
+    class StateTransition {
+        event : transition event trigger
+        state2 : transition destination state
+        guard : transition guard function
+        transition : transition function
+    }
+
+    class StateMachine {
+        id : state machine ID
+        name : state machine name (text)
+        sm_events : StateMachineEvent() class
+        startup_state : state in which to start
+        state_function_table : table of state functions
+        state_transition_table : table of state transitions
+        running : running flag (boolean)
+        event_queue : events are posted to this queue
+        current_state : the current state
+        enter_func : enter function for current state
+        do_func : do function for current state
+        ---
+        run() : main function to run the state machine
+        do() : executes current state 'do' function
+        post_event(event) : posts event to state machine event queue
+        event(event) : perform state machine event processing
+        update(event) : notification to us of events for US
+    }
+    StateMachine --> SmEvents
+    StateMachine --> StateTransition
+    StateMachine --> StateFunction
+
+    note right of StateMachine
+    Event Function Handles:
+        * execution of state transitions
+        * transition guard function tests
+        * transition function execution
+        * state exit function execution
+        * state enter function execution
+        * sets up do function for next state
+    end note
+}
+@enduml
