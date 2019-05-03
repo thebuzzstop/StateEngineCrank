@@ -14,7 +14,7 @@ import Defines
 import mvc
 import exceptions
 from StateEngineCrank.modules.PyState import StateMachineEvent as smEvent
-from DiningPhilosophers.main import Waiter as Waiter
+from DiningPhilosophers.main import WaiterEvents as WaiterEvents
 from DiningPhilosophers.main import Events as diningEvents
 from DiningPhilosophers.main import States as diningStates
 from DiningPhilosophers.main import ForkId
@@ -262,12 +262,12 @@ class DiningPhilosophers(Animation):
         self.waiter_coords = []
 
         self.waiter_event_dispatch = {
-            Waiter.WaiterEvents.IN: self.waiter_in,
-            Waiter.WaiterEvents.OUT: self.waiter_out,
-            Waiter.WaiterEvents.ACQUIRE: self.waiter_acquire,
-            Waiter.WaiterEvents.RELEASE: self.waiter_release,
-            Waiter.WaiterEvents.LEFTFORK: self.waiter_left_fork,
-            Waiter.WaiterEvents.RIGHTFORK: self.waiter_right_fork
+            WaiterEvents.IN: self.waiter_in,
+            WaiterEvents.OUT: self.waiter_out,
+            WaiterEvents.ACQUIRE: self.waiter_acquire,
+            WaiterEvents.RELEASE: self.waiter_release,
+            WaiterEvents.LEFTFORK: self.waiter_left_fork,
+            WaiterEvents.RIGHTFORK: self.waiter_right_fork
         }
 
         self.sm_dispatch = {
@@ -345,8 +345,6 @@ class DiningPhilosophers(Animation):
 
     def add_waiter(self):
         """ Add the waiter graphic to the simulation """
-        waiter_x = -(self.ani_width/2 - self.gap - self.config['waiter.radius'])
-        waiter_y = self.ani_height/2 - self.gap - self.config['waiter.radius']
         self.circle_at(0, 0, self.config['waiter.radius'], self.config['waiter.color'])
         self.waiter_coords.append([0, 0])
         self.ani_canvas.create_text(self.ani_center, text='Waiter', fill='white')
@@ -361,6 +359,7 @@ class DiningPhilosophers(Animation):
         if event['class'].lower() == 'mvc':
             if event['event'] == mvc.Event.Events.TIMER:
                 self.timer_handler(event)
+
         # SM class events
         elif event['class'].lower() == 'sm':
             if 'data' in event.keys() and event['data'] is not None:
@@ -389,10 +388,10 @@ class DiningPhilosophers(Animation):
     # Event processing support functions
     # ----------------------------------------------------
     def timer_handler(self, event):
-        time = event['data'][0]
-        id = event['user.id']
+        time_ = event['data'][0]
+        id_ = event['user.id']
         color = self.config['init.color']
-        self.draw_timer(id, color, text=time)
+        self.draw_timer(id_, color, text=time_)
 
     def dining_start(self, event):
         pass
@@ -423,21 +422,21 @@ class DiningPhilosophers(Animation):
             self.draw_fork(left)
             self.draw_fork(right)
         else:
-            raise('unexpected event handling')
+            raise Exception('unexpected event handling')
 
     def dining_state_eating(self, event):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
             self.draw_chair(event['user.id'], self.config['eating.color'][0])
             self.draw_philosopher(event['user.id'], self.config['eating.color'][1], text='E')
         else:
-            raise('unexpected event handling')
+            raise Exception('unexpected event handling')
 
     def dining_state_hungry(self, event):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
             self.draw_chair(event['user.id'], self.config['hungry.color'][0])
             self.draw_philosopher(event['user.id'], self.config['hungry.color'][1], text='H')
         else:
-            raise('unexpected event handling')
+            raise Exception('unexpected event handling')
 
     def dining_state_finish(self, event):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
@@ -447,7 +446,7 @@ class DiningPhilosophers(Animation):
             self.draw_fork(left)
             self.draw_fork(right)
         else:
-            raise('unexpected event handling')
+            raise Exception('unexpected event handling')
 
     # ----------------------------------------------------
     # Waiter support functions
@@ -642,7 +641,8 @@ class GuiView(mvc.View):
         else:
             print(event)
 
-    def update_gui(self, gui, event):
+    @staticmethod
+    def update_gui(gui, event):
         print(gui, event)
 
     def update_dining_console(self, event):
@@ -668,7 +668,8 @@ class GuiView(mvc.View):
         # stop the GUI
         self.gui_thread.join(timeout=Defines.Times.Stopping)
 
-    def write(self, text):
+    @staticmethod
+    def write(text):
         print(text)
 
     def tk_run(self):

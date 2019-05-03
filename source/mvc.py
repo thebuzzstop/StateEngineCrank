@@ -180,6 +180,33 @@ class Event(Borg):
         else:
             return None
 
+    def unregister_class(self, class_name):
+        """ Unregister a class
+
+            :param class_name: Class to unregister
+            :raises: ClassNotRegistered
+        """
+        # delete the class, it is an error if it is not registered
+        if class_name in self.events.keys():
+            del self.events[class_name]
+        else:
+            raise exceptions.ClassNotRegistered
+
+        # delete all actors who were registered for the just deleted class events
+        actors = list(self.actors.keys())
+        for actor in actors:
+            if class_name in actor:
+                del self.actors[actor]
+
+    def unregister_actor(self, actor_name):
+        """ Unregister an actor
+
+            :param actor_name: Name of actor to unregister
+            :raises: ActorNotRegistered
+        """
+        if actor_name in self.actors.keys():
+            del self.actors[actor_name]
+
     def post(self, class_name, event, actor_name, user_id=None, text=None, data=None):
         """ Prepare an event for posting
 

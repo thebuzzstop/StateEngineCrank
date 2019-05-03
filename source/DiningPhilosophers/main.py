@@ -55,6 +55,15 @@ import exceptions
 # ==============================================================================
 
 
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same state and behavior. """
+
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
 class States(Enum):
     StartUp = 1
     Thinking = 2
@@ -84,12 +93,48 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 10            #: minimum number of seconds to eat
-    Eat_Max = 30            #: maximum number of seconds to eat
-    Think_Min = 10          #: minimum number of seconds to think
-    Think_Max = 30          #: maximum number of seconds to think
-    Philosophers = 9        #: number of philosophers dining
-    Dining_Loops = 500      #: number of main loops for dining
+    Eat_Min = 1                         #: minimum number of seconds to eat
+    Eat_Max = 5                         #: maximum number of seconds to eat
+    Think_Min = 1                       #: minimum number of seconds to think
+    Think_Max = 5                       #: maximum number of seconds to think
+    Philosophers = 9                    #: number of philosophers dining
+    Dining_Loops = 100                  #: number of main loops for dining
+    Class_Name = 'philosophers'         #: class name for Event registration
+    Actor_Base_Name = 'philosopher'     #: used when identifying actors
+
+
+class ConfigData(Borg):
+
+    def __init__(self):
+        Borg.__init__(self)
+        if len(self._shared_state):
+            return
+        self.eat_max = Config.Eat_Max
+        self.eat_min = Config.Eat_Min
+        self.think_min = Config.Think_Min
+        self.think_max = Config.Think_Max
+        self.philosophers = Config.Philosophers
+        self.dining_loops = Config.Dining_Loops
+        self.class_name = Config.Class_Name
+        self.actor_base_name = Config.Actor_Base_Name
+
+    def set_eat_max(self, value):
+        self.eat_max = value
+
+    def set_eat_min(self, value):
+        self.eat_min = value
+
+    def set_think_max(self, value):
+        self.think_max = value
+
+    def set_think_min(self, value):
+        self.think_min = value
+
+    def set_philosophers(self, value):
+        self.philosophers = value
+
+    def set_dining_loops(self, value):
+        self.dining_loops = value
 
 
 class ForkStatus(Enum):
@@ -102,33 +147,41 @@ class ForkId(Enum):
     Right = 1
 
 
-class Waiter(mvc.Model):
-    """ Waiter class used to provide synchronization between philosophers wanting to eat """
+class WaiterEvents(Enum):
+    STARTING, RUNNING, IN, ACQUIRE, LEFTFORK, RIGHTFORK, OUT, RELEASE, STOPPING = range(9)
 
-    class WaiterEvents(Enum):
-        STARTING, RUNNING, IN, ACQUIRE, LEFTFORK, RIGHTFORK, OUT, RELEASE, STOPPING = range(9)
+
+class Waiter(mvc.Model, Borg):
+    """ Waiter class used to provide synchronization between philosophers wanting to eat.
+        Implemented as a Borg so all diners will be referencing the same waiter.
+    """
 
     def __init__(self):
+        Borg.__init__(self)
+        # see if we have called mvc.Model.__init__()
+        if hasattr(self, 'views'):
+            return
         mvc.Model.__init__(self, name='Waiter')
+        self.config = ConfigData()  #: simulation configuration data
         self.lock = Lock()          #: Lock to be acquired when accessing the *Waiter*
         self.id_ = None             #: last philosopher ID to make a request
         self.mvc = mvc.Event()      #: mvc Event registry
         self.mvc.register_class(class_name=self.name)
         self.mvc.register_actor(class_name='mvc', actor_name=self.name)
         self.mvc.register_event(self.name, mvc.Event.Events.TIMER, '*')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.STARTING, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.RUNNING, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.IN, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.ACQUIRE, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.LEFTFORK, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.RIGHTFORK, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.OUT, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.RELEASE, 'Model')
-        self.mvc.register_event(self.name, Waiter.WaiterEvents.STOPPING, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.STARTING, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.RUNNING, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.IN, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.ACQUIRE, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.LEFTFORK, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.RIGHTFORK, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.OUT, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.RELEASE, 'Model')
+        self.mvc.register_event(self.name, WaiterEvents.STOPPING, 'Model')
 
         #: Forks - 1 for each philosophers, initialized 'free'
-        self.forks = [ForkStatus.Free for _ in range(Config.Philosophers)]  # type: List[ForkStatus]
-        self.hungry_timers = [0 for _ in range(Config.Philosophers)]
+        self.forks = [ForkStatus.Free for _ in range(self.config.philosophers)]  # type: List[ForkStatus]
+        self.hungry_timers = [0 for _ in range(self.config.philosophers)]
 
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
@@ -136,15 +189,15 @@ class Waiter(mvc.Model):
 
     def run(self):
         # see if we are not running yet
-        self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.STARTING])
+        self.notify(self.mvc.events[self.name][WaiterEvents.STARTING])
         if not self.running:
             while not self.running:
                 time.sleep(1)
         # run until we aren't then exit
-        self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.RUNNING])
+        self.notify(self.mvc.events[self.name][WaiterEvents.RUNNING])
         while self.running:
             time.sleep(1)
-        self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.STOPPING])
+        self.notify(self.mvc.events[self.name][WaiterEvents.STOPPING])
 
     def request(self, philosopher_id, left_fork, right_fork):
         """ Function called when a Philosopher wants to eat.
@@ -161,7 +214,7 @@ class Waiter(mvc.Model):
             :param right_fork: ID of right fork required to eat
         """
         self.id_ = philosopher_id
-        self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.IN], data=philosopher_id)
+        self.notify(self.mvc.events[self.name][WaiterEvents.IN], data=philosopher_id)
 
         # loop until we successfully get both forks
         got_forks = False
@@ -188,9 +241,9 @@ class Waiter(mvc.Model):
             if self.forks[left_fork] is ForkStatus.Free or self.forks[right_fork] is ForkStatus.Free:
                 # we have the waiters attention and both forks are free
                 got_forks = True
-                self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.LEFTFORK], data=philosopher_id)
-                self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.RIGHTFORK], data=philosopher_id)
-                self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.OUT], data=philosopher_id)
+                self.notify(self.mvc.events[self.name][WaiterEvents.LEFTFORK], data=philosopher_id)
+                self.notify(self.mvc.events[self.name][WaiterEvents.RIGHTFORK], data=philosopher_id)
+                self.notify(self.mvc.events[self.name][WaiterEvents.OUT], data=philosopher_id)
             else:
                 # both forks are not free, release the lock and try again
                 self.lock.release()
@@ -205,12 +258,8 @@ class Waiter(mvc.Model):
 
             We use this opportunity to release the Waiter lock
         """
-        self.notify(self.mvc.events[self.name][Waiter.WaiterEvents.RELEASE], data=philosopher_id)
+        self.notify(self.mvc.events[self.name][WaiterEvents.RELEASE], data=philosopher_id)
         self.lock.release()
-
-
-#: Waiter who grants requests for access to forks
-waiter = Waiter()
 
 
 def seconds(minimum, maximum):
@@ -236,7 +285,8 @@ class UserCode(StateMachine, mvc.Model):
 
             :param user_id: unique identifier for this User
         """
-        name = 'philosopher%s' % user_id
+        self.config = ConfigData()  #: simulation configuration data
+        name = '{}{}'.format(self.config.actor_base_name, user_id)
         mvc.Model.__init__(self, name)
         StateMachine.__init__(self, sm_id=user_id, name=name, startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
@@ -253,8 +303,9 @@ class UserCode(StateMachine, mvc.Model):
         else:
             self.initial_state = States.Hungry
 
-        self.left_fork = self.id     #: left fork id for this philosopher
-        self.right_fork = (self.id + 1) % Config.Philosophers    #: right fork id for this philosopher
+        self.waiter = Waiter()      #: the waiter
+        self.left_fork = self.id    #: left fork id for this philosopher
+        self.right_fork = (self.id + 1) % self.config.philosophers    #: right fork id for this philosopher
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -289,8 +340,8 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the *Eating* state is exited.
         """
-        waiter.forks[self.left_fork] = ForkStatus.Free
-        waiter.forks[self.right_fork] = ForkStatus.Free
+        self.waiter.forks[self.left_fork] = ForkStatus.Free
+        self.waiter.forks[self.right_fork] = ForkStatus.Free
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -299,7 +350,7 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the *Eating* state is entered.
         """
-        self.event_timer = seconds(Config.Eat_Min, Config.Eat_Max)
+        self.event_timer = seconds(self.config.eat_min, self.config.eat_max)
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
                                                event=mvc.Event.Events.TIMER,
                                                data=[self.event_timer, self.current_state]))
@@ -312,7 +363,7 @@ class UserCode(StateMachine, mvc.Model):
             Called when the *Hungry* state is entered.
         """
         tstart = time.time()
-        waiter.request(self.id, self.left_fork, self.right_fork)
+        self.waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
         thungry = tend-tstart
         self.hungry_seconds += thungry
@@ -325,10 +376,10 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the state transition *PickUpForks* is taken.
         """
-        waiter.forks[self.left_fork] = ForkStatus.InUse
-        waiter.forks[self.right_fork] = ForkStatus.InUse
+        self.waiter.forks[self.left_fork] = ForkStatus.InUse
+        self.waiter.forks[self.right_fork] = ForkStatus.InUse
         # thanking the waiter releases the Waiter's lock
-        waiter.thank_you(self.id)
+        self.waiter.thank_you(self.id)
 
     # =========================================================
     # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -338,7 +389,7 @@ class UserCode(StateMachine, mvc.Model):
             Called when the state transition *ThankWaiter* is taken.
             Thanking the waiter releases the Waiter's lock.
         """
-        waiter.thank_you(self.id)
+        self.waiter.thank_you(self.id)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -347,7 +398,7 @@ class UserCode(StateMachine, mvc.Model):
 
             Called when the *Thinking* state is entered.
         """
-        self.event_timer = seconds(Config.Think_Min, Config.Think_Max)
+        self.event_timer = seconds(self.config.think_min, self.config.think_max)
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
                                                event=mvc.Event.Events.TIMER,
                                                data=[self.event_timer, self.current_state]))
@@ -496,6 +547,9 @@ class DiningPhilosophers(mvc.Model):
     def __init__(self, exit_when_done=None):
         super().__init__(name='philosophers', target=self.run)
 
+        #: simulation configuration data
+        self.config = ConfigData()
+
         # determine our exit criteria
         if exit_when_done is not None:
             self.exit_when_done = exit_when_done
@@ -516,18 +570,40 @@ class DiningPhilosophers(mvc.Model):
         #: The dining philosophers
         self.philosophers = []  # type: List[Philosopher]
 
-        # Instantiate and initialize all philosophers
-        for id_ in range(Config.Philosophers):
+        #: The waiter
+        self.waiter = Waiter()
+
+    def create_philosophers(self, first_time):
+        if not first_time:
+            # unregister philosopher actors so that they can be recreated
+            for p in self.philosophers:
+                self.mvc_events.unregister_actor(p.name)
+            # now delete our instantiations
+            del self.philosophers
+            self.philosophers = []
+            self.running = False
+
+        for id_ in range(self.config.philosophers):
             philosopher = Philosopher(philosopher_id=id_)
             self.philosophers.append(philosopher)
-            self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
-            self.mvc_events.register_actor(class_name='mvc', actor_name=philosopher.name)
+            try:
+                self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
+            except exceptions.ActorAlreadyRegistered:
+                # not a failure if already registered and not first time
+                if first_time:
+                    raise exceptions.ActorAlreadyRegistered
+            try:
+                self.mvc_events.register_actor(class_name='mvc', actor_name=philosopher.name)
+            except exceptions.ActorAlreadyRegistered:
+                # not a failure if already registered and not first time
+                if first_time:
+                    raise exceptions.ActorAlreadyRegistered
 
     def register(self, view):
         self.views[view.name] = view
         for p in self.philosophers:
             p.register(view)
-        waiter.register(view)
+        self.waiter.register(view)
 
     def update(self, event):
         """ Called by Views and/or Controller to alert us to an event. """
@@ -574,7 +650,13 @@ class DiningPhilosophers(mvc.Model):
             Also runnable as a standalone application.
         """
         done = False
+        first_time = True
         while not done:
+
+            # Instantiate and initialize all philosophers
+            self.create_philosophers(first_time=first_time)
+            first_time = False
+
             # Wait for simulation to start running
             while not self.running:
                 time.sleep(1.0)
@@ -586,7 +668,7 @@ class DiningPhilosophers(mvc.Model):
                 p.post_event(Events.EvStart)
 
             # Wait for the simulation to complete
-            for loop in range(Config.Dining_Loops):
+            for loop in range(self.config.dining_loops):
                 time.sleep(1)
                 loop += 1
                 if loop % 10 is 0:
@@ -619,8 +701,6 @@ class DiningPhilosophers(mvc.Model):
             if self.exit_when_done:
                 self.set_stopping()
                 done = True
-            else:
-                self.running = False
 
 
 if __name__ == '__main__':
