@@ -257,6 +257,8 @@ class MVC(ABC, threading.Thread):
         self.starting = True                    #: starting status
         self.running = False                    #: running status
         self.stopping = False                   #: stopping status
+        self.pause = False                      #: pause status
+        self.resuming = True                    #: resuming status
         self._stop_event = threading.Event()    #: event used to stop our thread
         if parent is not None:
             self.parent = parent                #: optional parent for notifications
@@ -265,6 +267,14 @@ class MVC(ABC, threading.Thread):
         """ Accessor to set the *running* flag """
         self.starting = False
         self.running = True
+
+    def set_pause(self):
+        """ Accessor to set the *pause* flag """
+        self.pause = True
+
+    def set_resume(self):
+        """ Accessor to clear the *pause* flag """
+        self.pause = False
 
     def set_stopping(self):
         """ Accessor to set the *stopping* flag """
@@ -298,6 +308,7 @@ class MVC(ABC, threading.Thread):
         """ Initiate stopping """
         self.stopping = True
         self.running = False
+        self.pause = False
         self.join(timeout=Defines.Times.Stopping)
         self.stopping = False
 

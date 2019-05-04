@@ -7,7 +7,7 @@ import enum
 import time
 import queue
 import mvc
-
+import Defines
 
 class Borg(object):
     """ The Borg class ensures that all instantiations refer to the same state and behavior. """
@@ -114,7 +114,7 @@ class StateMachine(mvc.Model):
         # wait until our state machine has been activated
         self.logger('%s StateMachine activating [%s]' % (self.name, self.current_state))
         while not self.running:
-            time.sleep(0.1)
+            time.sleep(Defines.Times.Starting)
         self.logger('%s StateMachine activated [%s]' % (self.name, self.current_state))
 
         # check for an enter function
@@ -125,17 +125,20 @@ class StateMachine(mvc.Model):
 
         self.logger('%s StateMachine running [%s]' % (self.name, self.current_state))
         while self.running:
-            if not self.event_queue.empty():
-                self.event(self.event_queue.get_nowait())
+            if not self.pause:
+                if not self.event_queue.empty():
+                    self.event(self.event_queue.get_nowait())
+                else:
+                    self.do()
             else:
-                self.do()
+                time.sleep(Defines.Times.Pausing)
         self.logger('%s StateMachine exiting [%s]' % (self.name, self.current_state))
 
     def do(self):
         """ Execute current state **do** function if it exists """
         if self.do_func is not None:
             self.do_func(self)
-        time.sleep(0)
+        time.sleep(Defines.Times.Do)
 
     def post_event(self, event):
         """ Posts **event** to the state machine event queue

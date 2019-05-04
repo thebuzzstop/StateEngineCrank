@@ -31,7 +31,7 @@ class ConsoleView(mvc.View, queue.Queue):
         """ Console view running """
         # wait until we are running
         while not self.running:
-            time.sleep(Defines.Times.Waiting)
+            time.sleep(Defines.Times.Starting)
         # loop until no longer running
         while self.running and not self._stop_event.isSet():
             time.sleep(Defines.Times.Running)

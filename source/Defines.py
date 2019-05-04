@@ -6,6 +6,9 @@ TITLE = 'StateEngineCrank'
 
 
 class Times(float, enum.Enum):
-    Waiting = 0.5
+    Starting = 0.1
     Running = 0.1
+    Do = 0.0
+    Pausing = 0.1
     Stopping = 5.0
+    LoopTime = 1.0

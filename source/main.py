@@ -26,7 +26,6 @@ import SleepingBarber.main as barbers
 # import view
 from console import ConsoleView
 from gui import GuiView
-from mvc import Model
 from mvc import Controller
 
 
@@ -46,15 +45,15 @@ class Main(Controller):
             'barbers': barbers.SleepingBarber()
         }
 
-        # dictionary of views
+        # dictionary of views, instantiated
         self.views = {
             'console': ConsoleView(),
             'gui': GuiView()
         }
 
-        # register views and models
-        self._register_views()
+        # register models and views
         self._register_models()
+        self._register_views()
 
         # start our thread of execution
         self.start()
@@ -87,7 +86,7 @@ class Main(Controller):
 
         # Wait until we are running
         while not self.running:
-            time.sleep(Defines.Times.Waiting)
+            time.sleep(Defines.Times.Starting)
 
         # Start views and models
         for v in self.views.keys():
@@ -95,7 +94,8 @@ class Main(Controller):
         for m in self.models.keys():
             self.models[m].start()
 
-        # Start models and views running
+        # Start views running
+        # Models are started running from the Views
         for v in self.views.keys():
             self.views[v].set_running()
 

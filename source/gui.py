@@ -612,7 +612,7 @@ class GuiView(mvc.View):
         for sme_ in smEvent.SmEvents:
             event = self.events.lookup_event('SM', sme_)
             if event is None:
-                raise 'SM Event not found : {}'.format(sme_)
+                raise Exception('SM Event not found : {}'.format(sme_))
             self.sm_events[sme_] = event
 
         # scan for Waiter events
@@ -655,7 +655,7 @@ class GuiView(mvc.View):
 
         # wait until we are running:
         while not self.running:
-            time.sleep(Defines.Times.Waiting)
+            time.sleep(Defines.Times.Starting)
 
         # start the GUI thread
         self.gui_thread = threading.Thread(target=self.tk_run, name='tk_gui')

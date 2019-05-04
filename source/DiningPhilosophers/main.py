@@ -49,6 +49,7 @@ from typing import List
 from StateEngineCrank.modules.PyState import StateMachine
 import mvc
 import exceptions
+import Defines
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -586,6 +587,8 @@ class DiningPhilosophers(mvc.Model):
         for id_ in range(self.config.philosophers):
             philosopher = Philosopher(philosopher_id=id_)
             self.philosophers.append(philosopher)
+            for vk in self.views.keys():
+                philosopher.register(self.views[vk])
             try:
                 self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
             except exceptions.ActorAlreadyRegistered:
@@ -620,9 +623,15 @@ class DiningPhilosophers(mvc.Model):
             self.logger('[{}]: {}'.format(event['class'], event['text']))
             self.running = False
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.PAUSE]['event']:
-            self.logger('[{}]: {} [unhandled]'.format(event['class'], event['text']))
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            for p in self.philosophers:
+                p.set_pause()
+            self.set_pause()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.RESUME]['event']:
-            self.logger('[{}]: {} [unhandled]'.format(event['class'], event['text']))
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            for p in self.philosophers:
+                p.set_resume()
+            self.set_resume()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS]['event']:
@@ -669,11 +678,17 @@ class DiningPhilosophers(mvc.Model):
 
             # Wait for the simulation to complete
             for loop in range(self.config.dining_loops):
-                time.sleep(1)
+                # Sleep for 1 loop iteration time slot
+                time.sleep(Defines.Times.LoopTime)
+                # Bump loop count, notify if multiple of 10
                 loop += 1
                 if loop % 10 is 0:
                     self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ITERATIONS],
                                 text='Iterations: %s' % loop)
+                # Pause if requested, keep monitoring the running flag
+                while self.pause and self.running:
+                    time.sleep(Defines.Times.Pausing)
+                # Break simulation if not running
                 if self.running is False:
                     break
 
