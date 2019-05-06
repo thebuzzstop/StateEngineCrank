@@ -37,9 +37,11 @@ import time
 from enum import Enum
 
 # Project imports
-from mvc import Model
+import mvc
+
 from StateEngineCrank.modules.PyState import StateMachine
 from SleepingBarber.Common import Config as Config
+from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 import SleepingBarber.Customer as Customer
 import SleepingBarber.WaitingRoom as WaitingRoom
@@ -77,21 +79,22 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine, Model):
+class UserCode(StateMachine, mvc.Model):
     """ User code unique to the Barber state implementation of the SleepingBarber simulation """
 
-    def __init__(self, id_=None):
+    def __init__(self, user_id=None):
         """ Barber class constructor
 
-            :param id_: barber ID unique to this barber
+            :param user_id: barber ID unique to this barber
         """
-        Model.__init__(self, name='Barber%d' % id_)
-        StateMachine.__init__(self, sm_id=id_, name='Barber%d' % id_,
+        self.config = ConfigData()  #: simulation configuration data
+        name = '{}{}'.format(self.config.actor_base_name, user_id)
+        mvc.Model.__init__(self, name)
+        StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.id = id_                   #: barber ID
         self.customers = 0              #: customers served
         self.cut_timer = 0              #: cut timer, used to time the length of a haircut
         self.cutting_time = 0           #: total time spent cutting

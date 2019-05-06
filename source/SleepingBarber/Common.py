@@ -10,15 +10,26 @@ import time
 # Project imports
 
 
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same state and behavior. """
+
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
 class Config(object):
     """ SleepingBarber configuration items """
-    HairCut_Min = 9         #: minimum number of seconds to cut hair
-    HairCut_Max = 13        #: maximum number of seconds to cut hair
-    Barbers = 4             #: number of barbers cutting hair
-    WaitingChairs = 4       #: number of chairs in the waiting room
-    CustomerRate = 3        #: rate for new customers
-    CustomerVariance = 1    #: variance in the customer rate
-    SimulationLoops = 100   #: total number of loops (seconds) to run
+    HairCut_Min = 9                 #: minimum number of seconds to cut hair
+    HairCut_Max = 13                #: maximum number of seconds to cut hair
+    Barbers = 4                     #: number of barbers cutting hair
+    WaitingChairs = 4               #: number of chairs in the waiting room
+    CustomerRate = 3                #: rate for new customers
+    CustomerVariance = 1            #: variance in the customer rate
+    SimulationLoops = 100           #: total number of loops (seconds) to run
+    Class_Name = 'barbers'          #: class name for Event registration
+    Actor_Base_Name = 'barbers'     #: used when identifying actors
 
     @staticmethod
     def seconds(minimum, maximum):
@@ -43,19 +54,24 @@ class Config(object):
         return Config.seconds(Config.HairCut_Min, Config.HairCut_Max)
 
 
-class Borg(object):
-    """ The Borg class ensures that all instantiations refer to the same
-        state and behavior.
-
-        Taken from `The Python Cookbook
-        <https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html>`_
-        by David Ascher, Alex Martelli
-    """
-    _shared_state = {}
+class ConfigData(Borg):
 
     def __init__(self):
-        """ Class constructor """
-        self.__dict__ = self._shared_state  #: Borg class shared state
+        Borg.__init__(self)
+        if len(self._shared_state):
+            return
+        self.haircut_min = Config.HairCut_Min
+        self.haircut_max = Config.HairCut_Max
+        self.barbers = Config.Barbers
+        self.waiting_chairs = Config.WaitingChairs
+        self.customer_rate = Config.CustomerRate
+        self.customer_variance = Config.CustomerVariance
+        self.simulation_loops = Config.SimulationLoops
+        self.class_name = Config.Class_Name
+        self.actor_base_name = Config.Actor_Base_Name
+
+    def get_barbers(self):
+        return self.barbers
 
 
 class Statistics(Borg):

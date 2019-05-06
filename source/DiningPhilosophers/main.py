@@ -94,10 +94,10 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 1                         #: minimum number of seconds to eat
-    Eat_Max = 5                         #: maximum number of seconds to eat
-    Think_Min = 1                       #: minimum number of seconds to think
-    Think_Max = 5                       #: maximum number of seconds to think
+    Eat_Min = 5                         #: minimum number of seconds to eat
+    Eat_Max = 15                        #: maximum number of seconds to eat
+    Think_Min = 5                       #: minimum number of seconds to think
+    Think_Max = 15                      #: maximum number of seconds to think
     Philosophers = 9                    #: number of philosophers dining
     Dining_Loops = 100                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
@@ -136,6 +136,9 @@ class ConfigData(Borg):
 
     def set_dining_loops(self, value):
         self.dining_loops = value
+
+    def get_philosophers(self):
+        return self.philosophers
 
 
 class ForkStatus(Enum):
@@ -221,17 +224,26 @@ class Waiter(mvc.Model, Borg):
         got_forks = False
         self.hungry_timers[philosopher_id] = 0
         while not got_forks:
+            if self.pause:
+                time.sleep(Defines.Times.Pausing)
+                if not self.step():
+                    continue
+
             # wait until both forks are free
             while self.forks[left_fork] is ForkStatus.InUse or self.forks[right_fork] is ForkStatus.InUse:
-                time.sleep(1)
+                time.sleep(Defines.Times.LoopTime)
                 self.hungry_timers[philosopher_id] += 1
                 self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
                                           event=mvc.Event.Events.TIMER,
                                           data=[self.hungry_timers[philosopher_id], None]))
 
+            # check if we are paused
+            if self.pause:
+                continue
+
             # acquire the waiters lock
             if not self.lock.acquire(blocking=False):
-                time.sleep(1)
+                time.sleep(Defines.Times.LoopTime)
                 self.hungry_timers[philosopher_id] += 1
                 self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
                                           event=mvc.Event.Events.TIMER,
@@ -248,7 +260,7 @@ class Waiter(mvc.Model, Borg):
             else:
                 # both forks are not free, release the lock and try again
                 self.lock.release()
-                time.sleep(1)
+                time.sleep(Defines.Times.LoopTime)
                 self.hungry_timers[philosopher_id] += 1
                 self.notify(self.mvc.post(class_name='mvc', actor_name=self.name, user_id=philosopher_id,
                                           event=mvc.Event.Events.TIMER,
@@ -289,20 +301,16 @@ class UserCode(StateMachine, mvc.Model):
         self.config = ConfigData()  #: simulation configuration data
         name = '{}{}'.format(self.config.actor_base_name, user_id)
         mvc.Model.__init__(self, name)
-        StateMachine.__init__(self, sm_id=user_id, name=name, startup_state=States.StartUp,
+        StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
+                              startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
+
         self.events_counter = 0     #: counter for tracking events
         self.eating_seconds = 0     #: number of seconds spent eating
         self.thinking_seconds = 0   #: number of seconds spent thinking
         self.hungry_seconds = 0     #: number of seconds spent hungry
         self.event_timer = 0        #: timer used to time eating & thinking
-
-        self.initial_state = None   #: starting state for a philosopher
-        if random.randint(0, 1) == 0:
-            self.initial_state = States.Thinking
-        else:
-            self.initial_state = States.Hungry
 
         self.waiter = Waiter()      #: the waiter
         self.left_fork = self.id    #: left fork id for this philosopher
@@ -564,6 +572,16 @@ class DiningPhilosophers(mvc.Model):
         except exceptions.ClassAlreadyRegistered:
             pass
 
+        #: register mvc model events
+        self.mvc_model_events = [
+            mvc.Event.Events.LOOPS,
+            mvc.Event.Events.STATISTICS,
+            mvc.Event.Events.ALLSTOPPED,
+            mvc.Event.Events.LOGGER
+        ]
+        for event_ in self.mvc_model_events:
+            self.mvc_events.register_event(self.name, event=event_, event_type='model', text=event_.name)
+
         #: register philosopher statemachine events
         for e in Events:
             self.mvc_events.register_event(class_name=self.name, event=e, event_type='model',
@@ -616,28 +634,35 @@ class DiningPhilosophers(mvc.Model):
         # process event received
         if event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.START]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
-            self.running = True
+            self.set_running()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STEP]['event']:
-            self.logger('[{}]: {} [unhandled]'.format(event['class'], event['text']))
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_step()
+            for p in self.philosophers:
+                p.set_step()
+            self.waiter.set_step()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STOP]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
-            self.running = False
+            self.set_stopping()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.PAUSE]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_pause()
             for p in self.philosophers:
                 p.set_pause()
-            self.set_pause()
+            self.waiter.set_pause()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.RESUME]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_resume()
             for p in self.philosophers:
                 p.set_resume()
-            self.set_resume()
+                self.waiter.set_resume()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
-        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ITERATIONS]['event']:
-            self.logger('[{}]: {}'.format(event['class'], event['text']))
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.LOOPS]['event']:
+            if (event['data'] % 10) == 0:
+                self.logger('[{}]: Iteration: {}'.format(event['class'], event['data']))
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.TIMER]['event']:
             pass
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.LOGGER]['event']:
@@ -668,7 +693,7 @@ class DiningPhilosophers(mvc.Model):
 
             # Wait for simulation to start running
             while not self.running:
-                time.sleep(1.0)
+                time.sleep(Defines.Times.Starting)
 
             # Philosophers have been instantiated and threads created
             # Start the simulation, i.e. start all philosophers eating
@@ -680,11 +705,9 @@ class DiningPhilosophers(mvc.Model):
             for loop in range(self.config.dining_loops):
                 # Sleep for 1 loop iteration time slot
                 time.sleep(Defines.Times.LoopTime)
-                # Bump loop count, notify if multiple of 10
+                # Bump loop count and notify
                 loop += 1
-                if loop % 10 is 0:
-                    self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ITERATIONS],
-                                text='Iterations: %s' % loop)
+                self.notify(self.mvc_events.events[self.name][mvc.Event.Events.LOOPS], data=loop)
                 # Pause if requested, keep monitoring the running flag
                 while self.pause and self.running:
                     time.sleep(Defines.Times.Pausing)
@@ -701,7 +724,7 @@ class DiningPhilosophers(mvc.Model):
                 p.join()
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
-            # Print some statistics of the simulation
+            # Generate some statistics of the simulation
             text = 'Statistics:'
             for p in self.philosophers:
                 t = p.thinking_seconds

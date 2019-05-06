@@ -8,8 +8,12 @@
 import time
 
 # Project imports
-from mvc import Model
+import mvc
+import exceptions
+import Defines
+
 from SleepingBarber.Common import Config as Config
+from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 from SleepingBarber.Barber import UserCode as Barber
 from SleepingBarber.Barber import Events as BarberEvents
@@ -18,7 +22,16 @@ from SleepingBarber.Customer import Events as CustomerEvents
 from SleepingBarber.WaitingRoom import WaitingRoom
 
 
-class CustomerGenerator(Model):
+class Borg(object):
+    """ The Borg class ensures that all instantiations refer to the same state and behavior. """
+
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class CustomerGenerator(mvc.Model):
     """ Class for generating customers based on configurable criteria. """
 
     def __init__(self, customer_rate, customer_variance, barbers):
@@ -46,7 +59,7 @@ class CustomerGenerator(Model):
         self.logger('run.wait')
         # wait until the simulation is running
         while not self.running:
-            time.sleep(0.100)
+            time.sleep(Defines.Times.Starting)
         self.logger('running')
 
         # run until the simulation is stopped
@@ -70,14 +83,45 @@ class CustomerGenerator(Model):
         self.logger('Done')
 
 
-class SleepingBarber(Model):
+class SleepingBarber(mvc.Model):
     """ Main SleepingBarber(s) Class """
 
-    def __init__(self):
-        super().__init__('barbers')
+    def __init__(self, exit_when_done=None):
+        super().__init__('barbers', target=self.run)
 
-        #: An array of barbers to cut hair
-        self.barbers = [Barber(id_=_ + 1) for _ in range(Config.Barbers)]
+        #: simulation configuration data
+        self.config = ConfigData()
+
+        # determine our exit criteria
+        if exit_when_done is not None:
+            self.exit_when_done = exit_when_done
+        else:
+            self.exit_when_done = True
+
+        #: event processing
+        self.mvc_events = mvc.Event()
+        try:
+            self.mvc_events.register_class(self.name)
+        except exceptions.ClassAlreadyRegistered:
+            pass
+
+        #: register mvc model events
+        self.mvc_model_events = [
+            mvc.Event.Events.LOOPS,
+            mvc.Event.Events.STATISTICS,
+            mvc.Event.Events.ALLSTOPPED,
+            mvc.Event.Events.LOGGER
+        ]
+        for event_ in self.mvc_model_events:
+            self.mvc_events.register_event(self.name, event=event_, event_type='model', text=event_.name)
+
+        #: register philosopher statemachine events
+        for e in BarberEvents:
+            self.mvc_events.register_event(class_name=self.name, event=e, event_type='model',
+                                           text='%s[%s][%s]' % (self.name, e.name, e.value), data=e.value)
+
+        #: The sleeping barbers
+        self.barbers = []
 
         #: Instantiate the customer generator
         self.cg = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance, self.barbers)
@@ -88,6 +132,34 @@ class SleepingBarber(Model):
         #: Instantiate the statistics module
         self.statistics = Statistics()
 
+    def create_barbers(self, first_time):
+        if not first_time:
+            # unregister barber actors so that they can be recreated
+            for b in self.barbers:
+                self.mvc_events.unregister_actor(b.name)
+            # now delete our instantiations
+            del self.barbers
+            self.barbers = []
+            self.running = False
+
+        for id_ in range(self.config.barbers):
+            barber = Barber(id_)
+            self.barbers.append(barber)
+            for vk in self.views.keys():
+                barber.register(self.views[vk])
+            try:
+                self.mvc_events.register_actor(class_name=self.name, actor_name=barber.name)
+            except exceptions.ActorAlreadyRegistered:
+                # not a failure if already registered and not the first time
+                if first_time:
+                    raise exceptions.ActorAlreadyRegistered
+            try:
+                self.mvc_events.register_actor(class_name='mvc', actor_name=barber.name)
+            except exceptions.ActorAlreadyRegistered:
+                # not a failure if already registered and not first time
+                if first_time:
+                    raise exceptions.ActorAlreadyRegistered
+
     def register(self, view):
         self.views[view.name] = view
         for b in self.barbers:
@@ -95,11 +167,8 @@ class SleepingBarber(Model):
         self.cg.register(view)
 
     def update(self, event):
-        """ Called by view to alert us to a change - we ignore for now """
+        """ Called by Views and/or Controller to alert us to an event """
         pass
-
-    def stop(self):
-        raise Exception
 
     def run(self):
         """ SleepingBarber Main Program
@@ -109,63 +178,87 @@ class SleepingBarber(Model):
 
             Also runnable as a standalone application.
         """
+        done = False
+        first_time = True
+        while not done:
 
-        # Wait for simulation to be running
-        while not self.running:
-            time.sleep(1)
+            # Instantiate and initialize all philosophers
+            self.create_barbers(first_time=first_time)
+            first_time = False
 
-        # Start the simulation, i.e. start all barbers and the customer generator
-        for barber in self.barbers:
-            barber.running = True
-            barber.event(BarberEvents.EvStart)
+            # Wait for simulation to start running
+            while not self.running:
+                time.sleep(Defines.Times.Starting)
 
-        # Start the customer generator
-        self.cg.start()
-        self.cg.running = True
+            # Start the simulation, i.e. start all barbers and the customer generator
+            for b in self.barbers:
+                b.running = True
+                b.event(BarberEvents.EvStart)
 
-        # Wait for the simulation to complete
-        for loop in range(Config.SimulationLoops):
-            time.sleep(1)
-            loop += 1
-            if loop % 10 is 0:
-                self.logger('Iterations: %s' % loop)
+            # Start the customer generator
+            self.cg.start()
+            self.cg.running = True
 
-        # Stop the customer generator
-        self.cg.running = False
+            # Wait for the simulation to complete
+            for loop in range(self.config.simulation_loops):
+                # Sleep for 1 loop iteration time slot
+                time.sleep(Defines.Times.LoopTime)
+                # Bump loop count and notify
+                loop += 1
+                self.notify(self.mvc_events.events[self.name][mvc.Event.Events.LOOPS], data=loop)
+                # Pause if requested, keep monitoring the running flag
+                while self.pause and self.running:
+                    time.sleep(Defines.Times.Pausing)
+                # Break simulation if not running
+                if self.running is False:
+                    break
 
-        # Tell the barber(s) to stop
-        for barber in self.barbers:
-            barber.event(BarberEvents.EvStop)
+            # Stop the customer generator
+            self.cg.running = False
 
-        # Tell any waiting customers to stop
-        for customer in self.cg.customer_list:
-            customer.event(CustomerEvents.EvStop)
+            # Tell the barber(s) to stop
+            for barber in self.barbers:
+                barber.event(BarberEvents.EvStop)
 
-        # Joining threads
-        self.logger('Main: Joining customers')
-        for customer in self.cg.customer_list:
-            customer.join()
-        self.logger('Main: Customers joined')
+            # Tell any waiting customers to stop
+            for customer in self.cg.customer_list:
+                customer.event(CustomerEvents.EvStop)
 
-        self.logger('CG: Join')
-        self.cg.join()
-        self.logger('CG: Joined')
+            # Joining threads
+            self.logger('Main: Joining customers')
+            for customer in self.cg.customer_list:
+                customer.join()
+            self.logger('Main: Customers joined')
 
-        for barber in self.barbers:
-            self.logger('Barber[%s] Join' % barber.id)
-            barber.join()
-            self.logger('Barber[%s] Joined' % barber.id)
+            self.logger('CG: Join')
+            self.cg.join()
+            self.logger('CG: Joined')
 
-        self.logger('Barber(s) all stopped')
+            # Joining threads
+            for b in self.barbers:
+                b.join()
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
-        # print statistics
-        self.logger(self.statistics.barber_stats())
-        self.logger(self.statistics.customer_stats())
-        self.logger(self.statistics.summary_stats())
+            # Generate some statistics of the simulation
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],
+                        text=self.statistics.barber_stats())
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],
+                        text=self.statistics.customer_stats())
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],
+                        text=self.statistics.summary_stats())
+
+            # shutdown behavior
+            if self.exit_when_done:
+                self.set_stopping()
+                done = True
 
 
 if __name__ == '__main__':
     """ Execute main code if run from the command line """
 
     sleeping_barbers = SleepingBarber()
+    sleeping_barbers.start()
     sleeping_barbers.set_running()
+    while sleeping_barbers.running:
+        time.sleep(1)
+    print('Done')
