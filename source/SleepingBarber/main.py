@@ -168,7 +168,43 @@ class SleepingBarber(mvc.Model):
 
     def update(self, event):
         """ Called by Views and/or Controller to alert us to an event """
-        pass
+        if event['class'] is not self.name:
+            raise Exception('Dining: Unknown event type')
+        # process event received
+        if event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.START]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_running()
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STEP]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_step()
+            for p in self.barbers:
+                p.set_step()
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STOP]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_stopping()
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.PAUSE]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_pause()
+            for p in self.barbers:
+                p.set_pause()
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.RESUME]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+            self.set_resume()
+            for p in self.barbers:
+                p.set_resume()
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS]['event']:
+            self.logger('[{}]: {}'.format(event['class'], event['text']))
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.LOOPS]['event']:
+            if (event['data'] % 10) == 0:
+                self.logger('[{}]: Iteration: {}'.format(event['class'], event['data']))
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.TIMER]['event']:
+            pass
+        elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.LOGGER]['event']:
+            self.logger('Event: %s / %s' % (event['text'], event['data']))
+        else:
+            raise Exception('Unhandled event')
 
     def run(self):
         """ SleepingBarber Main Program

@@ -82,27 +82,28 @@ class Statistics(Borg):
 
     def __init__(self):
         Borg.__init__(self)
-        if len(self._shared_state) is 0:
-            self.lock = Lock()      #: obtained by callers to ensure sole access
-            self.customers = []     #: list of customers instantiated in the simulation
-            self.barbers = []       #: list of barbers instantiated in the simulation
-            self.max_waiters = 0    #: maximum number of waiters encountered during the simulation
-            self.barber_sleeping_time = 0       #: total sleeping time for all barbers
-            self.barber_cutting_time = 0        #: total cutting time for all barbers
-            self.barber_total_customers = 0     #: total number of customers served
-            self.lost_customers = 0             #: number of customers lost due to no chairs in waiting room
-            self.simulation_start_time = 0      #: clock time, start of simulation
-            self.simulation_finish_time = 0     #: clock time, finish time of simulation
-            self.customers_cutting_time = 0     #: total cutting time for all customers
-            self.customers_waiting_time = 0     #: total waiting time for all customers
-            self.customers_elapsed_time = 0     #: total elapsed time for all customers
-            self.customers_simulation_time = 0  #: total simulation time (cutting + waiting) for all customers
-            self.simulation_start_time = time.time()
+        if len(self._shared_state):
+            return
+        self.lock = Lock()      #: obtained by callers to ensure sole access
+        self.customers = []     #: list of customers instantiated in the simulation
+        self.barbers = []       #: list of barbers instantiated in the simulation
+        self.max_waiters = 0    #: maximum number of waiters encountered during the simulation
+        self.barber_sleeping_time = 0       #: total sleeping time for all barbers
+        self.barber_cutting_time = 0        #: total cutting time for all barbers
+        self.barber_total_customers = 0     #: total number of customers served
+        self.lost_customers = 0             #: number of customers lost due to no chairs in waiting room
+        self.simulation_start_time = 0      #: clock time, start of simulation
+        self.simulation_finish_time = 0     #: clock time, finish time of simulation
+        self.customers_cutting_time = 0     #: total cutting time for all customers
+        self.customers_waiting_time = 0     #: total waiting time for all customers
+        self.customers_elapsed_time = 0     #: total elapsed time for all customers
+        self.customers_simulation_time = 0  #: total simulation time (cutting + waiting) for all customers
+        self.simulation_start_time = time.time()
 
-            # Summary statistics - fetchable as strings
-            self._customer_stats = ''
-            self._barber_stats = ''
-            self._summary_stats = ''
+        # Summary statistics - fetchable as strings
+        self._customer_stats = ''
+        self._barber_stats = ''
+        self._summary_stats = ''
 
     def customer_stats(self):
         """ Compiles customer statistics for the simulation

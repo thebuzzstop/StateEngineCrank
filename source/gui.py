@@ -20,6 +20,9 @@ from DiningPhilosophers.main import Events as diningEvents
 from DiningPhilosophers.main import States as diningStates
 from DiningPhilosophers.main import ForkId
 
+from SleepingBarber.Barber import Events as barberEvents
+from SleepingBarber.Barber import States as barberStates
+
 
 class AniButtonType(enum.Enum):
 
@@ -324,6 +327,7 @@ class DiningPhilosophers(Animation):
         self.timer_coords = []
         self.waiter_coords = []
 
+        # despatch table for waiter events
         self.waiter_event_dispatch = {
             WaiterEvents.IN: self.waiter_in,
             WaiterEvents.OUT: self.waiter_out,
@@ -333,6 +337,7 @@ class DiningPhilosophers(Animation):
             WaiterEvents.RIGHTFORK: self.waiter_right_fork
         }
 
+        # despatch table for SM events
         self.sm_dispatch = {
             diningEvents.EvStart: self.dining_start,
             diningEvents.EvStop: self.dining_stop,
@@ -554,6 +559,24 @@ class SleepingBarbers(Animation):
 
     def __init__(self, root=None, mainframe=None, config=None, common=None, parent=None):
         super().__init__(root=root, mainframe=mainframe, config=config, common=common, parent=self)
+        self.my_parent = parent
+        self.my_model = self.config['model']
+        self.num_barbers = self.config['barbers']
+
+        self.sm_dispatch = {
+            barberEvents.EvStart: self.noop,
+            barberEvents.EvStop: self.noop,
+            barberEvents.EvCustomerEnter: self.noop,
+            barberEvents.EvFinishCutting: self.noop,
+
+            barberStates.StartUp: self.noop,
+            barberStates.Cutting: self.noop,
+            barberStates.Sleeping: self.noop,
+            barberStates.Finish: self.noop,
+        }
+
+    def noop(self, event):
+        pass
 
     def draw_barbershop(self):
         self.ani_canvas.pack()
@@ -569,9 +592,33 @@ class SleepingBarbers(Animation):
 
             :param event: Animation event (mvc.Event)
         """
-        if hasattr(self, 'parent'):
-            self.parent.update(event)
-        self.notify(event)
+        # MVC class events
+        if event['class'].lower() == 'mvc':
+            if event['event'] == mvc.Event.Events.TIMER:
+                # self.timer_handler(event)
+                pass
+
+        # SM class events
+        elif event['class'].lower() == 'sm':
+            if 'data' in event.keys() and event['data'] is not None:
+                if event['data'] in self.sm_dispatch.keys():
+                    self.sm_dispatch[event['data']](event)
+                else:
+                    self.logger('Unknown SM data: %s' % event['data'])
+
+        # Actor events
+        elif 'actor' in event.keys():
+            if event['actor'] == self.name:
+                if hasattr(self, 'parent'):
+                    self.my_parent.update(event)
+                self.notify(event)
+        # process a non-actor event
+        else:
+            pass
+
+    # ----------------------------------------------------
+    # Event processing support functions
+    # ----------------------------------------------------
 
 
 class GuiConsoleView(mvc.View):
@@ -698,10 +745,10 @@ class GuiView(mvc.View):
         """
         if event['class'].lower() == 'philosophers':
             self.update_philosophers(event)
+        elif event['class'].lower() == 'barbers':
+            self.update_barbers(event)
         elif event['class'].lower() == 'waiter':
             self.ani_dining.update(event)
-        elif event['class'].lower() == 'barbers':
-            self.models['barbers'].update(event)
         elif event['class'].lower() == 'mvc':
             self.update_gui('mvc', event)
         elif event['class'].lower() == 'sm':
@@ -715,6 +762,15 @@ class GuiView(mvc.View):
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
                 self.ani_dining.draw_counter(event['data'])
+            else:
+                print(event)    # self.notify(mvc.Event.Events.UNHANDLED, data=event)
+
+    def update_barbers(self, event):
+        if event['type'] == 'view' or event['type'] == '*':
+            self.models['barbers'].update(event)
+        if event['type'] == 'model' or event['type'] == '*':
+            if event['event'] == mvc.Event.Events.LOOPS:
+                pass    # self.ani_dining.draw_counter(event['data'])
             else:
                 print(event)    # self.notify(mvc.Event.Events.UNHANDLED, data=event)
 
@@ -818,8 +874,8 @@ class GuiView(mvc.View):
         self.ani_barbers.draw_barbershop()
         self.ani_barbers.add_barbers()
         self.ani_barbers.add_waiting_room()
-        # Only start button is enabled <<< TEMPORARILY DISABLED
-        # self.ani_barbers.ani_buttons[AniButtonType.START].enable()
+        # Only start button is enabled
+        self.ani_barbers.ani_buttons[AniButtonType.START].enable()
 
         # all setup so run
         self.root.mainloop()
