@@ -55,7 +55,7 @@ class Event(Borg):
     """ MVC Events - Model and View """
 
     class Events(enum.Enum):
-        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ITERATIONS, ALLSTOPPED, STATISTICS = range(11)
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED = range(11)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -87,8 +87,8 @@ class Event(Borg):
             self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
             self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
             self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
-            self.register_event('mvc', Event.Events.ITERATIONS, '*', text='Display iteration/loop count')
             self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
+            self.register_event('mvc', Event.Events.UNHANDLED, '*', text='Unhandled condition')
 
     def register_class(self, class_name):
         """ Register a class name for the events database
@@ -180,6 +180,33 @@ class Event(Borg):
         else:
             return None
 
+    def unregister_class(self, class_name):
+        """ Unregister a class
+
+            :param class_name: Class to unregister
+            :raises: ClassNotRegistered
+        """
+        # delete the class, it is an error if it is not registered
+        if class_name in self.events.keys():
+            del self.events[class_name]
+        else:
+            raise exceptions.ClassNotRegistered
+
+        # delete all actors who were registered for the just deleted class events
+        actors = list(self.actors.keys())
+        for actor in actors:
+            if class_name in actor:
+                del self.actors[actor]
+
+    def unregister_actor(self, actor_name):
+        """ Unregister an actor
+
+            :param actor_name: Name of actor to unregister
+            :raises: ActorNotRegistered
+        """
+        if actor_name in self.actors.keys():
+            del self.actors[actor_name]
+
     def post(self, class_name, event, actor_name, user_id=None, text=None, data=None):
         """ Prepare an event for posting
 
@@ -224,12 +251,15 @@ class Event(Borg):
 class MVC(ABC, threading.Thread):
     """ Base class definition of an MVC Model, View or Controller """
 
-    def __init__(self, name=None, target=None, parent=None):
+    def __init__(self, name=None, running=False, target=None, parent=None):
         threading.Thread.__init__(self, name=name, target=target)
         self.name = name                        #: name of this MVC
         self.starting = True                    #: starting status
-        self.running = False                    #: running status
+        self.running = running                  #: running status
         self.stopping = False                   #: stopping status
+        self.pause = False                      #: pause status
+        self.resuming = True                    #: resuming status
+        self._step_event = threading.Event()    #: event used to step our thread
         self._stop_event = threading.Event()    #: event used to stop our thread
         if parent is not None:
             self.parent = parent                #: optional parent for notifications
@@ -238,6 +268,31 @@ class MVC(ABC, threading.Thread):
         """ Accessor to set the *running* flag """
         self.starting = False
         self.running = True
+
+    def step(self):
+        if self._step_event.is_set():
+            self._step_event.clear()
+            return True
+        else:
+            return False
+
+    def set_step(self):
+        """ Accessor to set the *step* flag """
+        self._step_event.set()
+
+    def clr_step(self):
+        """ Accessor to set the *step* flag """
+        self._step_event.clear()
+
+    def set_pause(self):
+        """ Accessor to set the *pause* flag """
+        self.pause = True
+        self._step_event.clear()
+
+    def set_resume(self):
+        """ Accessor to clear the *pause* flag """
+        self.pause = False
+        self._step_event.clear()
 
     def set_stopping(self):
         """ Accessor to set the *stopping* flag """
@@ -271,6 +326,8 @@ class MVC(ABC, threading.Thread):
         """ Initiate stopping """
         self.stopping = True
         self.running = False
+        self.pause = False
+        self.clr_step()
         self.join(timeout=Defines.Times.Stopping)
         self.stopping = False
 
@@ -351,8 +408,8 @@ class Controller(MVC, Logger):
 class Model(MVC, Logger):
     """ Base class definition of a Model """
 
-    def __init__(self, name=None, target=None, parent=None):
-        MVC.__init__(self, name=name, target=target, parent=parent)
+    def __init__(self, name=None, running=False, target=None, parent=None):
+        MVC.__init__(self, name=name, running=running, target=target, parent=parent)
         Logger.__init__(self, self)
         self.views = {}         #: dictionary of views we update
 

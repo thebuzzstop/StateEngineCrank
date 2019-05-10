@@ -7,6 +7,7 @@ import enum
 import time
 import queue
 import mvc
+import Defines
 
 
 class Borg(object):
@@ -39,6 +40,10 @@ class StateMachineEvent(Borg):
             for sme in StateMachineEvent.SmEvents:
                 self.events.register_event(class_name=self.class_name, actor_name=None, event=sme,
                                            event_type='model', text=str(sme.name))
+
+
+# call the StateMachineEvent constructor to register SM events
+StateMachineEvent()
 
 
 class StateFunction(object):
@@ -78,7 +83,7 @@ class StateTransition(object):
 class StateMachine(mvc.Model):
     """ The StateMachine class is the main execution engine """
 
-    def __init__(self, sm_id=None, name=None, running=None, startup_state=None,
+    def __init__(self, sm_id=None, name=None, running=False, startup_state=None,
                  function_table=None, transition_table=None):
         """ Constructor
 
@@ -89,7 +94,7 @@ class StateMachine(mvc.Model):
             :param function_table: state machine function table
             :param transition_table: state machine transition table
         """
-        mvc.Model.__init__(self, name=name, target=self.run)
+        mvc.Model.__init__(self, name=name, running=running, target=self.run)
         self.id = sm_id
         self.name = name
         self.sm_events = StateMachineEvent()
@@ -97,7 +102,6 @@ class StateMachine(mvc.Model):
         self.startup_state = startup_state
         self.state_function_table = function_table
         self.state_transition_table = transition_table
-        self.running = running
         self.event_queue = queue.Queue()
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
@@ -114,7 +118,7 @@ class StateMachine(mvc.Model):
         # wait until our state machine has been activated
         self.logger('%s StateMachine activating [%s]' % (self.name, self.current_state))
         while not self.running:
-            time.sleep(0.1)
+            time.sleep(Defines.Times.Starting)
         self.logger('%s StateMachine activated [%s]' % (self.name, self.current_state))
 
         # check for an enter function
@@ -125,6 +129,10 @@ class StateMachine(mvc.Model):
 
         self.logger('%s StateMachine running [%s]' % (self.name, self.current_state))
         while self.running:
+            if self.pause:
+                time.sleep(Defines.Times.Pausing)
+                if not self.step():
+                    continue
             if not self.event_queue.empty():
                 self.event(self.event_queue.get_nowait())
             else:
@@ -135,7 +143,7 @@ class StateMachine(mvc.Model):
         """ Execute current state **do** function if it exists """
         if self.do_func is not None:
             self.do_func(self)
-        time.sleep(0)
+        time.sleep(Defines.Times.Do)
 
     def post_event(self, event):
         """ Posts **event** to the state machine event queue
