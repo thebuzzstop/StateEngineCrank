@@ -86,6 +86,11 @@ class CustomerGenerator(mvc.Model):
             )
             self.logger('[%s] Zzzz [%s]' % (self.customer_count, sleep))
             time.sleep(sleep)
+
+            # pause if requested, keep monitoring the running flag
+            while self.pause and self.running:
+                time.sleep(Defines.Times.Pausing)
+
         self.logger('Done')
 
 
@@ -186,19 +191,23 @@ class SleepingBarber(mvc.Model):
             self.set_step()
             for p in self.barbers:
                 p.set_step()
+                self.cg.set_step()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STOP]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
             self.set_stopping()
+            self.cg.set_stopping()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.PAUSE]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
             self.set_pause()
             for p in self.barbers:
                 p.set_pause()
+                self.cg.set_pause()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.RESUME]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
             self.set_resume()
             for p in self.barbers:
                 p.set_resume()
+            self.cg.set_resume()
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED]['event']:
             self.logger('[{}]: {}'.format(event['class'], event['text']))
         elif event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS]['event']:
@@ -286,7 +295,8 @@ class SleepingBarber(mvc.Model):
             for customer in self.cg.customer_list:
                 self.logger('Main: Joining %s' % customer.name)
                 customer.join()
-            self.logger('Main: Customers joined')
+                self.logger('Main: Joined %s' % customer.name)
+            self.logger('Main: All customers joined')
 
             self.logger('CG: Join')
             self.cg.join()
