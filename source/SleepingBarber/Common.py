@@ -15,8 +15,10 @@ class Borg(object):
 
     _shared_state = {}
 
-    def __init__(self):
-        self.__dict__ = self._shared_state
+    def __init__(self, myclass):
+        if myclass not in self._shared_state.keys():
+            self._shared_state[myclass] = {}
+        self.__dict__ = self._shared_state[myclass]
 
 
 class Config(object):
@@ -57,8 +59,8 @@ class Config(object):
 class ConfigData(Borg):
 
     def __init__(self):
-        Borg.__init__(self)
-        if len(self._shared_state):
+        Borg.__init__(self, 'config')
+        if len(self._shared_state['config']):
             return
         self.haircut_min = Config.HairCut_Min
         self.haircut_max = Config.HairCut_Max
@@ -79,10 +81,9 @@ class Statistics(Borg):
 
         Implemented as a Borg, it can be instantiated as many times as necessary.
     """
-
     def __init__(self):
-        Borg.__init__(self)
-        if len(self._shared_state):
+        Borg.__init__(self, 'statistics')
+        if len(self._shared_state['statistics']):
             return
         self.lock = Lock()      #: obtained by callers to ensure sole access
         self.customers = []     #: list of customers instantiated in the simulation
@@ -101,6 +102,25 @@ class Statistics(Borg):
         self.simulation_start_time = time.time()
 
         # Summary statistics - fetchable as strings
+        self._customer_stats = ''
+        self._barber_stats = ''
+        self._summary_stats = ''
+
+    def reset(self):
+        self.customers = []
+        self.barbers = []
+        self.max_waiters = 0
+        self.barber_sleeping_time = 0
+        self.barber_cutting_time = 0
+        self.barber_total_customers = 0
+        self.lost_customers = 0
+        self.simulation_start_time = 0
+        self.simulation_finish_time = 0
+        self.customers_cutting_time = 0
+        self.customers_waiting_time = 0
+        self.customers_elapsed_time = 0
+        self.customers_simulation_time = 0
+        self.simulation_start_time = time.time()
         self._customer_stats = ''
         self._barber_stats = ''
         self._summary_stats = ''
@@ -125,7 +145,7 @@ class Statistics(Borg):
         customers = sorted(self.customers, key=lambda customer: customer.id)
 
         # Compile customer statistics for the simulation
-        self._customer_stats = ''
+        self._customer_stats = 'Customer Statistics:'
         for c in range(len(customers)):
             customer = customers[c]
             elapsed_time = customer.finish_time - customer.start_time
@@ -134,10 +154,8 @@ class Statistics(Borg):
             self.customers_simulation_time += simulation_time
             self.customers_cutting_time += customer.cutting_time
             self.customers_waiting_time += customer.waiting_time
-            if self._customer_stats is not '':
-                self._customer_stats = self._customer_stats + '\n'
             self._customer_stats = self._customer_stats + \
-                'customer[%03d] start: %4.2d  finish: %4.2d  elapsed: %3.2d  cutting: %2d  waiting: %2d  simulation: %2d' % \
+                '\ncustomer[%03d] start: %4.2d  finish: %4.2d  elapsed: %3.2d  cutting: %2d  waiting: %2d  simulation: %2d' % \
                 (customer.id,
                  customer.start_time - self.simulation_start_time,
                  customer.finish_time - self.simulation_start_time,
@@ -147,11 +165,11 @@ class Statistics(Borg):
                  simulation_time)
 
         self._customer_stats = self._customer_stats + \
-            '\nelapsed: %4.2d  cutting: %3d  waiting: %3d  simulation: %3d' % \
+            '\n\nCustomer Totals:\nelapsed: %4.2d  cutting: %3d  waiting: %3d  simulation: %3d' % \
             (self.customers_elapsed_time, self.customers_cutting_time,
              self.customers_waiting_time, self.customers_simulation_time)
 
-        return self._customer_stats
+        return self._customer_stats + '\n'
 
     def barber_stats(self):
         """ Compiles statistics for all barbers
@@ -167,20 +185,17 @@ class Statistics(Borg):
         barbers = sorted(self.barbers, key=lambda barber: barber.id)
 
         # Compile barber statistics for the simulation
-        self._barber_stats = ''
+        self._barber_stats = 'Barber Statistics:'
         for b in range(len(barbers)):
             barber = barbers[b]
             self.barber_sleeping_time += barber.sleeping_time
             self.barber_cutting_time += barber.cutting_time
             self.barber_total_customers += barber.customers
-            if self._barber_stats is not '':
-                self._barber_stats = self._barber_stats + '\n'
-            self._barber_stats = \
-                self._barber_stats + \
-                'barber[%s] customers: %3d  cutting: %3d  sleeping: %3d' % \
+            self._barber_stats = self._barber_stats + \
+                '\nbarber[%s] customers: %3d  cutting: %3d  sleeping: %3d' % \
                 (barber.id, barber.customers, barber.cutting_time, barber.sleeping_time)
 
-        return self._barber_stats
+        return self._barber_stats + '\n'
 
     def summary_stats(self):
         """ Compiles summary statistics for barbers and customers
@@ -194,9 +209,9 @@ class Statistics(Borg):
 
             :returns: Compiled summary statistics (string)
         """
-        self._summary_stats = \
-            ('Customers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' %
-             (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
-              self.customers_waiting_time, self.lost_customers, self.max_waiters))
+        self._summary_stats = 'Summary Statistics:' + \
+            '\nCustomers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' % \
+            (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
+            self.customers_waiting_time, self.lost_customers, self.max_waiters)
 
-        return self._summary_stats
+        return self._summary_stats + '\n'

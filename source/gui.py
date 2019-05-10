@@ -770,7 +770,7 @@ class GuiView(mvc.View):
             self.models['barbers'].update(event)
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
-                pass    # self.ani_dining.draw_counter(event['data'])
+                self.ani_barbers.draw_counter(event['data'])
             else:
                 print(event)    # self.notify(mvc.Event.Events.UNHANDLED, data=event)
 

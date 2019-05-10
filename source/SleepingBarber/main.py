@@ -47,22 +47,28 @@ class CustomerGenerator(mvc.Model):
         self.customer_count = 0                     #: total customers
         self.customer_list = []                     #: list of customer objects
         self.barbers = barbers                      #: list of barbers cutting hair
+        self.config = ConfigData()                  #: simulation configuration data
 
     def update(self, event):
         pass
+
+    def unregister_customers(self):
+        for c in self.customer_list:
+            c.sm_events.events.unregister_actor(c.name)
 
     def run(self):
         """ Customer generator main thread
 
             The customer generator thread runs in the background creating customers for the simulation.
         """
+        # loop until we are told we are done
         self.logger('run.wait')
         # wait until the simulation is running
         while not self.running:
             time.sleep(Defines.Times.Starting)
         self.logger('running')
 
-        # run until the simulation is stopped
+        # run until the simulation is stopped or we are done
         while self.running:
             # generate a new customer
             self.customer_count += 1
@@ -123,11 +129,11 @@ class SleepingBarber(mvc.Model):
         #: The sleeping barbers
         self.barbers = []
 
-        #: Instantiate the customer generator
-        self.cg = CustomerGenerator(Config.CustomerRate, Config.CustomerVariance, self.barbers)
+        #: The customer generator
+        self.cg = None
 
-        #: Instantiate the waiting room
-        self.waiting_room = WaitingRoom(chairs=Config.WaitingChairs)
+        #: The waiting room
+        self.waiting_room = None
 
         #: Instantiate the statistics module
         self.statistics = Statistics()
@@ -164,7 +170,8 @@ class SleepingBarber(mvc.Model):
         self.views[view.name] = view
         for b in self.barbers:
             b.register(view)
-        self.cg.register(view)
+        if self.cg is not None:
+            self.cg.register(view)
 
     def update(self, event):
         """ Called by Views and/or Controller to alert us to an event """
@@ -222,6 +229,20 @@ class SleepingBarber(mvc.Model):
             self.create_barbers(first_time=first_time)
             first_time = False
 
+            # Instantiate the waiting room
+            if self.waiting_room is not None:
+                del self.waiting_room
+            self.waiting_room = WaitingRoom(self.config.waiting_chairs)
+
+            # Instantiate the customer generator
+            if self.cg is not None:
+                self.cg.unregister_customers()
+                del self.cg
+            self.cg = CustomerGenerator(self.config.customer_rate, self.config.customer_variance, self.barbers)
+
+            # Reset simulation components
+            self.statistics.reset()
+
             # Wait for simulation to start running
             while not self.running:
                 time.sleep(Defines.Times.Starting)
@@ -263,6 +284,7 @@ class SleepingBarber(mvc.Model):
             # Joining threads
             self.logger('Main: Joining customers')
             for customer in self.cg.customer_list:
+                self.logger('Main: Joining %s' % customer.name)
                 customer.join()
             self.logger('Main: Customers joined')
 
