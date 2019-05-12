@@ -74,3 +74,8 @@ class EventNotRegistered(MyException):
 class ActorNotRegistered(MyException):
     """ Event actor is not registered """
     pass
+
+
+class JoinFailure(MyException):
+    """ Failure to join thread """
+    pass

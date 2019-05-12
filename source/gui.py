@@ -22,7 +22,8 @@ from DiningPhilosophers.main import ForkId
 
 from SleepingBarber.Barber import Events as barberEvents
 from SleepingBarber.Barber import States as barberStates
-
+from SleepingBarber.Customer import Events as customerEvents
+from SleepingBarber.Customer import States as customerStates
 
 class AniButtonType(enum.Enum):
 
@@ -98,7 +99,7 @@ class Animation(mvc.View):
         self.canvas_x_mid, self.canvas_y_mid = self.ani_center
 
         # Calculate the animation canvas iteration counter location
-        self.counter_x = 30
+        self.counter_x = 40
         self.counter_y = self.common['animation']['height'] - 10
         self.counter_id = None
         self.draw_counter(0)
@@ -351,6 +352,17 @@ class DiningPhilosophers(Animation):
             diningStates.Hungry: self.dining_state_hungry,
             diningStates.Finish: self.dining_state_finish,
         }
+        # ------------------------------------------------------
+        # Populate DiningPhilosophers animation graphics
+        # ------------------------------------------------------
+        self.add_table()
+        self.add_chairs()
+        self.add_forks()
+        self.add_waiter()
+        self.add_philosophers()
+        self.add_timers()
+        # Only start button is enabled
+        self.ani_buttons[AniButtonType.START].enable()
 
     def add_table(self):
         """ Add the main dining table """
@@ -413,7 +425,7 @@ class DiningPhilosophers(Animation):
 
     def add_waiter(self):
         """ Add the waiter graphic to the simulation """
-        self.circle_at(0, 0, self.config['waiter.radius'], self.config['waiter.color'])
+        self.circle_at(0, 0, self.config['waiter.chair.radius'], self.config['waiter.color'])
         self.waiter_coords.append([0, 0])
         self.ani_canvas.create_text(self.ani_center, text='Waiter', fill='white')
         self.ani_canvas.pack()
@@ -528,12 +540,12 @@ class DiningPhilosophers(Animation):
     def waiter_acquire(self, event):
         philosopher_id = event['data']
         fx, fy = self.waiter_coords[0]
-        self.circle_at(fx, fy, self.config['waiter.radius'], self.config['waiter.color'])
+        self.circle_at(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
         self.text_at(fx, fy, 'Wait[%s]' % philosopher_id, 'yellow')
 
     def waiter_release(self, event):
         fx, fy = self.waiter_coords[0]
-        self.circle_at(fx, fy, self.config['waiter.radius'], self.config['waiter.color'])
+        self.circle_at(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
         self.text_at(fx, fy, 'Waiter', 'white')
 
     def waiter_left_fork(self, event):
@@ -562,30 +574,80 @@ class SleepingBarbers(Animation):
         self.my_parent = parent
         self.my_model = self.config['model']
         self.num_barbers = self.config['barbers']
+        self.num_waiters = self.config['waiters']
+        self.ani_width = self.common['animation']['width']
+        self.ani_height = self.common['animation']['height']
+        self.barber_chair_radius = self.config['barber.chair.radius']
+        self.waiter_chair_radius = self.config['waiter.chair.radius']
+
+        self.barber_chair_spacer = (self.ani_width-(self.num_barbers*self.barber_chair_radius*2))/(self.num_barbers+3)
+        self.barber_coords = []
+        barber_y = (self.ani_height/2)/3
+        for b in range(self.num_barbers):
+            barber_x = self.barber_chair_spacer + b*(self.barber_chair_radius + self.barber_chair_spacer)
+            self.barber_coords.append([barber_x, barber_y])
+
+        self.waiter_chair_spacer = (self.ani_width-(self.num_waiters*self.waiter_chair_radius*2))/(self.num_waiters+3)
+        self.waiter_coords = []
+        waiter_y = self.ani_height - (self.ani_height/2)/3
+        for w in range(self.num_waiters):
+            waiter_x = self.waiter_chair_spacer + w*(self.waiter_chair_radius + self.waiter_chair_spacer)
+            self.waiter_coords.append([waiter_x, waiter_y])
+
+        self.barber_door_coords = []
+        self.waiter_door_coords = []
+
+        self.wall_coords = []
+        self.door_coords = []
 
         self.sm_dispatch = {
-            barberEvents.EvStart: self.noop,
-            barberEvents.EvStop: self.noop,
-            barberEvents.EvCustomerEnter: self.noop,
-            barberEvents.EvFinishCutting: self.noop,
+            barberEvents.EvStart: self.barber_start,
+            barberEvents.EvStop: self.barber_stop,
+            barberEvents.EvCustomerEnter: self.customer_enter,
+            barberEvents.EvFinishCutting: self.finish_cutting,
 
-            barberStates.StartUp: self.noop,
-            barberStates.Cutting: self.noop,
-            barberStates.Sleeping: self.noop,
-            barberStates.Finish: self.noop,
+            barberStates.StartUp: self.barber_state_startup,
+            barberStates.Cutting: self.barber_state_cutting,
+            barberStates.Sleeping: self.barber_state_sleeping,
+            barberStates.Finish: self.barber_state_finish,
+
+            customerEvents.EvStart: self.customer_start,
+            customerEvents.EvStop: self.customer_stop,
+            customerEvents.EvBarberReady: self.customer_barber_ready,
+            customerEvents.EvFinishCutting: self.customer_finish_cutting,
+
+            customerStates.StartUp: self.customer_state_startup,
+            customerStates.HairCut: self.customer_state_haircut,
+            customerStates.Waiting: self.customer_state_waiting,
+            customerStates.Finish: self.customer_state_finish
         }
 
-    def noop(self, event):
-        pass
-
-    def draw_barbershop(self):
-        self.ani_canvas.pack()
+        # ------------------------------------------------------
+        # Populate SleepingBarbers animation graphics
+        # ------------------------------------------------------
+        self.add_barbers()
+        self.add_waiting_room()
+        # Only start button is enabled
+        self.ani_buttons[AniButtonType.START].enable()
 
     def add_barbers(self):
-        pass
+        """ Add barbers and their chairs """
+        for b in range(self.num_barbers):
+            self.draw_barber(b, self.config['init.color'][0])
+
+    def draw_barber(self, b, color):
+        bx, by = self.barber_coords[b]
+        self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
+        self.ani_canvas.pack()
 
     def add_waiting_room(self):
-        pass
+        """ Add waiting room chairs """
+        for w in range(self.num_waiters):
+            self.draw_waiter(w, self.config['init.color'][0])
+
+    def draw_waiter(self, w, color):
+        wx, wy = self.waiter_coords[w]
+        self.circle_at(wx, wy, self.waiter_chair_radius, color)
 
     def update(self, event):
         """ Function to process all animation events
@@ -617,8 +679,55 @@ class SleepingBarbers(Animation):
             pass
 
     # ----------------------------------------------------
-    # Event processing support functions
+    # Event processing routines
     # ----------------------------------------------------
+    def barber_start(self, event):
+        pass
+
+    def barber_stop(self, event):
+        pass
+
+    def customer_enter(self, event):
+        pass
+
+    def finish_cutting(self, event):
+        pass
+
+    def barber_state_startup(self, event):
+        pass
+
+    def barber_state_cutting(self, event):
+        pass
+
+    def barber_state_sleeping(self, event):
+        pass
+
+    def barber_state_finish(self, event):
+        pass
+
+    def customer_start(self, event):
+        pass
+
+    def customer_stop(self, event):
+        pass
+
+    def customer_barber_ready(self, event):
+        pass
+
+    def customer_finish_cutting(self, event):
+        pass
+
+    def customer_state_startup(self, event):
+        pass
+
+    def customer_state_haircut(self, event):
+        pass
+
+    def customer_state_waiting(self, event):
+        pass
+
+    def customer_state_finish(self, event):
+        pass
 
 
 class GuiConsoleView(mvc.View):
@@ -693,7 +802,7 @@ class GuiView(mvc.View):
         'table.color': 'grey',
         'chair.radius': 20,
         'timer.radius': 15,
-        'waiter.radius': 25,
+        'waiter.chair.radius': 25,
         'waiter.color': 'blue',
     }
 
@@ -705,8 +814,17 @@ class GuiView(mvc.View):
         'console.text': 'Hello, Sleeping Barber(s)',
         'event.class': 'barbers',
         'barbers': None,
+        'waiters': None,
+        'barber.chair.radius': 30,
+        'waiter.chair.radius': 20,
 
-        'chair.radius': 10,
+        'start.color': ['lightgrey', 'yellow'],
+        'stop.color': ['lightgrey', 'red'],
+
+        'cutting.color': ['green', 'white'],
+        'sleeping.color': ['blue', 'white'],
+        'waiting.color': ['red', 'white'],
+        'init.color': ['grey', 'white'],
     }
 
     def __init__(self):
@@ -762,8 +880,14 @@ class GuiView(mvc.View):
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
                 self.ani_dining.draw_counter(event['data'])
+            elif event['event'] == mvc.Event.Events.ALLSTOPPED:
+                pass
+            elif event['event'] == mvc.Event.Events.STATISTICS:
+                pass
+            elif event['event'] == mvc.Event.Events.JOINING:
+                pass
             else:
-                print(event)    # self.notify(mvc.Event.Events.UNHANDLED, data=event)
+                print(event)
 
     def update_barbers(self, event):
         if event['type'] == 'view' or event['type'] == '*':
@@ -771,8 +895,14 @@ class GuiView(mvc.View):
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
                 self.ani_barbers.draw_counter(event['data'])
+            elif event['event'] == mvc.Event.Events.ALLSTOPPED:
+                pass
+            elif event['event'] == mvc.Event.Events.STATISTICS:
+                pass
+            elif event['event'] == mvc.Event.Events.JOINING:
+                pass
             else:
-                print(event)    # self.notify(mvc.Event.Events.UNHANDLED, data=event)
+                print(event)
 
     @staticmethod
     def update_gui(gui, event):
@@ -828,10 +958,11 @@ class GuiView(mvc.View):
         # fill in some model configuration items
         self.model_config = {
             'philosophers': self.models['philosophers'].config,
-            # 'barbers': self.models['barbers'].config
+            'barbers': self.models['barbers'].config
         }
         self.philosophers_config['philosophers'] = self.model_config['philosophers'].get_philosophers()
-        # self.barbers_config['barbers'] = self.model_config['barbers'].get_barbers()
+        self.barbers_config['barbers'] = self.model_config['barbers'].get_barbers()
+        self.barbers_config['waiters'] = self.model_config['barbers'].get_waiters()
 
         # instantiate our GUI animation views
         self.ani_dining = DiningPhilosophers(parent=self, root=self.root, mainframe=self.mainframe,
@@ -859,23 +990,6 @@ class GuiView(mvc.View):
             self.ani_dining.register(self.models[self.philosophers_config['model']])
         if self.barbers_config['model'] in self.models:
             self.ani_barbers.register(self.models[self.barbers_config['model']])
-
-        # Populate DiningPhilosophers animation graphics
-        self.ani_dining.add_table()
-        self.ani_dining.add_chairs()
-        self.ani_dining.add_forks()
-        self.ani_dining.add_waiter()
-        self.ani_dining.add_philosophers()
-        self.ani_dining.add_timers()
-        # Only start button is enabled
-        self.ani_dining.ani_buttons[AniButtonType.START].enable()
-
-        # Populate SleepingBarbers animation graphics
-        self.ani_barbers.draw_barbershop()
-        self.ani_barbers.add_barbers()
-        self.ani_barbers.add_waiting_room()
-        # Only start button is enabled
-        self.ani_barbers.ani_buttons[AniButtonType.START].enable()
 
         # all setup so run
         self.root.mainloop()

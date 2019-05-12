@@ -94,10 +94,10 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 5                         #: minimum number of seconds to eat
-    Eat_Max = 15                        #: maximum number of seconds to eat
-    Think_Min = 5                       #: minimum number of seconds to think
-    Think_Max = 15                      #: maximum number of seconds to think
+    Eat_Min = 10                        #: minimum number of seconds to eat
+    Eat_Max = 20                        #: maximum number of seconds to eat
+    Think_Min = 10                      #: minimum number of seconds to think
+    Think_Max = 20                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
     Dining_Loops = 100                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
@@ -577,6 +577,7 @@ class DiningPhilosophers(mvc.Model):
             mvc.Event.Events.LOOPS,
             mvc.Event.Events.STATISTICS,
             mvc.Event.Events.ALLSTOPPED,
+            mvc.Event.Events.JOINING,
             mvc.Event.Events.LOGGER
         ]
         for event_ in self.mvc_model_events:
@@ -720,8 +721,9 @@ class DiningPhilosophers(mvc.Model):
                 p.post_event(Events.EvStop)
 
             # Joining threads
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
             for p in self.philosophers:
-                p.join()
+                self.join_thread(p)
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
             # Generate some statistics of the simulation

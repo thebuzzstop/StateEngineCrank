@@ -55,7 +55,7 @@ class Event(Borg):
     """ MVC Events - Model and View """
 
     class Events(enum.Enum):
-        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED = range(11)
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED, JOINING = range(12)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -298,6 +298,16 @@ class MVC(ABC, threading.Thread):
         """ Accessor to set the *stopping* flag """
         self.running = False
         self.stopping = True
+
+    @staticmethod
+    def join_thread(thread):
+        for _ in range(Defines.Config.JOIN_RETRIES):
+            thread.join(timeout=Defines.Times.Joining)
+            if not thread.is_alive():
+                return True
+        if thread.is_alive():
+            raise exceptions.JoinFailure(thread)
+        return True
 
     @abstractmethod
     def notify(self, event):

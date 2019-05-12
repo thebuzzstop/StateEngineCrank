@@ -75,6 +75,9 @@ class ConfigData(Borg):
     def get_barbers(self):
         return self.barbers
 
+    def get_waiters(self):
+        return self.waiting_chairs
+
 
 class Statistics(Borg):
     """ This class is used by both barbers and customers to collect statistics.

@@ -121,6 +121,7 @@ class SleepingBarber(mvc.Model):
             mvc.Event.Events.LOOPS,
             mvc.Event.Events.STATISTICS,
             mvc.Event.Events.ALLSTOPPED,
+            mvc.Event.Events.JOINING,
             mvc.Event.Events.LOGGER
         ]
         for event_ in self.mvc_model_events:
@@ -287,24 +288,22 @@ class SleepingBarber(mvc.Model):
                 barber.event(BarberEvents.EvStop)
 
             # Tell any waiting customers to stop
-            for customer in self.cg.customer_list:
-                customer.event(CustomerEvents.EvStop)
+            for c in self.cg.customer_list:
+                c.post_event(CustomerEvents.EvStop)
 
             # Joining threads
             self.logger('Main: Joining customers')
-            for customer in self.cg.customer_list:
-                self.logger('Main: Joining %s' % customer.name)
-                customer.join()
-                self.logger('Main: Joined %s' % customer.name)
+            for c in self.cg.customer_list:
+                self.logger('Main: Joining %s' % c.name)
+                self.join_thread(c)
+                self.logger('Main: Joined %s' % c.name)
             self.logger('Main: All customers joined')
 
-            self.logger('CG: Join')
-            self.cg.join()
-            self.logger('CG: Joined')
-
             # Joining threads
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
+            self.join_thread(self.cg)
             for b in self.barbers:
-                b.join()
+                self.join_thread(b)
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
             # Generate some statistics of the simulation

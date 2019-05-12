@@ -205,6 +205,7 @@ class UserCode(StateMachine, mvc.Model):
         with self.waiting_room.lock:
             self.current_customer = self.waiting_room.get_customer()
         self.current_customer.post_event(Customer.Events.EvBarberReady)
+        self.logger('Barber[%s] GetCustomer %s' % (self.id, self.current_customer.id))
 
     # =========================================================
     # noinspection PyPep8Naming
