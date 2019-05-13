@@ -108,11 +108,13 @@ class UserCode(StateMachine, Model):
         self.waiting_time_finish = None     #: waiting clock time - finish
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
         self.waiting_time = 0               #: waiting time - simulation time (seconds)
+        self.my_barber = None               #: this customers barber
 
-        self.my_barber_id = None            #: ID of this customers barber
+    def get_barber(self):
+        return self.my_barber
 
-    def set_barber(self, id_):
-        self.my_barber_id = id_
+    def set_barber(self, barber):
+        self.my_barber = barber
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -149,7 +151,7 @@ class UserCode(StateMachine, Model):
 
             This function is called when the *HairCut* state is entered.
         """
-        self.logger('Customer[%s] StartHairCut [%s]' % (self.id, self.my_barber_id))
+        self.logger('Customer[%s] StartHairCut [%s]' % (self.id, self.my_barber.id))
         self.cutting_time_start = time.time()
 
     # ===========================================================================
@@ -190,7 +192,7 @@ class UserCode(StateMachine, Model):
             # send the barber a 'customer enter' event
             if barber.current_state == SleepingBarber.Barber.States.Sleeping:
                 self.post_event(Events.EvStart)
-                self.my_barber_id = barber.id
+                self.my_barber = barber
                 barber.current_customer = self
                 barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
                 return

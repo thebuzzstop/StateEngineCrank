@@ -25,6 +25,7 @@ from SleepingBarber.Barber import States as barberStates
 from SleepingBarber.Customer import Events as customerEvents
 from SleepingBarber.Customer import States as customerStates
 
+
 class AniButtonType(enum.Enum):
 
     START, STOP, STEP, PAUSE, RESUME = range(5)
@@ -94,13 +95,16 @@ class Animation(mvc.View):
                                  height=self.common['animation']['height'])
         self.ani_canvas.pack()
 
+        # Draw outer walls
+        self.draw_outer_walls(self.common['wall.thickness'], self.common['wall.color'])
+
         # Calculate the center of the animation canvas
         self.ani_center = (self.common['animation']['width']/2, self.common['animation']['height']/2)
         self.canvas_x_mid, self.canvas_y_mid = self.ani_center
 
         # Calculate the animation canvas iteration counter location
         self.counter_x = 40
-        self.counter_y = self.common['animation']['height'] - 10
+        self.counter_y = self.common['animation']['height'] - 20
         self.counter_id = None
         self.draw_counter(0)
 
@@ -230,7 +234,7 @@ class Animation(mvc.View):
         self.ani_buttons[AniButtonType.RESUME].disable()
         self.ani_buttons[AniButtonType.STEP].disable()
 
-    def canvas_xy(self, animation_x, animation_y):
+    def canvas_xy00(self, animation_x, animation_y):
         """ Convert an animation x-y coordinate to canvas x-y coordinate
 
             For the purpose of placing objects in the animation frame, the center of the frame
@@ -248,17 +252,33 @@ class Animation(mvc.View):
         """
         return animation_x+self.canvas_x_mid, animation_y+self.canvas_y_mid
 
-    def circle_at(self, x, y, r, c):
+    def circle_at00(self, x, y, r, c):
         """ Draw a circle at [x,y] coordinates, radius 'r'
+
+            This version of 'circle_at' assumes an origin of 0,0 at the center of the canvas.
 
             :param x: x-coordinate
             :param y: y-coordinate
             :param r: radius
             :param c: fill color
         """
-        canvas_x1, canvas_y1 = self.canvas_xy(x-r, y+r)
-        canvas_x2, canvas_y2 = self.canvas_xy(x+r, y-r)
+        canvas_x1, canvas_y1 = self.canvas_xy00(x - r, y + r)
+        canvas_x2, canvas_y2 = self.canvas_xy00(x + r, y - r)
         self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
+        self.ani_canvas.pack()
+
+    def circle_at(self, x, y, r, c):
+        """ Draw a circle at [x,y] coordinates, radius 'r'
+
+            This version of 'circle_at' assumes an origin of 0,0 the top left of the canvas.
+            There is no adjustment or translation of the [x, y] coordinates passed to us.
+
+            :param x: x-coordinate
+            :param y: y-coordinate
+            :param r: radius
+            :param c: fill color
+        """
+        self.ani_canvas.create_oval(x-r, y+r, x+r, y-r, fill=c)
         self.ani_canvas.pack()
 
     def draw_counter(self, count):
@@ -269,6 +289,17 @@ class Animation(mvc.View):
         self.counter_id = self.ani_canvas.create_text(self.counter_x, self.counter_y, text=text_, fill=color)
         self.ani_canvas.pack()
 
+    def text_at00(self, x, y, t, c):
+        """ Draw text at [x,y] coordinates
+
+            :param x: x-coordinate
+            :param y: y-coordinate
+            :param t: text
+            :param c: color
+        """
+        self.ani_canvas.create_text(self.canvas_xy00(x, y), text=t, fill=c)
+        self.ani_canvas.pack()
+
     def text_at(self, x, y, t, c):
         """ Draw text at [x,y] coordinates
 
@@ -277,7 +308,7 @@ class Animation(mvc.View):
             :param t: text
             :param c: color
         """
-        self.ani_canvas.create_text(self.canvas_xy(x, y), text=t, fill=c)
+        self.ani_canvas.create_text(x, y, text=t, fill=c)
         self.ani_canvas.pack()
 
     @staticmethod
@@ -291,6 +322,41 @@ class Animation(mvc.View):
         x = radius * math.sin(math.radians(angle))
         y = radius * math.cos(math.radians(angle))
         return x, y
+
+    def wall_at(self, x, y, t, l, c):
+        """ Draw a wall (rectangle)
+
+            :param x: center line x-coordinate
+            :param y: center line y-coordinate
+            :param l: length
+            :param t: thickness
+            :param c: color (fill)
+        """
+        self.ani_canvas.create_rectangle(x, y+t/2, x+l, y-t/2, fill=c, width=0)
+
+    def draw_outer_walls(self, t, c):
+        """ Draw outer walls
+
+            :param t: thickness
+            :param c: color (fill)
+        """
+        # top wall
+        self.ani_canvas.create_rectangle(0, 0,
+                                         self.common['animation']['width'], t+1,
+                                         fill=c, width=0)
+        # bottom wall
+        self.ani_canvas.create_rectangle(0, self.common['animation']['height']-t+1,
+                                         self.common['animation']['width'],
+                                         self.common['animation']['height']+1,
+                                         fill=c, width=0)
+        # left wall
+        self.ani_canvas.create_rectangle(0, 0,
+                                         t+1, self.common['animation']['height']+1,
+                                         fill=c, width=0)
+        # right wall
+        self.ani_canvas.create_rectangle(self.common['animation']['width']-t, 0,
+                                         self.common['animation']['width'], self.common['animation']['height'],
+                                         fill=c, width=0)
 
 
 class DiningPhilosophers(Animation):
@@ -366,12 +432,12 @@ class DiningPhilosophers(Animation):
 
     def add_table(self):
         """ Add the main dining table """
-        self.circle_at(0, 0, self.table_radius, self.config['table.color'])
+        self.circle_at00(0, 0, self.table_radius, self.config['table.color'])
 
     def draw_chair(self, chair, color):
         angle = chair * self.delta_angle_degrees
         cx, cy = self.transform_2xy(self.chair_circle_radius, angle)
-        self.circle_at(cx, cy, self.chair_radius, color)
+        self.circle_at00(cx, cy, self.chair_radius, color)
         return cx, cy
 
     def add_chairs(self):
@@ -385,8 +451,8 @@ class DiningPhilosophers(Animation):
         tx, ty = self.transform_2xy(self.timer_circle_radius, angle)
         if text is None:
             text = '0'
-        self.circle_at(tx, ty, self.timer_radius, color[0])
-        self.text_at(tx, ty, '%s' % text, color[1])
+        self.circle_at00(tx, ty, self.timer_radius, color[0])
+        self.text_at00(tx, ty, '%s' % text, color[1])
         return tx, ty
 
     def add_timers(self):
@@ -399,9 +465,9 @@ class DiningPhilosophers(Animation):
         angle = pid * self.delta_angle_degrees
         px, py = self.transform_2xy(self.chair_circle_radius, angle)
         if text is None:
-            self.text_at(px, py, 'P%s' % pid, color)
+            self.text_at00(px, py, 'P%s' % pid, color)
         else:
-            self.text_at(px, py, ('P%s-%s' % (pid, text)), color)
+            self.text_at00(px, py, ('P%s-%s' % (pid, text)), color)
         return px, py
 
     def add_philosophers(self):
@@ -413,8 +479,8 @@ class DiningPhilosophers(Animation):
     def draw_fork(self, fork):
         angle = self.fork_angle_offset + fork * self.delta_angle_degrees
         fx, fy = self.transform_2xy(self.fork_circle_radius, angle)
-        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
-        self.text_at(fx, fy, 'F', 'white')
+        self.circle_at00(fx, fy, self.fork_radius, self.config['fork.color'])
+        self.text_at00(fx, fy, 'F', 'white')
         return fx, fy
 
     def add_forks(self):
@@ -425,7 +491,7 @@ class DiningPhilosophers(Animation):
 
     def add_waiter(self):
         """ Add the waiter graphic to the simulation """
-        self.circle_at(0, 0, self.config['waiter.chair.radius'], self.config['waiter.color'])
+        self.circle_at00(0, 0, self.config['waiter.chair.radius'], self.config['waiter.color'])
         self.waiter_coords.append([0, 0])
         self.ani_canvas.create_text(self.ani_center, text='Waiter', fill='white')
         self.ani_canvas.pack()
@@ -540,13 +606,13 @@ class DiningPhilosophers(Animation):
     def waiter_acquire(self, event):
         philosopher_id = event['data']
         fx, fy = self.waiter_coords[0]
-        self.circle_at(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
-        self.text_at(fx, fy, 'Wait[%s]' % philosopher_id, 'yellow')
+        self.circle_at00(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
+        self.text_at00(fx, fy, 'Wait[%s]' % philosopher_id, 'yellow')
 
     def waiter_release(self, event):
         fx, fy = self.waiter_coords[0]
-        self.circle_at(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
-        self.text_at(fx, fy, 'Waiter', 'white')
+        self.circle_at00(fx, fy, self.config['waiter.chair.radius'], self.config['waiter.color'])
+        self.text_at00(fx, fy, 'Waiter', 'white')
 
     def waiter_left_fork(self, event):
         self.waiter_fork_(event, ForkId.Left)
@@ -562,8 +628,8 @@ class DiningPhilosophers(Animation):
             fx, fy = self.fork_coords[left]
         else:
             fx, fy = self.fork_coords[right]
-        self.circle_at(fx, fy, self.fork_radius, self.config['fork.color'])
-        self.text_at(fx, fy, '%s' % philosopher_id, 'white')
+        self.circle_at00(fx, fy, self.fork_radius, self.config['fork.color'])
+        self.text_at00(fx, fy, '%s' % philosopher_id, 'white')
 
 
 class SleepingBarbers(Animation):
@@ -579,26 +645,35 @@ class SleepingBarbers(Animation):
         self.ani_height = self.common['animation']['height']
         self.barber_chair_radius = self.config['barber.chair.radius']
         self.waiter_chair_radius = self.config['waiter.chair.radius']
+        self.wall_thickness = self.common['wall.thickness']
+        self.gap_multiplier = self.config['gap.multiplier']
 
-        self.barber_chair_spacer = (self.ani_width-(self.num_barbers*self.barber_chair_radius*2))/(self.num_barbers+3)
+        self.barber_chair_spacer = \
+            (self.ani_width-(self.num_barbers*self.barber_chair_radius*2))/(self.num_barbers-1+2*self.gap_multiplier)
         self.barber_coords = []
-        barber_y = (self.ani_height/2)/3
+        barber_y = self.ani_height/3
         for b in range(self.num_barbers):
-            barber_x = self.barber_chair_spacer + b*(self.barber_chair_radius + self.barber_chair_spacer)
+            barber_x = self.gap_multiplier*self.barber_chair_spacer + self.barber_chair_radius + \
+                       b*(2*self.barber_chair_radius + self.barber_chair_spacer)
             self.barber_coords.append([barber_x, barber_y])
 
-        self.waiter_chair_spacer = (self.ani_width-(self.num_waiters*self.waiter_chair_radius*2))/(self.num_waiters+3)
+        self.waiter_chair_spacer = \
+            (self.ani_width-(self.num_waiters*self.waiter_chair_radius*2))/(self.num_waiters-1+2*self.gap_multiplier)
         self.waiter_coords = []
-        waiter_y = self.ani_height - (self.ani_height/2)/3
+        waiter_y = self.ani_height - self.ani_height/3
         for w in range(self.num_waiters):
-            waiter_x = self.waiter_chair_spacer + w*(self.waiter_chair_radius + self.waiter_chair_spacer)
+            waiter_x = self.gap_multiplier*self.waiter_chair_spacer + self.waiter_chair_radius + \
+                       w*(2*self.waiter_chair_radius + self.waiter_chair_spacer)
             self.waiter_coords.append([waiter_x, waiter_y])
+
+        self.wall_data = [
+            (0, self.ani_height/2, self.common['wall.thickness'], self.ani_width, self.common['wall.color'])
+        ]
+
+        self.door_coords = []
 
         self.barber_door_coords = []
         self.waiter_door_coords = []
-
-        self.wall_coords = []
-        self.door_coords = []
 
         self.sm_dispatch = {
             barberEvents.EvStart: self.barber_start,
@@ -625,29 +700,45 @@ class SleepingBarbers(Animation):
         # ------------------------------------------------------
         # Populate SleepingBarbers animation graphics
         # ------------------------------------------------------
+        self.add_walls()
         self.add_barbers()
         self.add_waiting_room()
         # Only start button is enabled
         self.ani_buttons[AniButtonType.START].enable()
 
+    def add_walls(self):
+        for w in self.wall_data:
+            (x, y, t, l, c) = w
+            self.wall_at(x, y, t, l, c)
+
     def add_barbers(self):
         """ Add barbers and their chairs """
         for b in range(self.num_barbers):
-            self.draw_barber(b, self.config['init.color'][0])
+            self.draw_barber(b, self.config['init.color'])
 
-    def draw_barber(self, b, color):
-        bx, by = self.barber_coords[b]
-        self.ani_canvas.create_oval(canvas_x1, canvas_y1, canvas_x2, canvas_y2, fill=c)
-        self.ani_canvas.pack()
+    def add_waiting_room_wall(self):
+        pass
+
+    def draw_barber(self, bid, color, text=None):
+        bx, by = self.barber_coords[bid]
+        self.circle_at(bx, by, self.barber_chair_radius, color[0])
+        if text is None:
+            self.text_at(bx, by, 'B%s' % bid, color[1])
+        else:
+            self.text_at(bx, by, ('B%s-%s' % (bid, text)), color[1])
 
     def add_waiting_room(self):
         """ Add waiting room chairs """
         for w in range(self.num_waiters):
-            self.draw_waiter(w, self.config['init.color'][0])
+            self.draw_waiter(w, self.config['init.color'])
 
-    def draw_waiter(self, w, color):
+    def draw_waiter(self, w, color, text=None):
         wx, wy = self.waiter_coords[w]
-        self.circle_at(wx, wy, self.waiter_chair_radius, color)
+        self.circle_at(wx, wy, self.waiter_chair_radius, color[0])
+        if text is None:
+            self.text_at(wx, wy, 'C%s' % w, color[1])
+        else:
+            self.text_at(wx, wy, ('C%s-%s' % (w, text)), color[1])
 
     def update(self, event):
         """ Function to process all animation events
@@ -697,13 +788,13 @@ class SleepingBarbers(Animation):
         pass
 
     def barber_state_cutting(self, event):
-        pass
+        self.draw_barber(event['user.id'], self.config['cutting.color'])
 
     def barber_state_sleeping(self, event):
-        pass
+        self.draw_barber(event['user.id'], self.config['sleeping.color'])
 
     def barber_state_finish(self, event):
-        pass
+        self.draw_barber(event['user.id'], self.config['finish.color'])
 
     def customer_start(self, event):
         pass
@@ -778,6 +869,8 @@ class GuiView(mvc.View):
         'console.frame.stick': (N, S, E, W),
         'ani.frame.stick': (N, S, E, W),
         'label.stick': N,
+        'wall.thickness': 5,
+        'wall.color': 'lightgray',
     }
 
     philosophers_config = {
@@ -815,8 +908,9 @@ class GuiView(mvc.View):
         'event.class': 'barbers',
         'barbers': None,
         'waiters': None,
-        'barber.chair.radius': 30,
+        'barber.chair.radius': 20,
         'waiter.chair.radius': 20,
+        'gap.multiplier': 5,
 
         'start.color': ['lightgrey', 'yellow'],
         'stop.color': ['lightgrey', 'red'],
@@ -824,6 +918,7 @@ class GuiView(mvc.View):
         'cutting.color': ['green', 'white'],
         'sleeping.color': ['blue', 'white'],
         'waiting.color': ['red', 'white'],
+        'finish.color': ['lightgrey', 'white'],
         'init.color': ['grey', 'white'],
     }
 
