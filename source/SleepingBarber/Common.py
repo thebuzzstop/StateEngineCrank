@@ -23,15 +23,15 @@ class Borg(object):
 
 class Config(object):
     """ SleepingBarber configuration items """
-    HairCut_Min = 9                 #: minimum number of seconds to cut hair
-    HairCut_Max = 13                #: maximum number of seconds to cut hair
+    HairCut_Min = 20                #: minimum number of seconds to cut hair
+    HairCut_Max = 30                #: maximum number of seconds to cut hair
     Barbers = 4                     #: number of barbers cutting hair
     BarbersMax = 5                  #: maximum number of barbers for animation
     WaitingChairs = 4               #: number of chairs in the waiting room
-    WaitingChairsMax = 8            #: maximum number of waiters for animation
-    CustomerRate = 3                #: rate for new customers
-    CustomerVariance = 1            #: variance in the customer rate
-    SimulationLoops = 100           #: total number of loops (seconds) to run
+    WaitingChairsMax = 5            #: maximum number of waiters for animation
+    CustomerRate = 5                #: rate for new customers
+    CustomerVariance = 2            #: variance in the customer rate
+    SimulationLoops = 200           #: total number of loops (seconds) to run
     Class_Name = 'barbers'          #: class name for Event registration
     Actor_Base_Name = 'barbers'     #: used when identifying actors
 

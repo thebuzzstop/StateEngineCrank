@@ -815,6 +815,7 @@ class SleepingBarbers(Animation):
         pass
 
     def customer_state_waiting(self, event):
+        # waiting_list = self.
         pass
 
     def customer_state_finish(self, event):

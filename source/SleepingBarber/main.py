@@ -292,19 +292,35 @@ class SleepingBarber(mvc.Model):
                 c.post_event(CustomerEvents.EvStop)
 
             # Joining threads
-            self.logger('Main: Joining customers')
-            for c in self.cg.customer_list:
-                self.logger('Main: Joining %s' % c.name)
-                self.join_thread(c)
-                self.logger('Main: Joined %s' % c.name)
-            self.logger('Main: All customers joined')
-
-            # Joining threads
+            join_list_b = []
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
             self.join_thread(self.cg)
             for b in self.barbers:
-                self.join_thread(b)
-            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
+                try:
+                    self.join_thread(b)
+                except exceptions.JoinFailure:
+                    join_list_b.append(b)
+            if len(join_list_b) == 0:
+                self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
+
+            # Joining threads
+            join_list_c = []
+            self.logger('Main: Joining customers')
+            for c in self.cg.customer_list:
+                try:
+                    self.join_thread(c)
+                except exceptions.JoinFailure:
+                    join_list_c.append(c)
+            if len(join_list_c) == 0:
+                self.logger('Main: All customers joined')
+
+            # See if we have some reluctant threads
+            join_list = []
+            join_list.extend(join_list_b)
+            join_list.extend(join_list_c)
+            if len(join_list) > 0:
+                for t in join_list:
+                    self.join_thread(t)
 
             # Generate some statistics of the simulation
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],

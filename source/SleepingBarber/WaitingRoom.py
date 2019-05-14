@@ -6,7 +6,8 @@
 # System imports
 import sys
 from threading import Lock as Lock
-from queue import Queue as Queue
+from collections import deque
+from copy import copy
 
 # Project imports
 from SleepingBarber import Common
@@ -27,7 +28,7 @@ class Borg(object):
         self.__dict__ = self._shared_state  #: Borg class shared state
 
 
-class WaitingRoom(Borg, Queue, Model):
+class WaitingRoom(Borg, Model):
     """ Waiting Room Implementation
 
         Implemented as a Borg so that all instantiations of the WaitingRoom class will
@@ -46,10 +47,10 @@ class WaitingRoom(Borg, Queue, Model):
         if len(self._shared_state) is 0:
             if chairs is None:
                 chairs = Common.Config.WaitingChairs
-            Queue.__init__(self, maxsize=chairs)
             Model.__init__(self, name='WaitingRoom')
 
             self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
+            self.deque = deque(maxlen=chairs)   #: a queue of waiting room chairs
             self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
 
     def get_chair(self, customer):
@@ -61,13 +62,13 @@ class WaitingRoom(Borg, Queue, Model):
             :returns: True : Chair available, customer added to the waiting queue
             :returns: False : No chair available
         """
-        if self.full():
+        if len(self.deque) == self.deque.maxlen:
             chair = False
         else:
-            self.put(customer, block=False)
+            self.deque.append(customer)
             chair = True
             with self.stats.lock:
-                self.stats.max_waiters = max(self.stats.max_waiters, self.qsize())
+                self.stats.max_waiters = max(self.stats.max_waiters, len(self.deque))
         self.logger('WR: get_chair [%s]' % chair)
         return chair
 
@@ -79,12 +80,26 @@ class WaitingRoom(Borg, Queue, Model):
 
             :raises: CustomerWaitingError : no customer waiting.
         """
-        if self.empty():
+        if len(self.deque) == 0:
             raise CustomerWaitingError
         else:
-            customer = self.get(block=False)
+            customer = self.deque.popleft()
         self.logger('WR: get_customer [%s]' % customer.id)
         return customer
+
+    def get_waiting_list(self):
+        """ Returns a list of the waiting customers
+
+            In general, anyone calling a WaitingRoom function needs to obtain the lock before calling.
+            This is one case where we will acquire the lock on behalf of the caller.
+
+            :returns: current state of the waiting queue
+        """
+        with self.lock:
+            waiting_list = []
+            for c in range(len(self.deque)):
+                waiting_list.append(self.deque[c])
+            return waiting_list
 
     def customer_waiting(self):
         """ Function to test if a customer is waiting.
@@ -93,12 +108,20 @@ class WaitingRoom(Borg, Queue, Model):
             :returns: True : Customer is waiting
             :returns: False : No customer is waiting
         """
-        if not self.empty():
+        if len(self.deque) > 0:
             self.logger('WR: customer_waiting [TRUE]')
             return True
         else:
             self.logger('WR: customer_waiting [FALSE]')
             return False
+
+    def full(self):
+        """ Function to return state of waitingroom
+            It is assumed that the caller has obtained the WaitingRoom lock.
+
+            :returns: True if waitingroom is full
+        """
+        return len(self.deque) == self.deque.maxlen
 
     def update(self, event):
         """ Called by views or controllers to tell us to update
