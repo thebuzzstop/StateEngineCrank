@@ -372,8 +372,8 @@ class DiningPhilosophers(Animation):
         self.ani_height = self.common['animation']['height']
         self.table_radius = self.config['table.radius']
         self.chair_radius = self.config['chair.radius']
-        self.timer_radius = self.config['timer.radius']
         self.fork_radius = self.config['fork.radius']
+        self.timer_radius = self.common['timer.radius']
 
         self.x_gap = (self.ani_width - 2 * self.table_radius - 4 * (self.chair_radius+self.timer_radius)) / 6
         self.y_gap = (self.ani_height - 2 * self.table_radius - 4 * (self.chair_radius+self.timer_radius)) / 6
@@ -443,7 +443,7 @@ class DiningPhilosophers(Animation):
     def add_chairs(self):
         """ Add chairs around the dining table """
         for chair in range(self.num_philosophers):
-            cx, cy = self.draw_chair(chair, self.config['init.color'][0])
+            cx, cy = self.draw_chair(chair, self.common['init.color'][0])
             self.chair_coords.append([cx, cy])
 
     def draw_timer(self, timer, color, text=None):
@@ -458,7 +458,7 @@ class DiningPhilosophers(Animation):
     def add_timers(self):
         """ Add timers around the dining table """
         for timer in range(self.num_philosophers):
-            tx, ty = self.draw_timer(timer, self.config['init.color'])
+            tx, ty = self.draw_timer(timer, self.common['init.color'])
             self.timer_coords.append([tx, ty])
 
     def draw_philosopher(self, pid, color, text=None):
@@ -473,7 +473,7 @@ class DiningPhilosophers(Animation):
     def add_philosophers(self):
         """ Add philosophers around the table """
         for p in range(self.num_philosophers):
-            px, py = self.draw_philosopher(p, self.config['init.color'][1])
+            px, py = self.draw_philosopher(p, self.common['init.color'][1])
             self.philosopher_coords.append([px, py])
 
     def draw_fork(self, fork):
@@ -536,7 +536,7 @@ class DiningPhilosophers(Animation):
     def timer_handler(self, event):
         time_ = event['data'][0]
         id_ = event['user.id']
-        color = self.config['init.color']
+        color = self.common['init.color']
         self.draw_timer(id_, color, text=time_)
 
     def dining_start(self, event):
@@ -586,8 +586,8 @@ class DiningPhilosophers(Animation):
 
     def dining_state_finish(self, event):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
-            self.draw_chair(event['user.id'], self.config['stop.color'][0])
-            self.draw_philosopher(event['user.id'], self.config['stop.color'][1])
+            self.draw_chair(event['user.id'], self.common['stop.color'][0])
+            self.draw_philosopher(event['user.id'], self.common['stop.color'][1])
             left, right = self.models['philosophers'].forks(event['user.id'])
             self.draw_fork(left)
             self.draw_fork(right)
@@ -671,10 +671,9 @@ class SleepingBarbers(Animation):
         ]
 
         self.door_coords = []
-
         self.barber_door_coords = []
         self.waiter_door_coords = []
-
+        self.timer_coords = {}
         self.sm_dispatch = {
             barberEvents.EvStart: self.barber_start,
             barberEvents.EvStop: self.barber_stop,
@@ -703,6 +702,8 @@ class SleepingBarbers(Animation):
         self.add_walls()
         self.add_barbers()
         self.add_waiting_room()
+        self.add_timers()
+
         # Only start button is enabled
         self.ani_buttons[AniButtonType.START].enable()
 
@@ -714,10 +715,25 @@ class SleepingBarbers(Animation):
     def add_barbers(self):
         """ Add barbers and their chairs """
         for b in range(self.num_barbers):
-            self.draw_barber(b, self.config['init.color'])
+            self.draw_barber(b, self.common['init.color'])
 
     def add_waiting_room_wall(self):
         pass
+
+    def add_timers(self):
+        """ Timers for the barbers and waiting room chairs """
+        self.timer_coords['barber'] = []
+        for b in range(self.num_barbers):
+            bx, by = self.barber_coords[b]
+            by -= self.barber_chair_radius + self.barber_chair_spacer + self.config['timer.radius']
+            self.timer_coords['barber'].append([bx, by])
+            self.draw_timer(self.timer_coords['barber'][b], self.common['init.color'], text='0')
+        self.timer_coords['waiter'] = []
+        for w in range(self.num_waiters):
+            wx, wy = self.waiter_coords[w]
+            wy += self.waiter_chair_radius + self.waiter_chair_spacer + self.config['timer.radius']
+            self.timer_coords['waiter'].append([wx, wy])
+            self.draw_timer(self.timer_coords['waiter'][w], self.common['init.color'], text='0')
 
     def draw_barber(self, bid, color, text=None):
         bx, by = self.barber_coords[bid]
@@ -730,7 +746,7 @@ class SleepingBarbers(Animation):
     def add_waiting_room(self):
         """ Add waiting room chairs """
         for w in range(self.num_waiters):
-            self.draw_waiter(w, self.config['init.color'])
+            self.draw_waiter(w, self.common['init.color'])
 
     def draw_waiter(self, w, color, text=None):
         wx, wy = self.waiter_coords[w]
@@ -740,6 +756,12 @@ class SleepingBarbers(Animation):
         else:
             self.text_at(wx, wy, ('C%s-%s' % (w, text)), color[1])
 
+    def draw_timer(self, t, color, text=None):
+        tx, ty = t
+        self.circle_at(tx, ty, self.config['timer.radius'], color[0])
+        if text is not None:
+            self.text_at(tx, ty, ('%s' % text), color[1])
+
     def update(self, event):
         """ Function to process all animation events
 
@@ -748,8 +770,7 @@ class SleepingBarbers(Animation):
         # MVC class events
         if event['class'].lower() == 'mvc':
             if event['event'] == mvc.Event.Events.TIMER:
-                # self.timer_handler(event)
-                pass
+                self.timer_handler(event)
 
         # SM class events
         elif event['class'].lower() == 'sm':
@@ -772,6 +793,12 @@ class SleepingBarbers(Animation):
     # ----------------------------------------------------
     # Event processing routines
     # ----------------------------------------------------
+    def timer_handler(self, event):
+        time_ = event['data'][0]
+        id_ = event['user.id']
+        color = self.common['init.color']
+        self.draw_timer(id_, color, text=time_)
+
     def barber_start(self, event):
         pass
 
@@ -794,7 +821,7 @@ class SleepingBarbers(Animation):
         self.draw_barber(event['user.id'], self.config['sleeping.color'])
 
     def barber_state_finish(self, event):
-        self.draw_barber(event['user.id'], self.config['finish.color'])
+        self.draw_barber(event['user.id'], self.common['finish.color'])
 
     def customer_start(self, event):
         pass
@@ -872,6 +899,14 @@ class GuiView(mvc.View):
         'label.stick': N,
         'wall.thickness': 5,
         'wall.color': 'lightgray',
+
+        'timer.radius': 15,
+
+        'init.color': ['grey', 'white'],
+        'start.color': ['lightgrey', 'yellow'],
+        'stop.color': ['lightgrey', 'red'],
+        'finish.color': ['lightgrey', 'white'],
+        'timer.color': ['lightgrey', 'yellow'],
     }
 
     philosophers_config = {
@@ -883,9 +918,6 @@ class GuiView(mvc.View):
         'event.class': 'philosophers',
         'philosophers': None,
 
-        'init.color': ['grey', 'white'],
-        'start.color': ['lightgrey', 'yellow'],
-        'stop.color': ['lightgrey', 'red'],
         'hungry.color': ['red', 'yellow'],
         'eating.color': ['green', 'white'],
         'thinking.color': ['blue', 'white'],
@@ -895,7 +927,6 @@ class GuiView(mvc.View):
         'table.radius': 75,
         'table.color': 'grey',
         'chair.radius': 20,
-        'timer.radius': 15,
         'waiter.chair.radius': 25,
         'waiter.color': 'blue',
     }
@@ -912,15 +943,11 @@ class GuiView(mvc.View):
         'barber.chair.radius': 20,
         'waiter.chair.radius': 20,
         'gap.multiplier': 5,
-
-        'start.color': ['lightgrey', 'yellow'],
-        'stop.color': ['lightgrey', 'red'],
+        'timer.radius': 15,
 
         'cutting.color': ['green', 'white'],
         'sleeping.color': ['blue', 'white'],
         'waiting.color': ['red', 'white'],
-        'finish.color': ['lightgrey', 'white'],
-        'init.color': ['grey', 'white'],
     }
 
     def __init__(self):
