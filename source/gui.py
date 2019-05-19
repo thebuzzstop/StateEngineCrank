@@ -1,6 +1,7 @@
 """ StateEngineCrank Tkinter GUI View """
 
 # System imports
+import copy
 import threading
 from tkinter import *
 from tkinter import ttk
@@ -24,7 +25,7 @@ from SleepingBarber.Barber import Events as barberEvents
 from SleepingBarber.Barber import States as barberStates
 from SleepingBarber.Customer import Events as customerEvents
 from SleepingBarber.Customer import States as customerStates
-
+from SleepingBarber.WaitingRoom import WaitingRoom
 
 class AniButtonType(enum.Enum):
 
@@ -647,6 +648,11 @@ class SleepingBarbers(Animation):
         self.waiter_chair_radius = self.config['waiter.chair.radius']
         self.wall_thickness = self.common['wall.thickness']
         self.gap_multiplier = self.config['gap.multiplier']
+        self.waiting_room = WaitingRoom()
+        #: list of waiting room chairs, will contain the ID of a waiting customer
+        self.waiting_chairs = [None for _ in range(self.num_waiters)]
+        #: next waiting room chair to occupy
+        self.next_waiting_chair_ = -1
 
         self.barber_chair_spacer = \
             (self.ani_width-(self.num_barbers*self.barber_chair_radius*2))/(self.num_barbers-1+2*self.gap_multiplier)
@@ -752,9 +758,9 @@ class SleepingBarbers(Animation):
         wx, wy = self.waiter_coords[w]
         self.circle_at(wx, wy, self.waiter_chair_radius, color[0])
         if text is None:
-            self.text_at(wx, wy, 'C%s' % w, color[1])
+            self.text_at(wx, wy, 'Empty', color[1])
         else:
-            self.text_at(wx, wy, ('C%s-%s' % (w, text)), color[1])
+            self.text_at(wx, wy, ('%s' % text), color[1])
 
     def draw_timer(self, t, color, text=None):
         tx, ty = t
@@ -796,8 +802,48 @@ class SleepingBarbers(Animation):
     def timer_handler(self, event):
         time_ = event['data'][0]
         id_ = event['user.id']
-        color = self.common['init.color']
-        self.draw_timer(id_, color, text=time_)
+        if event['data'][1] == barberStates.Sleeping:
+            color = self.config['sleeping.color']
+            self.draw_timer(self.timer_coords['barber'][id_], color, text=time_)
+        elif event['data'][1] == barberStates.Cutting or \
+            event['data'][1] == barberStates.Stopping:
+            color = self.config['cutting.color']
+            self.draw_timer(self.timer_coords['barber'][id_], color, text=time_)
+        elif event['data'][1] == customerStates.Waiting:
+            color = self.config['waiting.color']
+            # get a copy of the waiting room list
+            waiting_list = copy.copy(self.waiting_room.get_waiting_list())
+            id_ = event['user.id']
+            time_ = event['data'][0]
+
+            # get the index of this customers chair
+            chair = self.waiting_customer_chair(id_)
+
+            self.draw_timer(self.timer_coords['waiter'][chair], color, text=time_)
+            self.draw_waiter(chair, color, text=id_)
+        else:
+            print(event)
+
+    def waiting_customer_chair(self, id_):
+        """ Returns the index of the waiting room chair for a given customer id
+
+            :param id_: Customer ID
+            :returns: Waiting room chair for requested customer
+            :returns: None if customer is not waiting
+        """
+        for w in range(self.num_waiters):
+            if self.waiting_chairs[w] == id_:
+                return w
+        return None
+
+    def next_waiting_chair(self):
+        """ Function to return the next available waiting room chair
+            Will increment the current index modulo the total number of chairs.
+
+            :returns: index of waiting room chair
+        """
+        self.next_waiting_chair_ = (self.next_waiting_chair_ + 1) % self.num_waiters
+        return self.next_waiting_chair_
 
     def barber_start(self, event):
         pass
@@ -839,11 +885,14 @@ class SleepingBarbers(Animation):
         pass
 
     def customer_state_haircut(self, event):
-        pass
+        chair = self.waiting_customer_chair(event['user.id'])
+        if chair is not None:
+            color = self.common['init.color']
+            self.draw_timer(self.timer_coords['waiter'][chair], color, text=0)
+            self.draw_waiter(chair, color, text=None)
 
     def customer_state_waiting(self, event):
-        # waiting_list = self.
-        pass
+        self.waiting_chairs[self.next_waiting_chair()] = event['user.id']
 
     def customer_state_finish(self, event):
         pass

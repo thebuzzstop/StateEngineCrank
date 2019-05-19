@@ -70,25 +70,26 @@ class Event(Borg):
                 * data : optional data payload
         """
         Borg.__init__(self)
-        if len(self._shared_state) is 0:
-            self.events = {}        #: dictionary of events
-            self.event_by_id = []   #: list of events, used for lookups by ID
-            self.actors = {}        #: dictionary of actors (i.e. posters of events)
-            self.event_counter = 0
+        if len(self._shared_state) > 0:
+            return
+        self.events = {}        #: dictionary of events
+        self.event_by_id = []   #: list of events, used for lookups by ID
+        self.actors = {}        #: dictionary of actors (i.e. posters of events)
+        self.event_counter = 0
 
-            # register some well-known events
-            self.register_class('mvc')
-            self.register_event('mvc', Event.Events.START, '*', text='Start execution, enter run-state')
-            self.register_event('mvc', Event.Events.STOP, '*', text='Stop execution, terminate program')
-            self.register_event('mvc', Event.Events.STEP, '*', text='Single execution step')
-            self.register_event('mvc', Event.Events.PAUSE, '*', text='Pause execution, retain current state')
-            self.register_event('mvc', Event.Events.RESUME, '*', text='Resume execution')
-            self.register_event('mvc', Event.Events.LOGGER, '*', text='Log entry')
-            self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
-            self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
-            self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
-            self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
-            self.register_event('mvc', Event.Events.UNHANDLED, '*', text='Unhandled condition')
+        # register some well-known events
+        self.register_class('mvc')
+        self.register_event('mvc', Event.Events.START, '*', text='Start execution, enter run-state')
+        self.register_event('mvc', Event.Events.STOP, '*', text='Stop execution, terminate program')
+        self.register_event('mvc', Event.Events.STEP, '*', text='Single execution step')
+        self.register_event('mvc', Event.Events.PAUSE, '*', text='Pause execution, retain current state')
+        self.register_event('mvc', Event.Events.RESUME, '*', text='Resume execution')
+        self.register_event('mvc', Event.Events.LOGGER, '*', text='Log entry')
+        self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
+        self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
+        self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
+        self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
+        self.register_event('mvc', Event.Events.UNHANDLED, '*', text='Unhandled condition')
 
     def register_class(self, class_name):
         """ Register a class name for the events database

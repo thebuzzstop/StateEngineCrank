@@ -23,17 +23,19 @@ class Borg(object):
 
 class Config(object):
     """ SleepingBarber configuration items """
-    HairCut_Min = 20                #: minimum number of seconds to cut hair
-    HairCut_Max = 30                #: maximum number of seconds to cut hair
-    Barbers = 4                     #: number of barbers cutting hair
-    BarbersMax = 5                  #: maximum number of barbers for animation
-    WaitingChairs = 4               #: number of chairs in the waiting room
-    WaitingChairsMax = 5            #: maximum number of waiters for animation
-    CustomerRate = 5                #: rate for new customers
-    CustomerVariance = 2            #: variance in the customer rate
-    SimulationLoops = 200           #: total number of loops (seconds) to run
-    Class_Name = 'barbers'          #: class name for Event registration
-    Actor_Base_Name = 'barbers'     #: used when identifying actors
+    HairCut_Min = 20                    #: minimum number of seconds to cut hair
+    HairCut_Max = 30                    #: maximum number of seconds to cut hair
+    Barbers = 4                         #: number of barbers cutting hair
+    BarbersMax = 5                      #: maximum number of barbers for animation
+    WaitingChairs = 4                   #: number of chairs in the waiting room
+    WaitingChairsMax = 5                #: maximum number of waiters for animation
+    CustomerRate = 5                    #: rate for new customers
+    CustomerVariance = 2                #: variance in the customer rate
+    SimulationLoops = 2000              #: total number of loops (seconds) to run
+    Class_Name = 'barbers'              #: class name for Event registration
+    Actor_Base_Name = 'barber'          #: used when identifying actors
+    Customer_Class_Name = 'customers'   #: class name for Event registration
+    Customer_Base_Name = 'customer'     #: used when identifying actors
 
     @staticmethod
     def seconds(minimum, maximum):
@@ -75,6 +77,8 @@ class ConfigData(Borg):
         self.simulation_loops = Config.SimulationLoops
         self.class_name = Config.Class_Name
         self.actor_base_name = Config.Actor_Base_Name
+        self.customer_class_name = Config.Customer_Class_Name
+        self.customer_actor_base_name = Config.Customer_Base_Name
 
     def get_barbers(self):
         return self.barbers

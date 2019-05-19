@@ -82,6 +82,10 @@ class StateTables(object):
 class UserCode(StateMachine, mvc.Model):
     """ User code unique to the Barber state implementation of the SleepingBarber simulation """
 
+    def cleanup(self):
+        self.mvc_events.unregister_actor(self.name)
+        StateMachine.cleanup(self)
+
     def __init__(self, user_id=None):
         """ Barber class constructor
 
@@ -98,9 +102,12 @@ class UserCode(StateMachine, mvc.Model):
         self.customers = 0              #: customers served
         self.cut_timer = 0              #: cut timer, used to time the length of a haircut
         self.cutting_time = 0           #: total time spent cutting
+        self.sleep_timer = 0            #: sleep timer, used to time the length of a barber sleeping
         self.sleeping_time = 0          #: total time spent sleeping
         self.current_customer = None    #: current customer being served
         self.waiting_room = WaitingRoom.WaitingRoom()   #: waiting room instantiation
+        self.mvc_events = mvc.Event()   #: for event registration
+        self.mvc_events.register_actor(class_name=self.config.class_name, actor_name=self.name)
 
     def update(self, event):
         """ Called by view to alert us to a change - we ignore for now """
@@ -121,6 +128,10 @@ class UserCode(StateMachine, mvc.Model):
         # process timer for current haircut
         if self.cut_timer:
             self.cut_timer -= 1
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.cut_timer, self.current_state, self.current_customer]))
         if self.cut_timer == 0:
             self.logger('Barber[%s] Finish cutting %s' % (self.id, self.customers))
             self.post_event(Events.EvFinishCutting)
@@ -138,6 +149,10 @@ class UserCode(StateMachine, mvc.Model):
         # start haircut timer
         self.cut_timer = Config.cutting_time()
         self.logger('Barber[%s] StartCutting %s [%s]' % (self.id, self.customers, self.cut_timer))
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.cut_timer, self.current_state, self.current_customer]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -162,7 +177,12 @@ class UserCode(StateMachine, mvc.Model):
             processing for the *Sleeping* state.
         """
         time.sleep(1)
-        self.sleeping_time += 1
+        self.sleeping_time += 1     # total time sleeping
+        self.sleep_timer += 1       # current time sleeping
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.sleep_timer, self.current_state]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -172,6 +192,11 @@ class UserCode(StateMachine, mvc.Model):
             This function is called when the *Sleeping* state is entered.
         """
         self.logger('Barber[%s] StartSleeping' % self.id)
+        self.sleep_timer = 0
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.sleep_timer, self.current_state]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -204,9 +229,9 @@ class UserCode(StateMachine, mvc.Model):
         """
         with self.waiting_room.lock:
             self.current_customer = self.waiting_room.get_customer()
+        self.logger('Barber[%s] GetCustomer %s' % (self.id, self.current_customer.id))
         self.current_customer.post_event(Customer.Events.EvBarberReady)
         self.current_customer.set_barber(self)
-        self.logger('Barber[%s] GetCustomer %s' % (self.id, self.current_customer.id))
 
     # =========================================================
     # noinspection PyPep8Naming

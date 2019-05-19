@@ -99,7 +99,7 @@ class Config(object):
     Think_Min = 10                      #: minimum number of seconds to think
     Think_Max = 20                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
-    Dining_Loops = 100                  #: number of main loops for dining
+    Dining_Loops = 5000                 #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
 
@@ -293,6 +293,9 @@ def seconds(minimum, maximum):
 
 class UserCode(StateMachine, mvc.Model):
 
+    def cleanup(self):
+        StateMachine.cleanup(self)
+
     def __init__(self, user_id=None):
         """ UserCode Constructor
 
@@ -315,6 +318,8 @@ class UserCode(StateMachine, mvc.Model):
         self.waiter = Waiter()      #: the waiter
         self.left_fork = self.id    #: left fork id for this philosopher
         self.right_fork = (self.id + 1) % self.config.philosophers    #: right fork id for this philosopher
+
+        self.mvc_events.register_actor(class_name=self.config.class_name, actor_name=self.name)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -535,6 +540,9 @@ StateTables.state_function_table[States.Eating] = \
 class Philosopher(UserCode):
     """ Philosophers extends the UserCode base class """
 
+    def cleanup(self):
+        UserCode.cleanup(self)
+
     def __init__(self, philosopher_id=None):
         """ Philosopher Constructor - Extends the UserCode base class
 
@@ -608,18 +616,6 @@ class DiningPhilosophers(mvc.Model):
             self.philosophers.append(philosopher)
             for vk in self.views.keys():
                 philosopher.register(self.views[vk])
-            try:
-                self.mvc_events.register_actor(class_name=self.name, actor_name=philosopher.name)
-            except exceptions.ActorAlreadyRegistered:
-                # not a failure if already registered and not first time
-                if first_time:
-                    raise exceptions.ActorAlreadyRegistered
-            try:
-                self.mvc_events.register_actor(class_name='mvc', actor_name=philosopher.name)
-            except exceptions.ActorAlreadyRegistered:
-                # not a failure if already registered and not first time
-                if first_time:
-                    raise exceptions.ActorAlreadyRegistered
 
     def register(self, view):
         self.views[view.name] = view

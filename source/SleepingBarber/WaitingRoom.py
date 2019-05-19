@@ -44,14 +44,15 @@ class WaitingRoom(Borg, Model):
             :param chairs: number of chairs in the waiting room
         """
         Borg.__init__(self)
-        if len(self._shared_state) is 0:
-            if chairs is None:
-                chairs = Common.Config.WaitingChairs
-            Model.__init__(self, name='WaitingRoom')
+        if len(self._shared_state) > 0:
+            return
+        if chairs is None:
+            chairs = Common.Config.WaitingChairs
+        Model.__init__(self, name='WaitingRoom')
 
-            self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
-            self.deque = deque(maxlen=chairs)   #: a queue of waiting room chairs
-            self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
+        self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
+        self.deque = deque(maxlen=chairs)   #: a queue of waiting room chairs
+        self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
 
     def get_chair(self, customer):
         """ Function called by a customer to get a chair in the waiting room.

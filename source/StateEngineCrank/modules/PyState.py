@@ -21,7 +21,7 @@ class Borg(object):
 
 class StateMachineEvent(Borg):
     """ Events that are posted as notifications to anyone
-        that wants to know what what we are doing """
+        that wants to know what we are doing """
 
     class SmEvents(enum.Enum):
         START_EXECUTION, STOP_EXECUTION, \
@@ -33,13 +33,14 @@ class StateMachineEvent(Borg):
 
     def __init__(self):
         Borg.__init__(self)
-        if len(self._shared_state) is 0:
-            self.class_name = 'SM'
-            self.events = mvc.Event()
-            self.events.register_class(self.class_name)
-            for sme in StateMachineEvent.SmEvents:
-                self.events.register_event(class_name=self.class_name, actor_name=None, event=sme,
-                                           event_type='model', text=str(sme.name))
+        if len(self._shared_state) > 0:
+            return
+        self.class_name = 'SM'
+        self.events = mvc.Event()
+        self.events.register_class(self.class_name)
+        for sme in StateMachineEvent.SmEvents:
+            self.events.register_event(class_name=self.class_name, actor_name=None, event=sme,
+                                       event_type='model', text=str(sme.name))
 
 
 # call the StateMachineEvent constructor to register SM events
@@ -83,6 +84,11 @@ class StateTransition(object):
 class StateMachine(mvc.Model):
     """ The StateMachine class is the main execution engine """
 
+    def cleanup(self):
+        """ Do some cleanup """
+        self.sm_events.events.unregister_actor(actor_name=self.name)
+        self.mvc_events.unregister_actor(actor_name=self.name)
+
     def __init__(self, sm_id=None, name=None, running=False, startup_state=None,
                  function_table=None, transition_table=None):
         """ Constructor
@@ -99,6 +105,8 @@ class StateMachine(mvc.Model):
         self.name = name
         self.sm_events = StateMachineEvent()
         self.sm_events.events.register_actor(class_name=self.sm_events.class_name, actor_name=self.name)
+        self.mvc_events = mvc.Event()
+        self.mvc_events.register_actor(class_name='mvc', actor_name=self.name)
         self.startup_state = startup_state
         self.state_function_table = function_table
         self.state_transition_table = transition_table
@@ -251,7 +259,8 @@ class StateMachine(mvc.Model):
         self.current_state = transition['state2']
         text = '%s %s [%s]' % (self.name, event, self.current_state)
         self.notify(self.sm_events.events.post(class_name='SM', actor_name=self.name, user_id=self.id,
-                                               event=StateMachineEvent.SmEvents.STATE_TRANSITION, text=text, data=transition['state2']))
+                                               event=StateMachineEvent.SmEvents.STATE_TRANSITION, text=text,
+                                               data=transition['state2']))
 
         # Execute state enter function if it is not None
         enter_func = self.state_function_table[self.current_state]['enter']
