@@ -99,7 +99,7 @@ class Config(object):
     Think_Min = 10                      #: minimum number of seconds to think
     Think_Max = 20                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
-    Dining_Loops = 5000                 #: number of main loops for dining
+    Dining_Loops = 100                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
 
@@ -291,7 +291,7 @@ def seconds(minimum, maximum):
 # ==============================================================================
 
 
-class UserCode(StateMachine, mvc.Model):
+class UserCode(StateMachine):
 
     def cleanup(self):
         StateMachine.cleanup(self)
@@ -303,7 +303,6 @@ class UserCode(StateMachine, mvc.Model):
         """
         self.config = ConfigData()  #: simulation configuration data
         name = '{}{}'.format(self.config.actor_base_name, user_id)
-        mvc.Model.__init__(self, name)
         StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,

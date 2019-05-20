@@ -818,7 +818,9 @@ class SleepingBarbers(Animation):
 
             # get the index of this customers chair
             chair = self.waiting_customer_chair(id_)
-
+            # just return if the customer is no longer occupying a chair
+            if chair is None:
+                return
             self.draw_timer(self.timer_coords['waiter'][chair], color, text=time_)
             self.draw_waiter(chair, color, text=id_)
         else:
@@ -895,7 +897,11 @@ class SleepingBarbers(Animation):
         self.waiting_chairs[self.next_waiting_chair()] = event['user.id']
 
     def customer_state_finish(self, event):
-        pass
+        chair = self.waiting_customer_chair(event['user.id'])
+        if chair is not None:
+            color = self.common['finish.color']
+            self.draw_timer(self.timer_coords['waiter'][chair], color, text=0)
+            self.draw_waiter(chair, color, text=None)
 
 
 class GuiConsoleView(mvc.View):

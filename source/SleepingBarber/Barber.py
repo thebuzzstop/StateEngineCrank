@@ -79,7 +79,7 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine, mvc.Model):
+class UserCode(StateMachine):
     """ User code unique to the Barber state implementation of the SleepingBarber simulation """
 
     def cleanup(self):
@@ -93,7 +93,6 @@ class UserCode(StateMachine, mvc.Model):
         """
         self.config = ConfigData()  #: simulation configuration data
         name = '{}{}'.format(self.config.actor_base_name, user_id)
-        mvc.Model.__init__(self, name)
         StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,

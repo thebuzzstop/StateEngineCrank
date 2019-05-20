@@ -75,7 +75,7 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine, Model):
+class UserCode(StateMachine):
     """ User code unique to the Customer state implementation of the SleepingBarber simulation """
 
     def cleanup(self):
@@ -90,7 +90,6 @@ class UserCode(StateMachine, Model):
         """
         self.config = ConfigData()  #: simulation configuration data
         name_ = 'Customer%03d' % id_
-        Model.__init__(self, name=name_)
         StateMachine.__init__(self, sm_id=id_, name=name_, running=False,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
@@ -198,18 +197,19 @@ class UserCode(StateMachine, Model):
         self.logger('Customer[%s] CustomerStart' % self.id)
 
         # tell barbers we are here
-        for barber in self.barbers:
-            # if we find one sleeping then issue our start and
-            # send the barber a 'customer enter' event
-            if barber.current_state == SleepingBarber.Barber.States.Sleeping:
-                self.post_event(Events.EvStart)
-                self.my_barber = barber
-                barber.current_customer = self
-                barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
-                return
-        # no sleeping barbers so issue our start and hopefully
-        # we end up in the waiting room
-        self.post_event(Events.EvStart)
+        with self.waiting_room.lock:
+            for barber in self.barbers:
+                # if we find one sleeping then issue our start and
+                # send the barber a 'customer enter' event
+                if barber.current_state == SleepingBarber.Barber.States.Sleeping:
+                    self.post_event(Events.EvStart)
+                    self.my_barber = barber
+                    barber.current_customer = self
+                    barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
+                    return
+            # no sleeping barbers so issue our start and hopefully
+            # we end up in the waiting room
+            self.post_event(Events.EvStart)
 
     # ===========================================================================
     # noinspection PyPep8Naming
