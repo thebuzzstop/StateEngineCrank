@@ -747,6 +747,9 @@ class SleepingBarbers(Animation):
         if text is None:
             self.text_at(bx, by, 'B%s' % bid, color[1])
         else:
+            text = text[-5:]
+            if not text[0].isdigit():
+                text = text[-4:]
             self.text_at(bx, by, ('B%s-%s' % (bid, text)), color[1])
 
     def add_waiting_room(self):
@@ -805,8 +808,12 @@ class SleepingBarbers(Animation):
         if event['data'][1] == barberStates.Sleeping:
             color = self.config['sleeping.color']
             self.draw_timer(self.timer_coords['barber'][id_], color, text=time_)
-        elif event['data'][1] == barberStates.Cutting or \
-            event['data'][1] == barberStates.Stopping:
+        elif event['data'][1] == barberStates.Cutting:
+            color = self.config['cutting.color']
+            self.draw_timer(self.timer_coords['barber'][id_], color, text=time_)
+            customer = event['data'][2]
+            self.draw_barber(id_, color, text='%s' % event['data'][2].id)
+        elif event['data'][1] == barberStates.Stopping:
             color = self.config['cutting.color']
             self.draw_timer(self.timer_coords['barber'][id_], color, text=time_)
         elif event['data'][1] == customerStates.Waiting:
