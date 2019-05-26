@@ -27,6 +27,7 @@ from SleepingBarber.Customer import Events as customerEvents
 from SleepingBarber.Customer import States as customerStates
 from SleepingBarber.WaitingRoom import WaitingRoom
 
+
 class AniButtonType(enum.Enum):
 
     START, STOP, STEP, PAUSE, RESUME = range(5)
@@ -915,7 +916,7 @@ class GuiConsoleView(mvc.View):
     """ GUI Console View """
 
     def __init__(self, name, widget):
-        super().__init__('%s_console' % name)
+        super().__init__(name='%s_console' % name)
         self.widget = widget
 
     def update(self, event):
@@ -1013,7 +1014,7 @@ class GuiView(mvc.View):
     }
 
     def __init__(self):
-        super().__init__('gui')
+        super().__init__(name='gui', target=self.run)
         self.root = None
         self.mainframe = None
         self.gui_thread = None

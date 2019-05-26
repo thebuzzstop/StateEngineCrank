@@ -165,7 +165,7 @@ class Waiter(mvc.Model, Borg):
         # see if we have called mvc.Model.__init__()
         if hasattr(self, 'views'):
             return
-        mvc.Model.__init__(self, name='Waiter')
+        mvc.Model.__init__(self, name='Waiter', target=self.run)
         self.config = ConfigData()  #: simulation configuration data
         self.lock = Lock()          #: Lock to be acquired when accessing the *Waiter*
         self.id_ = None             #: last philosopher ID to make a request

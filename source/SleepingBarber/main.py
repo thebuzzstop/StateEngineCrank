@@ -47,7 +47,7 @@ class CustomerGenerator(mvc.Model):
             :param customer_variance: used to introduce variation in customer rate
             :param barbers: list of barbers cutting hair
         """
-        super().__init__('CG')
+        super().__init__('CG', target=self.run)
         self.customer_rate = customer_rate          #: rate at which customers will be generated
         self.customer_variance = customer_variance  #: variance in rate, used by random number generator
         self.customer_count = 0                     #: total customers
@@ -252,7 +252,7 @@ class SleepingBarber(mvc.Model):
                 b.event(BarberEvents.EvStart)
 
             # Start the customer generator
-            self.cg.start()
+            self.cg.thread.start()
             self.cg.running = True
 
             # Wait for the simulation to complete
@@ -285,7 +285,7 @@ class SleepingBarber(mvc.Model):
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
             for b in self.barbers:
                 try:
-                    self.join_thread(b)
+                    self.join_thread(b.thread)
                     del b
                 except exceptions.JoinFailure:
                     join_list_b.append(b)
@@ -297,7 +297,7 @@ class SleepingBarber(mvc.Model):
             self.logger('Main: Joining customers')
             for c in self.cg.customer_list:
                 try:
-                    self.join_thread(c)
+                    self.join_thread(c.thread)
                     c.cleanup()
                     del c
                 except exceptions.JoinFailure:
@@ -311,12 +311,12 @@ class SleepingBarber(mvc.Model):
             join_list.extend(join_list_c)
             if len(join_list) > 0:
                 for t in join_list:
-                    self.join_thread(t)
+                    self.join_thread(t.thread)
                     t.cleanup()
                     del t
 
             # Last one to join is customer generator
-            self.join_thread(self.cg)
+            self.join_thread(self.cg.thread)
             self.cg.cleanup()
             del self.cg
             self.cg = None

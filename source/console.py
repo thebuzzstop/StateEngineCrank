@@ -14,7 +14,7 @@ class ConsoleView(mvc.View, queue.Queue):
     """ StateEngineCrank Console View """
 
     def __init__(self):
-        mvc.View.__init__(self, 'console')
+        mvc.View.__init__(self, name='console', target=self.run)
         queue.Queue.__init__(self)
 
     def update(self, event):
