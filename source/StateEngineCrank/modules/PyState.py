@@ -115,7 +115,7 @@ class StateMachine(mvc.Model):
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
         self.logger('%s StateMachine thread start' % self.name)
-        self.thread.start()
+        self.start()
 
     def run(self):
         """ Function to run the state machine.

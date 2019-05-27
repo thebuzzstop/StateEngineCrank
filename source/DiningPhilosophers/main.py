@@ -718,7 +718,7 @@ class DiningPhilosophers(mvc.Model):
             # Joining threads
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
             for p in self.philosophers:
-                self.join_thread(p)
+                self.join_thread(p.thread)
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
             # Generate some statistics of the simulation

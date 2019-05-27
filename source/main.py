@@ -56,7 +56,7 @@ class Main(Controller):
         self._register_views()
 
         # start our thread of execution
-        self.thread.start()
+        self.start()
 
     def _register_views(self):
         """ register views with models """

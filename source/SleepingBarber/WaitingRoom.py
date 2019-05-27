@@ -38,6 +38,9 @@ class WaitingRoom(Borg, Model):
         * Implements a Lock to prevent deadlock and race conditions between barbers and customers.
         * Anyone calling a WaitingRoom function needs to obtain the lock before calling.
     """
+    def cleanup(self):
+        self._shared_state = {}
+
     def __init__(self, chairs=None):
         """ Class constructor
 

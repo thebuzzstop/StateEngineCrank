@@ -231,11 +231,13 @@ class SleepingBarber(mvc.Model):
 
             # Instantiate the waiting room
             if self.waiting_room is not None:
+                self.waiting_room.cleanup()
                 del self.waiting_room
             self.waiting_room = WaitingRoom(self.config.waiting_chairs)
 
             # Instantiate the customer generator
             if self.cg is not None:
+                self.cg.cleanup()
                 del self.cg
             self.cg = CustomerGenerator(self.config.customer_rate, self.config.customer_variance, self.barbers)
 
@@ -339,7 +341,7 @@ if __name__ == '__main__':
     """ Execute main code if run from the command line """
 
     sleeping_barbers = SleepingBarber()
-    sleeping_barbers.start()
+    sleeping_barbers.thread.start()
     sleeping_barbers.set_running()
     while sleeping_barbers.running:
         time.sleep(1)

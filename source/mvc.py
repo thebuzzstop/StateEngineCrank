@@ -270,6 +270,14 @@ class MVC(ABC):
         self._step_event = threading.Event()    #: event used to step our thread
         self._stop_event = threading.Event()    #: event used to stop our thread
 
+    def start(self):
+        """ Function to start our thread """
+        self.thread.start()
+
+    def join(self):
+        """ Function to join our thread """
+        self.join_thread(self.thread)
+
     def set_running(self):
         """ Accessor to set the *running* flag """
         self.starting = False
