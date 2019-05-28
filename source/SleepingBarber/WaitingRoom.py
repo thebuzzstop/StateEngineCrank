@@ -7,7 +7,6 @@
 import sys
 from threading import Lock as Lock
 from collections import deque
-from copy import copy
 
 # Project imports
 from SleepingBarber import Common
@@ -41,7 +40,7 @@ class WaitingRoom(Borg, Model):
     def cleanup(self):
         self._shared_state = {}
 
-    def __init__(self, chairs=None):
+    def __init__(self):
         """ Class constructor
 
             :param chairs: number of chairs in the waiting room
@@ -49,13 +48,14 @@ class WaitingRoom(Borg, Model):
         Borg.__init__(self)
         if len(self._shared_state) > 0:
             return
-        if chairs is None:
-            chairs = Common.Config.WaitingChairs
+        config_data = Common.ConfigData()
+        chairs = config_data.waiting_chairs
         Model.__init__(self, name='WaitingRoom')
 
         self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
         self.deque = deque(maxlen=chairs)   #: a queue of waiting room chairs
         self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
+        self.customers_waiting = 0          #: number of customers waiting
 
     def get_chair(self, customer):
         """ Function called by a customer to get a chair in the waiting room.
@@ -70,10 +70,11 @@ class WaitingRoom(Borg, Model):
             chair = False
         else:
             self.deque.append(customer)
+            self.customers_waiting += 1
             chair = True
             with self.stats.lock:
                 self.stats.max_waiters = max(self.stats.max_waiters, len(self.deque))
-        self.logger('WR: get_chair [%s]' % chair)
+        self.logger('WR: get_chair [%s][%s][%s]' % (chair, self.customers_waiting, self.get_waiting_list_ids()))
         return chair
 
     def get_customer(self):
@@ -88,8 +89,16 @@ class WaitingRoom(Borg, Model):
             raise CustomerWaitingError
         else:
             customer = self.deque.popleft()
-        self.logger('WR: get_customer [%s]' % customer.id)
+            self.customers_waiting -= 1
+        self.logger('WR: get_customer [%s][%s][%s]' %
+                    (customer.id, self.customers_waiting, self.get_waiting_list_ids()))
         return customer
+
+    def get_waiting_list_ids(self):
+        waiting_list = []
+        for c in range(len(self.deque)):
+            waiting_list.append(self.deque[c].id)
+        return waiting_list
 
     def get_waiting_list(self):
         """ Returns a list of the waiting customers

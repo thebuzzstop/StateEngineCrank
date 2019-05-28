@@ -43,8 +43,8 @@ from StateEngineCrank.modules.PyState import StateMachine
 from SleepingBarber.Common import Config as Config
 from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
-import SleepingBarber.Customer as Customer
-import SleepingBarber.WaitingRoom as WaitingRoom
+from SleepingBarber.Customer import Events as CustomerEvents
+from SleepingBarber.WaitingRoom import WaitingRoom as WaitingRoom
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -98,14 +98,14 @@ class UserCode(StateMachine):
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.customers = 0              #: customers served
-        self.cut_timer = 0              #: cut timer, used to time the length of a haircut
-        self.cutting_time = 0           #: total time spent cutting
-        self.sleep_timer = 0            #: sleep timer, used to time the length of a barber sleeping
-        self.sleeping_time = 0          #: total time spent sleeping
-        self.current_customer = None    #: current customer being served
-        self.waiting_room = WaitingRoom.WaitingRoom()   #: waiting room instantiation
-        self.mvc_events = mvc.Event()   #: for event registration
+        self.customers = 0                  #: customers served
+        self.cut_timer = 0                  #: cut timer, used to time the length of a haircut
+        self.cutting_time = 0               #: total time spent cutting
+        self.sleep_timer = 0                #: sleep timer, used to time the length of a barber sleeping
+        self.sleeping_time = 0              #: total time spent sleeping
+        self.current_customer = None        #: current customer being served
+        self.waiting_room = WaitingRoom()   #: waiting room instantiation
+        self.mvc_events = mvc.Event()       #: for event registration
         self.mvc_events.register_actor(class_name=self.config.class_name, actor_name=self.name)
 
     def update(self, event):
@@ -134,7 +134,7 @@ class UserCode(StateMachine):
         if self.cut_timer == 0:
             self.logger('Barber[%s] Finish cutting %s' % (self.id, self.customers))
             self.post_event(Events.EvFinishCutting)
-            self.current_customer.post_event(Customer.Events.EvFinishCutting)
+            self.current_customer.post_event(CustomerEvents.EvFinishCutting)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -229,7 +229,7 @@ class UserCode(StateMachine):
         with self.waiting_room.lock:
             self.current_customer = self.waiting_room.get_customer()
         self.logger('Barber[%s] GetCustomer %s' % (self.id, self.current_customer.id))
-        self.current_customer.post_event(Customer.Events.EvBarberReady)
+        self.current_customer.post_event(CustomerEvents.EvBarberReady)
         self.current_customer.set_barber(self)
 
     # =========================================================

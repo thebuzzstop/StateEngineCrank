@@ -225,21 +225,24 @@ class SleepingBarber(mvc.Model):
         first_time = True
         while not done:
 
-            # Instantiate and initialize all philosophers
-            self.create_barbers(first_time=first_time)
-            first_time = False
-
             # Instantiate the waiting room
+            # nb: barbers and customers require a newly instantiated waiting room
             if self.waiting_room is not None:
                 self.waiting_room.cleanup()
                 del self.waiting_room
-            self.waiting_room = WaitingRoom(self.config.waiting_chairs)
+            self.waiting_room = WaitingRoom()
+
+            # Instantiate and initialize all barbers
+            self.create_barbers(first_time=first_time)
+            first_time = False
 
             # Instantiate the customer generator
             if self.cg is not None:
                 self.cg.cleanup()
                 del self.cg
             self.cg = CustomerGenerator(self.config.customer_rate, self.config.customer_variance, self.barbers)
+            for v in self.views.keys():
+                self.cg.register(self.views[v])
 
             # Reset simulation components
             self.statistics.reset()

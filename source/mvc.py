@@ -272,11 +272,20 @@ class MVC(ABC):
 
     def start(self):
         """ Function to start our thread """
-        self.thread.start()
+        if self.thread is not None:
+            self.thread.start()
+        else:
+            raise exceptions.InvalidThread
 
-    def join(self):
-        """ Function to join our thread """
-        self.join_thread(self.thread)
+    def join_thread(self, thread):
+        self._stop_event.set()
+        for _ in range(Defines.Config.JOIN_RETRIES):
+            thread.join(timeout=Defines.Times.Joining)
+            if not thread.is_alive():
+                return True
+        if thread.is_alive():
+            raise exceptions.JoinFailure(thread)
+        return True
 
     def set_running(self):
         """ Accessor to set the *running* flag """
@@ -313,16 +322,6 @@ class MVC(ABC):
         self.running = False
         self.stopping = True
 
-    @staticmethod
-    def join_thread(thread):
-        for _ in range(Defines.Config.JOIN_RETRIES):
-            thread.join(timeout=Defines.Times.Joining)
-            if not thread.is_alive():
-                return True
-        if thread.is_alive():
-            raise exceptions.JoinFailure(thread)
-        return True
-
     @abstractmethod
     def notify(self, event):
         """ Called to send a notification of the occurrence of event
@@ -354,13 +353,6 @@ class MVC(ABC):
         self.clr_step()
         self.thread.join(timeout=Defines.Times.Stopping)
         self.stopping = False
-
-    def join(self, timeout=None):
-        """ Called to terminate a thread
-            Assumes thread is monitoring the stopevent
-        """
-        self._stop_event.set()
-        threading.Thread.join(self.thread, timeout)
 
     def prepare(self, event, **kwargs):
         """ Prepare an event for logging and/or notification

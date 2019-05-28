@@ -17,6 +17,11 @@ class MyException(Exception):
             msg = '[Error] {0}\n{1}'.format(text, msg)
 
 
+class InvalidThread(MyException):
+    """ Thread operation on inavlid thread object """
+    pass
+
+
 class InvalidMVC(MyException):
     """ Invalid model/view/controller passed """
     pass

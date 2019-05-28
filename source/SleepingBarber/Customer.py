@@ -36,12 +36,11 @@ from enum import Enum
 
 # Project imports
 import mvc
-from mvc import Model
 from StateEngineCrank.modules.PyState import StateMachine
 from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 import SleepingBarber.Barber
-import SleepingBarber.WaitingRoom
+from SleepingBarber.WaitingRoom import WaitingRoom as WaitingRoom
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -110,7 +109,7 @@ class UserCode(StateMachine):
         self.cutting_time = 0               #: cutting time - simulation time (seconds)
 
         # simulation time spent in the waiting room
-        self.waiting_room = SleepingBarber.WaitingRoom.WaitingRoom()   #: establish access to waitingroom
+        self.waiting_room = WaitingRoom()   #: establish access to waitingroom
         self.waiting_time_start = None      #: waiting clock time - start
         self.waiting_time_finish = None     #: waiting clock time - finish
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
