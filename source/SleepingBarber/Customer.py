@@ -35,11 +35,12 @@ import time
 from enum import Enum
 
 # Project imports
-from mvc import Model
+import mvc
 from StateEngineCrank.modules.PyState import StateMachine
+from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 import SleepingBarber.Barber
-import SleepingBarber.WaitingRoom
+from SleepingBarber.WaitingRoom import WaitingRoom as WaitingRoom
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -73,8 +74,12 @@ class StateTables(object):
 # ==============================================================================
 
 
-class UserCode(StateMachine, Model):
+class UserCode(StateMachine):
     """ User code unique to the Customer state implementation of the SleepingBarber simulation """
+
+    def cleanup(self):
+        self.mvc_events.unregister_actor(self.name)
+        StateMachine.cleanup(self)
 
     def __init__(self, id_=None, barbers=None):
         """ Customer class constructor
@@ -82,8 +87,8 @@ class UserCode(StateMachine, Model):
             :param id_: customer ID, unique to this customer
             :param barbers[]: list of barbers in the simulation
         """
+        self.config = ConfigData()  #: simulation configuration data
         name_ = 'Customer%03d' % id_
-        Model.__init__(self, name=name_)
         StateMachine.__init__(self, sm_id=id_, name=name_, running=False,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
@@ -91,6 +96,7 @@ class UserCode(StateMachine, Model):
 
         self.barbers = barbers  #: list of barbers in this simulation
         self.id = id_           #: our customer ID
+        self.my_class_name = self.config.customer_class_name    #: our class name
 
         # clock time of simulation from start to finish
         self.start_time = time.time()   #: simulation clock start time
@@ -103,11 +109,21 @@ class UserCode(StateMachine, Model):
         self.cutting_time = 0               #: cutting time - simulation time (seconds)
 
         # simulation time spent in the waiting room
-        self.waiting_room = SleepingBarber.WaitingRoom.WaitingRoom()   #: establish access to waitingroom
+        self.waiting_room = WaitingRoom()   #: establish access to waitingroom
         self.waiting_time_start = None      #: waiting clock time - start
         self.waiting_time_finish = None     #: waiting clock time - finish
         self.waiting_time_elapsed = None    #: waiting clock time - elapsed
         self.waiting_time = 0               #: waiting time - simulation time (seconds)
+        self.my_barber = None               #: this customers barber
+
+        self.mvc_events = mvc.Event()       #: for event registration
+        self.mvc_events.register_actor(class_name=self.config.customer_class_name, actor_name=self.name)
+
+    def get_barber(self):
+        return self.my_barber
+
+    def set_barber(self, barber):
+        self.my_barber = barber
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -144,7 +160,7 @@ class UserCode(StateMachine, Model):
 
             This function is called when the *HairCut* state is entered.
         """
-        self.logger('Customer[%s] StartHairCut' % self.id)
+        self.logger('Customer[%s] StartHairCut [%s]' % (self.id, self.my_barber.id))
         self.cutting_time_start = time.time()
 
     # ===========================================================================
@@ -180,17 +196,19 @@ class UserCode(StateMachine, Model):
         self.logger('Customer[%s] CustomerStart' % self.id)
 
         # tell barbers we are here
-        for barber in self.barbers:
-            # if we find one sleeping then issue our start and
-            # send the barber a 'customer enter' event
-            if barber.current_state == SleepingBarber.Barber.States.Sleeping:
-                self.post_event(Events.EvStart)
-                barber.current_customer = self
-                barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
-                return
-        # no sleeping barbers so issue our start and hopefully
-        # we end up in the waiting room
-        self.post_event(Events.EvStart)
+        with self.waiting_room.lock:
+            for barber in self.barbers:
+                # if we find one sleeping then issue our start and
+                # send the barber a 'customer enter' event
+                if barber.current_state == SleepingBarber.Barber.States.Sleeping:
+                    self.post_event(Events.EvStart)
+                    self.my_barber = barber
+                    barber.current_customer = self
+                    barber.post_event(SleepingBarber.Barber.Events.EvCustomerEnter)
+                    return
+            # no sleeping barbers so issue our start and hopefully
+            # we end up in the waiting room
+            self.post_event(Events.EvStart)
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -201,6 +219,10 @@ class UserCode(StateMachine, Model):
         """
         self.logger('Customer[%s] StartWaiting' % self.id)
         self.waiting_time_start = time.time()
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.waiting_time, self.current_state]))
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -223,6 +245,10 @@ class UserCode(StateMachine, Model):
         """
         time.sleep(1)
         self.waiting_time += 1
+        # post event for view handling
+        self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
+                                               event=mvc.Event.Events.TIMER,
+                                               data=[self.waiting_time, self.current_state]))
 
     # =========================================================
     # noinspection PyPep8Naming

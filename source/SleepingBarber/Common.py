@@ -23,15 +23,19 @@ class Borg(object):
 
 class Config(object):
     """ SleepingBarber configuration items """
-    HairCut_Min = 9                 #: minimum number of seconds to cut hair
-    HairCut_Max = 13                #: maximum number of seconds to cut hair
-    Barbers = 4                     #: number of barbers cutting hair
-    WaitingChairs = 4               #: number of chairs in the waiting room
-    CustomerRate = 3                #: rate for new customers
-    CustomerVariance = 1            #: variance in the customer rate
-    SimulationLoops = 100           #: total number of loops (seconds) to run
-    Class_Name = 'barbers'          #: class name for Event registration
-    Actor_Base_Name = 'barbers'     #: used when identifying actors
+    HairCut_Min = 20                    #: minimum number of seconds to cut hair
+    HairCut_Max = 30                    #: maximum number of seconds to cut hair
+    Barbers = 4                         #: number of barbers cutting hair
+    BarbersMax = 5                      #: maximum number of barbers for animation
+    WaitingChairs = 4                   #: number of chairs in the waiting room
+    WaitingChairsMax = 5                #: maximum number of waiters for animation
+    CustomerRate = 5                    #: rate for new customers
+    CustomerVariance = 2                #: variance in the customer rate
+    SimulationLoops = 100               #: total number of loops (seconds) to run
+    Class_Name = 'barbers'              #: class name for Event registration
+    Actor_Base_Name = 'barber'          #: used when identifying actors
+    Customer_Class_Name = 'customers'   #: class name for Event registration
+    Customer_Base_Name = 'customer'     #: used when identifying actors
 
     @staticmethod
     def seconds(minimum, maximum):
@@ -65,15 +69,28 @@ class ConfigData(Borg):
         self.haircut_min = Config.HairCut_Min
         self.haircut_max = Config.HairCut_Max
         self.barbers = Config.Barbers
+        self.barbers_max = Config.BarbersMax
         self.waiting_chairs = Config.WaitingChairs
+        self.waiting_chairs_max = Config.WaitingChairsMax
         self.customer_rate = Config.CustomerRate
         self.customer_variance = Config.CustomerVariance
         self.simulation_loops = Config.SimulationLoops
         self.class_name = Config.Class_Name
         self.actor_base_name = Config.Actor_Base_Name
+        self.customer_class_name = Config.Customer_Class_Name
+        self.customer_actor_base_name = Config.Customer_Base_Name
 
     def get_barbers(self):
         return self.barbers
+
+    def get_barbers_max(self):
+        return self.barbers_max
+
+    def get_waiters(self):
+        return self.waiting_chairs
+
+    def get_waiters_max(self):
+        return self.waiting_chairs_max
 
 
 class Statistics(Borg):

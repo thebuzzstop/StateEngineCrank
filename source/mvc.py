@@ -55,7 +55,7 @@ class Event(Borg):
     """ MVC Events - Model and View """
 
     class Events(enum.Enum):
-        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED = range(11)
+        START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED, JOINING = range(12)
 
     def __init__(self):
         """ A Model-View-Controller Event
@@ -70,25 +70,26 @@ class Event(Borg):
                 * data : optional data payload
         """
         Borg.__init__(self)
-        if len(self._shared_state) is 0:
-            self.events = {}        #: dictionary of events
-            self.event_by_id = []   #: list of events, used for lookups by ID
-            self.actors = {}        #: dictionary of actors (i.e. posters of events)
-            self.event_counter = 0
+        if len(self._shared_state) > 0:
+            return
+        self.events = {}        #: dictionary of events
+        self.event_by_id = []   #: list of events, used for lookups by ID
+        self.actors = {}        #: dictionary of actors (i.e. posters of events)
+        self.event_counter = 0
 
-            # register some well-known events
-            self.register_class('mvc')
-            self.register_event('mvc', Event.Events.START, '*', text='Start execution, enter run-state')
-            self.register_event('mvc', Event.Events.STOP, '*', text='Stop execution, terminate program')
-            self.register_event('mvc', Event.Events.STEP, '*', text='Single execution step')
-            self.register_event('mvc', Event.Events.PAUSE, '*', text='Pause execution, retain current state')
-            self.register_event('mvc', Event.Events.RESUME, '*', text='Resume execution')
-            self.register_event('mvc', Event.Events.LOGGER, '*', text='Log entry')
-            self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
-            self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
-            self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
-            self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
-            self.register_event('mvc', Event.Events.UNHANDLED, '*', text='Unhandled condition')
+        # register some well-known events
+        self.register_class('mvc')
+        self.register_event('mvc', Event.Events.START, '*', text='Start execution, enter run-state')
+        self.register_event('mvc', Event.Events.STOP, '*', text='Stop execution, terminate program')
+        self.register_event('mvc', Event.Events.STEP, '*', text='Single execution step')
+        self.register_event('mvc', Event.Events.PAUSE, '*', text='Pause execution, retain current state')
+        self.register_event('mvc', Event.Events.RESUME, '*', text='Resume execution')
+        self.register_event('mvc', Event.Events.LOGGER, '*', text='Log entry')
+        self.register_event('mvc', Event.Events.LOOPS, '*', text='Loop count', data=0)
+        self.register_event('mvc', Event.Events.ALLSTOPPED, '*', text='All processes stopped')
+        self.register_event('mvc', Event.Events.STATISTICS, '*', text='Generate statistics')
+        self.register_event('mvc', Event.Events.TIMER, '*', text='State timer tick')
+        self.register_event('mvc', Event.Events.UNHANDLED, '*', text='Unhandled condition')
 
     def register_class(self, class_name):
         """ Register a class name for the events database
@@ -248,11 +249,18 @@ class Event(Borg):
         return event_
 
 
-class MVC(ABC, threading.Thread):
+class MVC(ABC):
     """ Base class definition of an MVC Model, View or Controller """
 
-    def __init__(self, name=None, running=False, target=None, parent=None):
-        threading.Thread.__init__(self, name=name, target=target)
+    def __init__(self, name=None, running=False, **kwargs):
+        if 'target' in kwargs:                  #: optional thread target
+            self.thread = threading.Thread(name=name, target=kwargs.get('target'))
+        else:
+            self.thread = None
+        if 'parent' in kwargs:                  #: optional parent for notifications
+            self.parent = kwargs.get('parent')
+        else:
+            self.parent = None
         self.name = name                        #: name of this MVC
         self.starting = True                    #: starting status
         self.running = running                  #: running status
@@ -261,8 +269,23 @@ class MVC(ABC, threading.Thread):
         self.resuming = True                    #: resuming status
         self._step_event = threading.Event()    #: event used to step our thread
         self._stop_event = threading.Event()    #: event used to stop our thread
-        if parent is not None:
-            self.parent = parent                #: optional parent for notifications
+
+    def start(self):
+        """ Function to start our thread """
+        if self.thread is not None:
+            self.thread.start()
+        else:
+            raise exceptions.InvalidThread
+
+    def join_thread(self, thread):
+        self._stop_event.set()
+        for _ in range(Defines.Config.JOIN_RETRIES):
+            thread.join(timeout=Defines.Times.Joining)
+            if not thread.is_alive():
+                return True
+        if thread.is_alive():
+            raise exceptions.JoinFailure(thread)
+        return True
 
     def set_running(self):
         """ Accessor to set the *running* flag """
@@ -328,15 +351,8 @@ class MVC(ABC, threading.Thread):
         self.running = False
         self.pause = False
         self.clr_step()
-        self.join(timeout=Defines.Times.Stopping)
+        self.thread.join(timeout=Defines.Times.Stopping)
         self.stopping = False
-
-    def join(self, timeout=None):
-        """ Called to terminate a thread
-            Assumes thread is monitoring the stopevent
-        """
-        self._stop_event.set()
-        threading.Thread.join(self, timeout)
 
     def prepare(self, event, **kwargs):
         """ Prepare an event for logging and/or notification
@@ -362,8 +378,8 @@ class MVC(ABC, threading.Thread):
 class Controller(MVC, Logger):
     """ Base class definition of a Controller """
 
-    def __init__(self, name=None, target=None, parent=None):
-        MVC.__init__(self, name=name, target=target, parent=parent)
+    def __init__(self, name=None, **kwargs):
+        MVC.__init__(self, name=name, **kwargs)
         Logger.__init__(self, self)
         self.models = {}    #: dictionary of models under our control
         self.views = {}     #: dictionary of views to be updated
@@ -408,8 +424,8 @@ class Controller(MVC, Logger):
 class Model(MVC, Logger):
     """ Base class definition of a Model """
 
-    def __init__(self, name=None, running=False, target=None, parent=None):
-        MVC.__init__(self, name=name, running=running, target=target, parent=parent)
+    def __init__(self, name=None, running=False, **kwargs):
+        MVC.__init__(self, name=name, running=running, **kwargs)
         Logger.__init__(self, self)
         self.views = {}         #: dictionary of views we update
 
@@ -450,8 +466,8 @@ class Model(MVC, Logger):
 class View(MVC, Logger):
     """ Base class definition of a View """
 
-    def __init__(self, name=None, target=None, parent=None):
-        MVC.__init__(self, name=name, target=target, parent=parent)
+    def __init__(self, name=None, **kwargs):
+        MVC.__init__(self, name=name, **kwargs)
         Logger.__init__(self, self)
         self.models = {}        #: our models
 

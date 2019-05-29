@@ -37,7 +37,7 @@ class Main(Controller):
     """ Main code """
 
     def __init__(self):
-        super().__init__('State Engine Main')
+        super().__init__(name='State Engine Main', target=self.run)
 
         # dictionary of models
         self.models = {
@@ -90,9 +90,9 @@ class Main(Controller):
 
         # Start views and models
         for v in self.views.keys():
-            self.views[v].start()
+            self.views[v].thread.start()
         for m in self.models.keys():
-            self.models[m].start()
+            self.models[m].thread.start()
 
         # Start views running
         # Models are started running from the Views
@@ -106,9 +106,9 @@ class Main(Controller):
         # Tell all views and models to stop
         self.stopping = True
         for v in self.views.keys():
-            self.views[v].stop()
+            self.views[v].thread.stop()
         for m in self.models.keys():
-            self.models[m].stop()
+            self.models[m].thread.stop()
 
 
 if __name__ == '__main__':
