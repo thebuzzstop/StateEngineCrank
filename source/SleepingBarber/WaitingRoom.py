@@ -37,9 +37,6 @@ class WaitingRoom(Borg, Model):
         * Implements a Lock to prevent deadlock and race conditions between barbers and customers.
         * Anyone calling a WaitingRoom function needs to obtain the lock before calling.
     """
-    def cleanup(self):
-        self._shared_state = {}
-
     def __init__(self):
         """ Class constructor
 
@@ -48,14 +45,18 @@ class WaitingRoom(Borg, Model):
         Borg.__init__(self)
         if len(self._shared_state) > 0:
             return
-        config_data = Common.ConfigData()
-        chairs = config_data.waiting_chairs
         Model.__init__(self, name='WaitingRoom')
-
         self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
-        self.deque = deque(maxlen=chairs)   #: a queue of waiting room chairs
-        self.stats = Common.Statistics()    #: statistics module, used to gather simulation statistics
-        self.customers_waiting = 0          #: number of customers waiting
+        self.chairs = Common.ConfigData().waiting_chairs
+        self.stats = Common.Statistics()        #: statistics module, used to gather simulation statistics
+        self.deque = deque(maxlen=self.chairs)  #: a queue of waiting room chairs
+        self.customers_waiting = 0              #: number of customers waiting
+
+    def reset(self):
+        self.chairs = Common.ConfigData().waiting_chairs
+        self.deque = deque(maxlen=self.chairs)
+        self.customers_waiting = 0
+        self.stats.reset()
 
     def get_chair(self, customer):
         """ Function called by a customer to get a chair in the waiting room.

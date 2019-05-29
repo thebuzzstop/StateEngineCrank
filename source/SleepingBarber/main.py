@@ -227,10 +227,10 @@ class SleepingBarber(mvc.Model):
 
             # Instantiate the waiting room
             # nb: barbers and customers require a newly instantiated waiting room
-            if self.waiting_room is not None:
-                self.waiting_room.cleanup()
-                del self.waiting_room
-            self.waiting_room = WaitingRoom()
+            if self.waiting_room is None:
+                self.waiting_room = WaitingRoom()
+            else:
+                self.waiting_room.reset()
 
             # Instantiate and initialize all barbers
             self.create_barbers(first_time=first_time)
