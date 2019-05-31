@@ -12,13 +12,12 @@ import mvc
 import exceptions
 import Defines
 
-from SleepingBarber.Common import Config as Config
 from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 from SleepingBarber.Barber import UserCode as Barber
 from SleepingBarber.Barber import Events as BarberEvents
-from SleepingBarber.Customer import UserCode as Customer
 from SleepingBarber.Customer import Events as CustomerEvents
+from SleepingBarber.CustomerGen import CustomerGenerator
 from SleepingBarber.WaitingRoom import WaitingRoom
 
 
@@ -29,74 +28,6 @@ class Borg(object):
 
     def __init__(self):
         self.__dict__ = self._shared_state
-
-
-class CustomerGenerator(mvc.Model):
-    """ Class for generating customers based on configurable criteria. """
-
-    def cleanup(self):
-        """ Cleanup registrations """
-        for c in self.customer_list:
-            c.sm_events.events.unregister_actor(c.name)
-        self.mvc_events.unregister_class(self.config.customer_class_name)
-
-    def __init__(self, customer_rate, customer_variance, barbers):
-        """ Constructor
-
-            :param customer_rate: rate at which customers will be generated
-            :param customer_variance: used to introduce variation in customer rate
-            :param barbers: list of barbers cutting hair
-        """
-        super().__init__('CG', target=self.run)
-        self.customer_rate = customer_rate          #: rate at which customers will be generated
-        self.customer_variance = customer_variance  #: variance in rate, used by random number generator
-        self.customer_count = 0                     #: total customers
-        self.customer_list = []                     #: list of customer objects
-        self.barbers = barbers                      #: list of barbers cutting hair
-        self.config = ConfigData()                  #: simulation configuration data
-        self.mvc_events = mvc.Event()               #: for event registration
-        self.mvc_events.register_class(self.config.customer_class_name)
-
-    def update(self, event):
-        pass
-
-    def run(self):
-        """ Customer generator main thread
-
-            The customer generator thread runs in the background creating customers for the simulation.
-        """
-        # loop until we are told we are done
-        self.logger('run.wait')
-        # wait until the simulation is running
-        while not self.running:
-            time.sleep(Defines.Times.Starting)
-        self.logger('running')
-
-        # run until the simulation is stopped or we are done
-        while self.running:
-            # generate a new customer
-            self.customer_count += 1
-            self.logger('[%s] new customer' % self.customer_count)
-            next_customer = Customer(id_=self.customer_count, barbers=self.barbers)
-            for v in self.views:
-                next_customer.register(self.views[v])
-
-            next_customer.running = True
-            self.customer_list.append(next_customer)
-
-            # delay between generating new customers
-            sleep = Config.seconds(
-                self.customer_rate - self.customer_variance,
-                self.customer_rate + self.customer_variance
-            )
-            self.logger('[%s] Zzzz [%s]' % (self.customer_count, sleep))
-            time.sleep(sleep)
-
-            # pause if requested, keep monitoring the running flag
-            while self.pause and self.running:
-                time.sleep(Defines.Times.Pausing)
-
-        self.logger('Done')
 
 
 class SleepingBarber(mvc.Model):
@@ -297,18 +228,11 @@ class SleepingBarber(mvc.Model):
             if len(join_list_b) == 0:
                 self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
-            # Joining threads
-            join_list_c = []
-            self.logger('Main: Joining customers')
-            for c in self.cg.customer_list:
-                try:
-                    self.join_thread(c.thread)
-                    c.cleanup()
-                    del c
-                except exceptions.JoinFailure:
-                    join_list_c.append(c)
-            if len(join_list_c) == 0:
-                self.logger('Main: All customers joined')
+            # Cleanup and Join customer generator
+            join_list_c = self.cg.cleanup()
+            self.join_thread(self.cg.thread)
+            del self.cg
+            self.cg = None
 
             # See if we have some reluctant threads
             join_list = []
@@ -319,12 +243,6 @@ class SleepingBarber(mvc.Model):
                     self.join_thread(t.thread)
                     t.cleanup()
                     del t
-
-            # Last one to join is customer generator
-            self.join_thread(self.cg.thread)
-            self.cg.cleanup()
-            del self.cg
-            self.cg = None
 
             # Generate some statistics of the simulation
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],
