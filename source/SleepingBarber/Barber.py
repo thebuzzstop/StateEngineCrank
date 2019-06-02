@@ -86,17 +86,18 @@ class UserCode(StateMachine):
         self.mvc_events.unregister_actor(self.name)
         StateMachine.cleanup(self)
 
-    def __init__(self, user_id=None):
+    def __init__(self, user_id=None, **kwargs):
         """ Barber class constructor
 
             :param user_id: barber ID unique to this barber
         """
         self.config = ConfigData()  #: simulation configuration data
         name = '{}{}'.format(self.config.actor_base_name, user_id)
-        StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
+        StateMachine.__init__(self, sm_id=user_id, name=name,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
+                              transition_table=StateTables.state_transition_table,
+                              **kwargs)
 
         self.customers = 0                  #: customers served
         self.cut_timer = 0                  #: cut timer, used to time the length of a haircut

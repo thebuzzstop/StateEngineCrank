@@ -108,6 +108,7 @@ class CustomerGenerator(mvc.Model):
             self.customer_count += 1
             self.logger('[%s] new customer' % self.customer_count)
             next_customer = Customer(id_=self.customer_count, barbers=self.barbers)
+            self.pool.add_task(next_customer.run)
             for v in self.views:
                 next_customer.register(self.views[v])
 

@@ -89,18 +89,17 @@ class StateMachine(mvc.Model):
         self.sm_events.events.unregister_actor(actor_name=self.name)
         self.mvc_events.unregister_actor(actor_name=self.name)
 
-    def __init__(self, sm_id=None, name=None, running=False, startup_state=None,
-                 function_table=None, transition_table=None):
+    def __init__(self, sm_id=None, name=None, startup_state=None,
+                 function_table=None, transition_table=None, **kwargs):
         """ Constructor
 
             :param sm_id: state machine ID
             :param name: state machine name
-            :param running: flag indicates state machine is running
             :param startup_state: state machine starting state
             :param function_table: state machine function table
             :param transition_table: state machine transition table
         """
-        mvc.Model.__init__(self, name=name, running=running, target=self.run)
+        mvc.Model.__init__(self, name=name, **kwargs)
         self.id = sm_id
         self.name = name
         self.sm_events = StateMachineEvent()
@@ -115,7 +114,10 @@ class StateMachine(mvc.Model):
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
         self.logger('%s StateMachine thread start' % self.name)
-        self.start()
+
+        # optional start if there is a thread to start
+        if self.thread is not None:
+            self.start()
 
     def run(self):
         """ Function to run the state machine.

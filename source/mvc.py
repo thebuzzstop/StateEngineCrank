@@ -252,18 +252,22 @@ class Event(Borg):
 class MVC(ABC):
     """ Base class definition of an MVC Model, View or Controller """
 
-    def __init__(self, name=None, running=False, **kwargs):
-        if 'target' in kwargs:                  #: optional thread target
-            self.thread = threading.Thread(name=name, target=kwargs.get('target'))
+    def __init__(self, name=None, **kwargs):
+
+        if 'target' in kwargs:
+            self.thread = threading.Thread(name=name, target=kwargs.pop('target'))
+        elif 'thread' in kwargs:
+            self.thread = kwargs.pop('thread')  #: optional thread for execution
         else:
             self.thread = None
         if 'parent' in kwargs:                  #: optional parent for notifications
-            self.parent = kwargs.get('parent')
+            self.parent = kwargs.pop('parent')
         else:
             self.parent = None
+
         self.name = name                        #: name of this MVC
         self.starting = True                    #: starting status
-        self.running = running                  #: running status
+        self.running = False                    #: running status
         self.stopping = False                   #: stopping status
         self.pause = False                      #: pause status
         self.resuming = True                    #: resuming status
@@ -424,8 +428,8 @@ class Controller(MVC, Logger):
 class Model(MVC, Logger):
     """ Base class definition of a Model """
 
-    def __init__(self, name=None, running=False, **kwargs):
-        MVC.__init__(self, name=name, running=running, **kwargs)
+    def __init__(self, name=None, **kwargs):
+        MVC.__init__(self, name=name, **kwargs)
         Logger.__init__(self, self)
         self.views = {}         #: dictionary of views we update
 

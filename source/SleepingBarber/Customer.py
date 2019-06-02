@@ -89,7 +89,7 @@ class UserCode(StateMachine):
         """
         self.config = ConfigData()  #: simulation configuration data
         name_ = 'Customer%03d' % id_
-        StateMachine.__init__(self, sm_id=id_, name=name_, running=False,
+        StateMachine.__init__(self, sm_id=id_, name=name_,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)

@@ -296,17 +296,18 @@ class UserCode(StateMachine):
     def cleanup(self):
         StateMachine.cleanup(self)
 
-    def __init__(self, user_id=None):
+    def __init__(self, user_id=None, **kwargs):
         """ UserCode Constructor
 
             :param user_id: unique identifier for this User
         """
         self.config = ConfigData()  #: simulation configuration data
         name = '{}{}'.format(self.config.actor_base_name, user_id)
-        StateMachine.__init__(self, sm_id=user_id, name=name, running=False,
+        StateMachine.__init__(self, sm_id=user_id, name=name,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
+                              transition_table=StateTables.state_transition_table,
+                              **kwargs)
 
         self.events_counter = 0     #: counter for tracking events
         self.eating_seconds = 0     #: number of seconds spent eating
@@ -547,9 +548,8 @@ class Philosopher(UserCode):
 
             :param philosopher_id: ID unique to this Philosopher
         """
-        UserCode.__init__(self, user_id=philosopher_id)
+        UserCode.__init__(self, user_id=philosopher_id, target=self.run)
         self.exit_code = 0          #: exit code returned by this philosopher
-        self.running = False        #: True, simulation is running
         self.has_forks = False      #: True, philosopher has possession of both forks
 
     def update(self, event):

@@ -6,6 +6,7 @@
 
 # System imports
 import time
+import threading
 
 # Project imports
 import mvc
@@ -14,7 +15,7 @@ import Defines
 
 from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
-from SleepingBarber.Barber import UserCode as Barber
+from SleepingBarber.Barber import UserCode as UserCode
 from SleepingBarber.Barber import Events as BarberEvents
 from SleepingBarber.Customer import Events as CustomerEvents
 from SleepingBarber.CustomerGen import CustomerGenerator
@@ -30,11 +31,21 @@ class Borg(object):
         self.__dict__ = self._shared_state
 
 
+class Barber(UserCode):
+    """ Extends the UserCode base class """
+
+    def cleanup(self):
+        UserCode.cleanup(self)
+
+    def __init__(self, barber_id=None):
+        UserCode.__init__(self, user_id=barber_id, target=self.run)
+
+
 class SleepingBarber(mvc.Model):
     """ Main SleepingBarber(s) Class """
 
     def __init__(self, exit_when_done=None):
-        super().__init__('barbers', target=self.run)
+        super().__init__('barbers', thread=threading.Thread(name='barbers', target=self.run))
 
         #: simulation configuration data
         self.config = ConfigData()
@@ -89,6 +100,7 @@ class SleepingBarber(mvc.Model):
 
         for id_ in range(self.config.barbers):
             barber = Barber(id_)
+            barber.thread = threading.Thread(name='barber%s' % id_, target=barber.run)
             self.barbers.append(barber)
             for vk in self.views.keys():
                 barber.register(self.views[vk])
