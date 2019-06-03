@@ -16,6 +16,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../source'))
 sys.path.insert(0, os.path.abspath('../source/SleepingBarber'))
+sys.path.insert(0, os.path.abspath('../source/DiningPhilosophers'))
 sys.path.insert(0, os.path.abspath('../source/StateEngineCrank'))
 sys.path.insert(0, os.path.abspath('../source/StateEngineCrank/modules'))
 sys.path.insert(0, os.path.abspath('../source/StateEngineCrank/modules/ansi_c'))

@@ -1,16 +1,6 @@
 SleepingBarber
 ==============
 
-Barber State Diagram
---------------------
-.. figure:: Barber.png
-	:alt: SleepingBarber state diagram (Barber)
-
-	SleepingBarber simulation Barber state diagram.
-
-	This image was created using PlantUML with the UML
-	contained in the Barber.py docstring.
-
 Barber
 ------
 .. automodule:: Barber
@@ -18,19 +8,36 @@ Barber
     :undoc-members:
     :show-inheritance:
 
+Barber State Diagram
+--------------------
+.. figure:: Barber.png
+    :alt: SleepingBarber state diagram (Barber)
+
+    SleepingBarber simulation Barber state diagram.
+
+    This image was created using PlantUML with the UML
+    contained in the Barber.py docstring.
+
 Customer State Diagram
 ----------------------
 .. figure:: Customer.png
-	:alt: SleepingBarber state diagram (Customer)
+    :alt: SleepingBarber state diagram (Customer)
 
-	SleepingBarber simulation Customer state diagram.
+    SleepingBarber simulation Customer state diagram.
 
-	This image was created using PlantUML with the UML
-	contained in the Customer.py docstring.
+    This image was created using PlantUML with the UML
+    contained in the Customer.py docstring.
 
 Customer
 --------
 .. automodule:: Customer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+CustomerGen
+-----------
+.. automodule:: CustomerGen
     :members:
     :undoc-members:
     :show-inheritance:
