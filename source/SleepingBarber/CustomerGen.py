@@ -65,6 +65,7 @@ class CustomerGenerator(mvc.Model):
         self.mvc_events.unregister_class(self.config.customer_class_name)
 
         # Join threads
+        self.pool.wait_completion()
 
     def __init__(self, customer_rate, customer_variance, barbers):
         """ Constructor

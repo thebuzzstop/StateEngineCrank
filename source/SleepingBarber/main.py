@@ -100,7 +100,6 @@ class SleepingBarber(mvc.Model):
 
         for id_ in range(self.config.barbers):
             barber = Barber(id_)
-            barber.thread = threading.Thread(name='barber%s' % id_, target=barber.run)
             self.barbers.append(barber)
             for vk in self.views.keys():
                 barber.register(self.views[vk])
@@ -245,16 +244,6 @@ class SleepingBarber(mvc.Model):
             self.join_thread(self.cg.thread)
             del self.cg
             self.cg = None
-
-            # See if we have some reluctant threads
-            join_list = []
-            join_list.extend(join_list_b)
-            join_list.extend(join_list_c)
-            if len(join_list) > 0:
-                for t in join_list:
-                    self.join_thread(t.thread)
-                    t.cleanup()
-                    del t
 
             # Generate some statistics of the simulation
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS],

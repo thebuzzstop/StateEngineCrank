@@ -99,7 +99,7 @@ class Config(object):
     Think_Min = 10                      #: minimum number of seconds to think
     Think_Max = 20                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
-    Dining_Loops = 100                  #: number of main loops for dining
+    Dining_Loops = 500                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
 
