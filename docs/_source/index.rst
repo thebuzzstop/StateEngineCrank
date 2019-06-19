@@ -13,6 +13,8 @@ Welcome to State Engine Crank's documentation!
    StateEngineCrank
    DiningPhilosophers
    SleepingBarber
+   GuiAnimation
+   ModelViewController
 
 Indices and tables
 ==================

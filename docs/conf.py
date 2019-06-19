@@ -31,7 +31,7 @@ author = 'Mark Sawyer'
 # The short X.Y version
 version = '0.00.01'
 # The full version, including alpha/beta/rc tags
-release = '20190308'
+release = '20190618'
 
 
 # -- General configuration ---------------------------------------------------

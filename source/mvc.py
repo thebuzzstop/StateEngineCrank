@@ -22,7 +22,10 @@ class Borg(object):
 
 
 class Logger(object):
-    """ Logger class for simplified logging to console """
+    """ Logger class for simplified logging to console
+
+        All MVC classes implement the Logger class.
+    """
 
     def __init__(self, parent):
         self.logger_parent = parent
@@ -52,9 +55,13 @@ class Logger(object):
 
 
 class Event(Borg):
-    """ MVC Events - Model and View """
+    """ MVC Events - Model and View
+
+        This class is the basis for all MVC Events.
+    """
 
     class Events(enum.Enum):
+        """ Common events that are generic in nature. """
         START, STOP, STEP, PAUSE, RESUME, LOGGER, LOOPS, TIMER, ALLSTOPPED, STATISTICS, UNHANDLED, JOINING = range(12)
 
     def __init__(self):
@@ -75,7 +82,7 @@ class Event(Borg):
         self.events = {}        #: dictionary of events
         self.event_by_id = []   #: list of events, used for lookups by ID
         self.actors = {}        #: dictionary of actors (i.e. posters of events)
-        self.event_counter = 0
+        self.event_counter = 0  #: counter for generating unique Event ID's
 
         # register some well-known events
         self.register_class('mvc')
@@ -155,6 +162,7 @@ class Event(Borg):
 
             :param class_name: Class of events
             :param actor_name: Name of this actor
+            :raises: ClassNotRegistered, ActorAlreadyRegistered
         """
         if class_name not in self.events.keys():
             raise exceptions.ClassNotRegistered
@@ -169,6 +177,12 @@ class Event(Borg):
             self.actors[actor_name] = [class_name]
 
     def lookup_event(self, class_name, event):
+        """ Lookup an event object
+
+            :param class_name: Class associated with the event
+            :param event: Event enum
+            :returns: Requested event or None
+        """
         if class_name not in self.events.keys():
             return None
         if event in self.events[class_name].keys():
@@ -176,6 +190,11 @@ class Event(Borg):
         return None
 
     def lookup_by_id(self, event_id):
+        """ Lookup an Event by the Event ID
+
+            :param event_id: Event ID
+            :returns: Associated Event ID or None
+        """
         if 0 < event_id < len(self.event_by_id):
             return self.event_by_id[event_id-1]
         else:
@@ -203,7 +222,6 @@ class Event(Borg):
         """ Unregister an actor
 
             :param actor_name: Name of actor to unregister
-            :raises: ActorNotRegistered
         """
         if actor_name in self.actors.keys():
             del self.actors[actor_name]
@@ -217,7 +235,7 @@ class Event(Borg):
             :param user_id: Optional ID for the poster of this event
             :param text: Optional text for this event
             :param data: Optional data for this event
-            :raises: ClassNotRegistered, EventNotRegistered
+            :raises: ClassNotRegistered, EventNotRegistered, ActorNotRegistered
         """
         if class_name not in self.events.keys():
             raise exceptions.ClassNotRegistered
@@ -250,7 +268,13 @@ class Event(Borg):
 
 
 class MVC(ABC):
-    """ Base class definition of an MVC Model, View or Controller """
+    """ Base class definition of an MVC Model, View or Controller
+
+        MVC is a mixture of abstract and non-abstract functions.
+        Some functions are by their nature mechanical and can be fully defined by the base class.
+        Other functions (e.g. *update*, *notify* and *run*) are specific to the child class and therefore
+        are left abstract.
+    """
 
     def __init__(self, name=None, **kwargs):
 
@@ -266,7 +290,7 @@ class MVC(ABC):
             self.parent = None
 
         self.name = name                        #: name of this MVC
-        self.starting = True                    #: starting status
+        self.starting = True                    #: starting status, by definition True at the beginning of life
         self.running = False                    #: running status
         self.stopping = False                   #: stopping status
         self.pause = False                      #: pause status
@@ -275,13 +299,19 @@ class MVC(ABC):
         self._stop_event = threading.Event()    #: event used to stop our thread
 
     def start(self):
-        """ Function to start our thread """
+        """ Function to start thread execution """
         if self.thread is not None:
             self.thread.start()
         else:
             raise exceptions.InvalidThread
 
     def join_thread(self, thread):
+        """ Helper function to stop thread execution and join with the thread
+
+            :param thread: Thread object
+            :returns: True - thread is successfully joined and no longer alive
+            :raises: JoinFailure(thread)
+        """
         self._stop_event.set()
         for _ in range(Defines.Config.JOIN_RETRIES):
             thread.join(timeout=Defines.Times.Joining)
@@ -292,11 +322,22 @@ class MVC(ABC):
         return True
 
     def set_running(self):
-        """ Accessor to set the *running* flag """
+        """ Accessor to set the *running* flag
+
+            The *running* flag is used to transition a thread to the running state.
+            It is expected that the thread will not begin execution of whatever its
+            main function in life is until the *running* flag is set (True).
+        """
         self.starting = False
         self.running = True
 
     def step(self):
+        """ Used to cause a thread to execute a single *step* of *state execution*.
+            The ability to *step* is entirely optional.
+            The specifics of what a *step* means is implementation dependent.
+            The most common interpretation will be to process an event which may lead
+            to a state transition or execute a single cycle of a state *do* function.
+        """
         if self._step_event.is_set():
             self._step_event.clear()
             return True
@@ -308,7 +349,7 @@ class MVC(ABC):
         self._step_event.set()
 
     def clr_step(self):
-        """ Accessor to set the *step* flag """
+        """ Accessor to clear the *step* flag """
         self._step_event.clear()
 
     def set_pause(self):
@@ -328,8 +369,9 @@ class MVC(ABC):
 
     @abstractmethod
     def notify(self, event):
-        """ Called to send a notification of the occurrence of event
-            Events are outbound.
+        """ Called to send a notification of the occurrence of an event.
+
+            Notify events are outbound.
 
             :param event: Event to be sent to those in registry
         """
@@ -337,8 +379,9 @@ class MVC(ABC):
 
     @abstractmethod
     def update(self, event):
-        """ Called to notify us of the occurrence of event
-            Events are inbound.
+        """ Called to notify us of the occurrence of an event.
+
+            Update events are inbound.
 
             :param event: Event to be processed
         """
@@ -360,10 +403,15 @@ class MVC(ABC):
 
     def prepare(self, event, **kwargs):
         """ Prepare an event for logging and/or notification
+
             1) Make a shallow copy of this event so we don't modify the original
             2) Add a datetime if one is not present
             3) Add 'text' if present in kwargs
             4) Add 'data' if present in kwargs
+
+            :param event: Event to prepare
+            :param kwargs: Optional args (*text* and *data*)
+            :returns: Event prepared for logging and/or notification
         """
         event_ = copy.copy(event)
         if 'datetime' not in event_.keys():
@@ -380,7 +428,14 @@ class MVC(ABC):
 
 
 class Controller(MVC, Logger):
-    """ Base class definition of a Controller """
+    """ Base class definition of a Controller
+
+        Controllers are the highest level of the MVC hierarchy and primarily used
+        to instantiate and connect models and views. Controllers can also be used
+        to propagate events to any models and/or views that are known to it.
+        Events passed to the *notify* function will be delivered to registered models
+        and/or views as appropriate.
+    """
 
     def __init__(self, name=None, **kwargs):
         MVC.__init__(self, name=name, **kwargs)
@@ -403,7 +458,9 @@ class Controller(MVC, Logger):
 
     def notify(self, event, **kwargs):
         """ Called to send notification of the occurrence of event
+
             We deliver:
+
                 * 'model' events to Views.
                 * 'view' events to Models.
                 * '*' events to Views & Models
@@ -426,7 +483,13 @@ class Controller(MVC, Logger):
 
 
 class Model(MVC, Logger):
-    """ Base class definition of a Model """
+    """ Base class definition of a Model
+
+        Responsible for implementing the algorithms and logic which define the model.
+        Communications of model events and state is accomplished via events.
+        Model events are communicated to registered views via the *notify* function.
+        View events are communicated to the model via the *update* function.
+    """
 
     def __init__(self, name=None, **kwargs):
         MVC.__init__(self, name=name, **kwargs)
@@ -437,7 +500,7 @@ class Model(MVC, Logger):
         """ Register a view with us
 
             :param view: View to be registered
-            :raises: InvalidView
+            :raises: InvalidView(view)
         """
         if isinstance(view, View):
             self.views[view.name] = view
@@ -479,6 +542,7 @@ class View(MVC, Logger):
         """ Register a model with us
 
             :param model: Model to be registered
+            :raises: InvalidModel(model)
         """
         if isinstance(model, Model):
             self.models[model.name] = model

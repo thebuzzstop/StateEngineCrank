@@ -3,7 +3,7 @@ SleepingBarber
 
 Barber
 ------
-.. automodule:: Barber
+.. automodule:: SleepingBarber.Barber
     :members:
     :undoc-members:
     :show-inheritance:
@@ -30,14 +30,14 @@ Customer State Diagram
 
 Customer
 --------
-.. automodule:: Customer
+.. automodule:: SleepingBarber.Customer
     :members:
     :undoc-members:
     :show-inheritance:
 
 CustomerGen
 -----------
-.. automodule:: CustomerGen
+.. automodule:: SleepingBarber.CustomerGen
     :members:
     :undoc-members:
     :show-inheritance:
@@ -51,21 +51,21 @@ SleepingBarber Main
 
 WaitingRoom
 -----------
-.. automodule:: WaitingRoom
+.. automodule:: SleepingBarber.WaitingRoom
     :members:
     :undoc-members:
     :show-inheritance:
 
 Common
 ------
-.. automodule:: Common
+.. automodule:: SleepingBarber.Common
     :members:
     :undoc-members:
     :show-inheritance:
 
 Exceptions
 ----------
-.. automodule:: exceptions
+.. automodule:: SleepingBarber.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
