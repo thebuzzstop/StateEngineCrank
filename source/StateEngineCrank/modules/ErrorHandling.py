@@ -6,7 +6,7 @@ import logging
 logging.debug('Loading modules: %s as %s' % (__file__, __name__))
 
 # Project imports
-import modules.Singleton  # noqa 408
+import StateEngineCrank.modules.Singleton  # noqa 408
 
 
 class ConfigFileError(Exception):
@@ -88,6 +88,7 @@ class Error(Borg):
     # =========================================================================
     @staticmethod
     def lineno():
+        """ Function to return the current line number of the current stack frame """
         return inspect.currentframe().f_back.f_lineno
 
     # =========================================================================

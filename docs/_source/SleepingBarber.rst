@@ -13,6 +13,8 @@ Barber State Diagram
 .. figure:: Barber.png
     :alt: SleepingBarber state diagram (Barber)
 
+.. note::
+
     SleepingBarber simulation Barber state diagram.
 
     This image was created using PlantUML with the UML
@@ -22,6 +24,8 @@ Customer State Diagram
 ----------------------
 .. figure:: Customer.png
     :alt: SleepingBarber state diagram (Customer)
+
+.. note::
 
     SleepingBarber simulation Customer state diagram.
 

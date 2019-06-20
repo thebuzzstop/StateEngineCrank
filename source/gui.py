@@ -240,7 +240,7 @@ class Animation(mvc.View):
         """ Convert an animation x-y coordinate to canvas x-y coordinate
 
             For the purpose of placing objects in the animation frame, the center of the frame
-            is considered to be cartesian coordinate (0, 0). This routine converts from an
+            is considered to be cartesian coordinate [0, 0]. This routine converts from an
             animation coordinate to an absolute Tk.Frame.Canvas coordinate.
 
             Example:
@@ -257,7 +257,7 @@ class Animation(mvc.View):
     def circle_at00(self, x, y, r, c):
         """ Draw a circle at [x,y] coordinates, radius 'r'
 
-            This version of 'circle_at' assumes an origin of 0,0 at the center of the canvas.
+            This version of 'circle_at' assumes an origin of [0, 0] at the center of the canvas.
 
             :param x: x-coordinate
             :param y: y-coordinate
@@ -272,7 +272,7 @@ class Animation(mvc.View):
     def circle_at(self, x, y, r, c):
         """ Draw a circle at [x,y] coordinates, radius 'r'
 
-            This version of 'circle_at' assumes an origin of 0,0 the top left of the canvas.
+            This version of 'circle_at' assumes an origin of [0, 0] at the top left of the canvas.
             There is no adjustment or translation of the [x, y] coordinates passed to us.
 
             :param x: x-coordinate
@@ -292,7 +292,9 @@ class Animation(mvc.View):
         self.ani_canvas.pack()
 
     def text_at00(self, x, y, t, c):
-        """ Draw text at [x,y] coordinates
+        """ Draw text at [x, y] coordinates
+
+            This version of 'text_at' assumes an origin of [0, 0] at the center of the canvas.
 
             :param x: x-coordinate
             :param y: y-coordinate
@@ -303,7 +305,10 @@ class Animation(mvc.View):
         self.ani_canvas.pack()
 
     def text_at(self, x, y, t, c):
-        """ Draw text at [x,y] coordinates
+        """ Draw text at [x, y] coordinates
+
+            This version of 'text_at' assumes an origin of [0, 0] at the top left of the canvas.
+            There is no adjustment or translation of the [x, y] coordinates passed to us.
 
             :param x: x-coordinate
             :param y: y-coordinate
@@ -315,7 +320,7 @@ class Animation(mvc.View):
 
     @staticmethod
     def transform_2xy(radius, angle):
-        """ Perform transformation from radius, angle to x & y coordinates
+        """ Perform transformation from radius, angle to [x, y] coordinates
 
             :param radius: length of the vector
             :param angle: angle in radians
@@ -443,7 +448,7 @@ class DiningPhilosophers(Animation):
         return cx, cy
 
     def add_chairs(self):
-        """ Add chairs around the dining table """
+        """ Add chairs around the dining table, one chair for each philosopher """
         for chair in range(self.num_philosophers):
             cx, cy = self.draw_chair(chair, self.common['init.color'][0])
             self.chair_coords.append([cx, cy])
@@ -458,7 +463,7 @@ class DiningPhilosophers(Animation):
         return tx, ty
 
     def add_timers(self):
-        """ Add timers around the dining table """
+        """ Add timers around the dining table, one timer for each philosopher """
         for timer in range(self.num_philosophers):
             tx, ty = self.draw_timer(timer, self.common['init.color'])
             self.timer_coords.append([tx, ty])
@@ -486,7 +491,7 @@ class DiningPhilosophers(Animation):
         return fx, fy
 
     def add_forks(self):
-        """ Add forks around the table """
+        """ Add forks around the table, forks are situated between philosophers """
         for f in range(self.num_philosophers):
             fx, fy = self.draw_fork(f)
             self.fork_coords.append([fx, fy])
@@ -847,7 +852,7 @@ class SleepingBarbers(Animation):
         return None
 
     def next_waiting_chair(self):
-        """ Function to return the next available waiting room chair
+        """ Function to return the next available waiting room chair.
             Will increment the current index modulo the total number of chairs.
 
             :returns: index of waiting room chair
@@ -913,7 +918,26 @@ class SleepingBarbers(Animation):
 
 
 class GuiConsoleView(mvc.View):
-    """ GUI Console View """
+    """ GUI Console View
+
+        Performs console logging as a scrolling text window.
+
+        Logging is used to display MVC state machine events, state transitions and any other
+        operational information relevant to the simulation.
+
+        Example::
+
+            [...]
+            23:16:23:470859 [Waiter] 6 IN
+            23:16:25:477872 [SM] philosopher2 Events.EvHungry [States.Thinking] Events.EvHungry
+            23:16:25:478875 [SM] philosopher2 Events.EvHungry [States.Thinking]
+            23:16:25:481884 [SM] philosopher2 Events.EvHungry [States.Hungry] States.Hungry
+            23:16:25:496323 [SM] philosopher2 Events.EvHungry [States.Hungry]
+            23:16:25:498651 [Waiter] 2 IN
+            23:16:28:425131 [philosophers] 20 LOOPS
+            [...]
+
+    """
 
     def __init__(self, name, widget):
         super().__init__(name='%s_console' % name)

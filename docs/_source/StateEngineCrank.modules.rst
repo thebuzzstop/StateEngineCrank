@@ -48,6 +48,8 @@ UMLParse State Diagram
 .. figure:: UMLParse.png
     :alt: StateEngineCrank UML Parse State Diagram
 
+.. note::
+
     StateEngineCrank state diagram for the UML Parse module.
     The purpose of the state diagram is to provide a representation
     of the various state diagram elements:
