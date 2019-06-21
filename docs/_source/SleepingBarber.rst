@@ -1,5 +1,7 @@
-SleepingBarber
-==============
+.. _Sleeping Barber:
+
+Sleeping Barber
+===============
 
 Barber
 ------

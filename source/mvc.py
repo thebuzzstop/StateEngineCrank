@@ -114,7 +114,7 @@ class Event(Borg):
         """ Register a class event
 
             :param class_name: Name of the class this event belongs to
-            :param event: Event class name
+            :param event: Event name
             :param event_type: Type of event [model, view, controller]
             :param kwargs:
                 ['user.id'] Optional ID associated with this event
@@ -335,8 +335,9 @@ class MVC(ABC):
         """ Used to cause a thread to execute a single *step* of *state execution*.
             The ability to *step* is entirely optional.
             The specifics of what a *step* means is implementation dependent.
-            The most common interpretation will be to process an event which may lead
-            to a state transition or execute a single cycle of a state *do* function.
+            The most common interpretation will be to execute a single cycle of a state
+            *do* function. This may result in processing an event, which in turn may
+            result in a state transition.
         """
         if self._step_event.is_set():
             self._step_event.clear()
@@ -345,20 +346,20 @@ class MVC(ABC):
             return False
 
     def set_step(self):
-        """ Accessor to set the *step* flag """
+        """ Accessor to set the *step* flag [also see *clr_step()*] """
         self._step_event.set()
 
     def clr_step(self):
-        """ Accessor to clear the *step* flag """
+        """ Accessor to clear the *step* flag [also see *set_step()*] """
         self._step_event.clear()
 
     def set_pause(self):
-        """ Accessor to set the *pause* flag """
+        """ Accessor to set the *pause* flag [also see *set_resume()*] """
         self.pause = True
         self._step_event.clear()
 
     def set_resume(self):
-        """ Accessor to clear the *pause* flag """
+        """ Accessor to clear the *pause* flag [also see *set_pause()*] """
         self.pause = False
         self._step_event.clear()
 
@@ -459,6 +460,8 @@ class Controller(MVC, Logger):
     def notify(self, event, **kwargs):
         """ Called to send notification of the occurrence of event
 
+            Notify events are outbound.
+
             We deliver:
 
                 * 'model' events to Views.
@@ -508,7 +511,9 @@ class Model(MVC, Logger):
             raise exceptions.InvalidView(view)
 
     def notify(self, event, **kwargs):
-        """ Called by us to notify Views about a Model event
+        """ Called to send notification of a Model event
+
+            Notify events are outbound.
 
             :param event: Model event to be sent
         """
@@ -518,7 +523,9 @@ class Model(MVC, Logger):
 
     @abstractmethod
     def update(self, event):
-        """ Called by Views to tell us to update
+        """ Called to notify us about an event.
+
+            Update events are inbound.
 
             :param event: View event to be processed
         """
@@ -550,9 +557,11 @@ class View(MVC, Logger):
             raise exceptions.InvalidModel(model)
 
     def notify(self, event, **kwargs):
-        """ Called by us to notify Models about a View event
+        """ Called to send notification of a View event
 
-            :param event: View event to be sent
+            Notify events are outbound.
+
+            :param event: Event to be sent
         """
         event_ = self.prepare(event, **kwargs)
         for mk in self.models.keys():
@@ -560,9 +569,11 @@ class View(MVC, Logger):
 
     @abstractmethod
     def update(self, event):
-        """ Called by Models to tell us to update
+        """ Called to notify us about an event.
 
-            :param event: Model event to be processed
+            Update events are inbound.
+
+            :param event: Event to be processed
         """
         pass
 
