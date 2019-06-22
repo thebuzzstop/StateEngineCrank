@@ -12,8 +12,8 @@ This implementation uses an arbitrator solution in the form of a **Waiter**.
 A philosopher that is hungry and wishes to eat gains access to the necessary forks by
 asking the Waiter for permission.
 
-State Diagram
--------------
+Dining Philosophers State Diagram
+---------------------------------
 .. figure:: DiningPhilosophers.png
 	:alt: DiningPhilosophers state diagram
 
@@ -24,8 +24,8 @@ State Diagram
 	This image was created using PlantUML with the UML
 	contained in the DiningPhilosophers.py docstring.
 
-Main module
------------
+Dining Philosophers Source
+--------------------------
 .. automodule:: DiningPhilosophers.main
 	:members:
 	:undoc-members:

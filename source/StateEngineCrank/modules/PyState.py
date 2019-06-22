@@ -173,7 +173,7 @@ class StateMachine(mvc.Model):
                 * state enter function execution
                 * sets up do function for next state
 
-            :param event : event to process
+            :param event: event to process
         """
         if event is None:
             return
@@ -276,7 +276,7 @@ class StateMachine(mvc.Model):
         self.do_func = self.state_function_table[self.current_state]['do']
 
     def update(self, event):
-        """ Called by View/Controller to tell us to update
+        """ Called by View/Controller to tell us to update.
             We currently have nothing to do.
 
             :param event: View/Controller event to be processed

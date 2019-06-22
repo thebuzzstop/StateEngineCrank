@@ -51,10 +51,6 @@ import mvc
 import exceptions
 import Defines
 
-# ==============================================================================
-# ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
-# ==============================================================================
-
 
 class Borg(object):
     """ The Borg class ensures that all instantiations refer to the same state and behavior. """
@@ -63,6 +59,10 @@ class Borg(object):
 
     def __init__(self):
         self.__dict__ = self._shared_state
+
+# ==============================================================================
+# ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
+# ==============================================================================
 
 
 class States(Enum):
@@ -291,6 +291,11 @@ def seconds(minimum, maximum):
 # ==============================================================================
 
 
+    def __init__(self, id=None):
+        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
+                              function_table=StateTables.state_function_table,
+                              transition_table=StateTables.state_transition_table)
+
 class UserCode(StateMachine):
 
     def cleanup(self):
@@ -437,10 +442,9 @@ class UserCode(StateMachine):
     # ===========================================================================
     # noinspection PyPep8Naming
     def Finish_NotRunning(self):
-        """
-        @brief Enter function processing for *Finish* state.
+        """ *Enter* function processing for *Finish* state.
 
-        @details State machine enter function processing for the *Finish* state.
+        State machine *enter* function processing for the *Finish* state.
         This function is called when the *Finish* state is entered.
         """
         self.running = False
@@ -448,10 +452,9 @@ class UserCode(StateMachine):
     # ===========================================================================
     # noinspection PyPep8Naming
     def Finish_Wait(self):
-        """
-        @brief *Do* function processing for the *Finish* state
+        """ *Do* function processing for the *Finish* state
 
-        @details State machine *do* function processing for the *Finish* state.
+        State machine *do* function processing for the *Finish* state.
         This function is called once every state machine iteration to perform processing
         for the *Finish* state.
         """
@@ -460,26 +463,24 @@ class UserCode(StateMachine):
     # =========================================================
     # noinspection PyPep8Naming
     def Restart(self):
-        """
-        @brief State transition processing for *Restart*
+        """ State transition processing for *Restart*
 
-        @details State machine state transition processing for *Restart*.
+        State machine state transition processing for *Restart*.
         This function is called whenever the state transition *Restart* is taken.
 
-        @todo Add any reset/initialization processes here prior to restarting
+        :todo: Add any reset/initialization processes here prior to restarting
         """
         return
 
     # =========================================================
     # noinspection PyPep8Naming
     def Shutdown(self):
-        """
-        @brief State transition processing for *Shutdown*
+        """ State transition processing for *Shutdown*
 
-        @details State machine state transition processing for *Shutdown*.
+        State machine state transition processing for *Shutdown*.
         This function is called whenever the state transition *Shutdown* is taken.
 
-        @todo Add any processes here prior to exiting the program.
+        :todo: Add any processes here prior to exiting the program.
         """
         return
 
@@ -490,7 +491,6 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
-
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},
@@ -561,6 +561,10 @@ class DiningPhilosophers(mvc.Model):
     """ Main DiningPhilosophers Class """
 
     def __init__(self, exit_when_done=None):
+        """ Constructor
+
+            :param exit_when_done: True, then exit when done. False, run until program exit requested.
+        """
         super().__init__(name='philosophers', target=self.run)
 
         #: simulation configuration data
@@ -601,6 +605,16 @@ class DiningPhilosophers(mvc.Model):
         self.waiter = Waiter()
 
     def create_philosophers(self, first_time):
+        """ Create philosophers
+
+            Called to create the philosophers (actors).
+            If this is not the first time then any existing philosophers will be unregistered
+            so that they can be recreated.
+
+            :todo: Revisit the **first_time** issue for a more structured solution.
+
+            :param first_time: True if first time
+        """
         if not first_time:
             # unregister philosopher actors so that they can be recreated
             for p in self.philosophers:
@@ -617,13 +631,27 @@ class DiningPhilosophers(mvc.Model):
                 philosopher.register(self.views[vk])
 
     def register(self, view):
+        """ Register all simulation actors with the specified view.
+
+            The View may be anything which can respond to view type events.
+            [e.g. console, logger, GUI, etc.]
+
+            :param view: View to register with.
+        """
         self.views[view.name] = view
         for p in self.philosophers:
             p.register(view)
         self.waiter.register(view)
 
     def update(self, event):
-        """ Called by Views and/or Controller to alert us to an event. """
+        """ Called by Views and/or Controller to alert us to an event.
+
+            We only know how to process which are in our *class*.
+            Receipt of an event not in our *class* will raise an exception.
+
+            :param event: Event to process
+            :raises: Unknown event type, Unhandled event
+        """
         if event['class'] is not self.name:
             raise Exception('Dining: Unknown event type')
 
@@ -667,6 +695,11 @@ class DiningPhilosophers(mvc.Model):
             raise Exception('Unhandled event')
 
     def forks(self, philosopher_id):
+        """ Returns the forks associated with a specific philosopher
+
+            :param philosopher_id: Philosopher ID whose forks are being requested
+            :returns: Tuple representing the *left* and *right* forks
+        """
         left = self.philosophers[philosopher_id].left_fork
         right = self.philosophers[philosopher_id].right_fork
         return left, right

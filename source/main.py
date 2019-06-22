@@ -18,11 +18,6 @@ import Defines
 import DiningPhilosophers.main as philosophers
 import SleepingBarber.main as barbers
 
-# import SleepingBarber.Barber as Barber
-# import SleepingBarber.Customer as Customer
-# import SleepingBarber.WaitingRoom as WaitingRoom
-# import SleepingBarber.Common as BarberCommon
-
 # import view
 from console import ConsoleView
 from gui import GuiView

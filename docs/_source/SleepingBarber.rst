@@ -3,15 +3,8 @@
 Sleeping Barber
 ===============
 
-Barber
-------
-.. automodule:: SleepingBarber.Barber
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Barber State Diagram
---------------------
+Sleeping Barber State Diagram
+-----------------------------
 .. figure:: Barber.png
     :alt: SleepingBarber state diagram (Barber)
 
@@ -34,36 +27,43 @@ Customer State Diagram
     This image was created using PlantUML with the UML
     contained in the Customer.py docstring.
 
-Customer
---------
-.. automodule:: SleepingBarber.Customer
+Barber Module
+-------------
+.. automodule:: SleepingBarber.Barber
     :members:
     :undoc-members:
     :show-inheritance:
 
-CustomerGen
------------
-.. automodule:: SleepingBarber.CustomerGen
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-SleepingBarber Main
--------------------
+Sleeping Barber Main Module
+---------------------------
 .. automodule:: SleepingBarber.main
     :members:
     :undoc-members:
     :show-inheritance:
 
-WaitingRoom
------------
+Customer Module
+---------------
+.. automodule:: SleepingBarber.Customer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+WaitingRoom Module
+------------------
 .. automodule:: SleepingBarber.WaitingRoom
     :members:
     :undoc-members:
     :show-inheritance:
 
-Common
-------
+Customer Generator Module
+-------------------------
+.. automodule:: SleepingBarber.CustomerGen
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Common Code
+-----------
 .. automodule:: SleepingBarber.Common
     :members:
     :undoc-members:

@@ -54,13 +54,12 @@ class CodeGen(object):
     TRANS_FUNC_TEMPLATE = [
         '    # =========================================================',
         '    def {TRANS_FUNC_TAG}(self):',
-        '        """',
-        '        @brief State transition processing for *{TRANS_FUNC_TAG}*',
+        '        """ State transition processing for *{TRANS_FUNC_TAG}*',
         '',
-        '        @details State machine state transition processing for *{TRANS_FUNC_TAG}*.',
+        '        State machine state transition processing for *{TRANS_FUNC_TAG}*.',
         '        This function is called whenever the state transition *{TRANS_FUNC_TAG}* is taken.',
         '',
-        '        @todo FIXME',
+        '        :todo: FIXME',
         '        """',
         '        return',
     ]
@@ -70,16 +69,15 @@ class CodeGen(object):
     GUARD_FUNC_TEMPLATE = [
         '    # =========================================================',
         '    def {GUARD_FUNC_TAG}(self):',
-        '        """',
-        '        @brief Guard processing for *{GUARD_FUNC_TAG}*',
+        '        """ Guard processing for *{GUARD_FUNC_TAG}*',
         '',
-        '        @details State machine guard processing for *{GUARD_FUNC_TAG}*.',
+        '        State machine guard processing for *{GUARD_FUNC_TAG}*.',
         '        This function is called whenever the guard *{GUARD_FUNC_TAG}* is tested.',
         '',
-        '        @retval True Guard is active/valid',
-        '        @retval False Guard is inactive/invalid',
+        '        :returns True: Guard is active/valid',
+        '        :returns False: Guard is inactive/invalid',
         '',
-        '        @todo FIXME',
+        '        :todo: FIXME',
         '        """',
         '        return False',
     ]
@@ -91,13 +89,12 @@ class CodeGen(object):
     ENTER_FUNC_TEMPLATE = [
         '    # ===========================================================================',
         '    def {ENTER_FUNC_TAG}(self):',
-        '        """',
-        '        @brief Enter function processing for *{STATE_TAG}* state.',
+        '        """ Enter function processing for *{STATE_TAG}* state.',
         '',
-        '        @details State machine enter function processing for the *{STATE_TAG}* state.',
+        '        State machine enter function processing for the *{STATE_TAG}* state.',
         '        This function is called when the *{STATE_TAG}* state is entered.',
         '',
-        '        @todo FIXME',
+        '        :todo: FIXME',
         '        """',
         '        return',
     ]
@@ -107,14 +104,13 @@ class CodeGen(object):
     DO_FUNC_TEMPLATE = [
         '    # ===========================================================================',
         '    def {DO_FUNC_TAG}(self):',
-        '        """',
-        '        @brief *Do* function processing for the *{STATE_TAG}* state',
+        '        """ *Do* function processing for the *{STATE_TAG}* state',
         '',
-        '        @details State machine *do* function processing for the *{STATE_TAG}* state.',
+        '        State machine *do* function processing for the *{STATE_TAG}* state.',
         '        This function is called once every state machine iteration to perform processing',
         '        for the *{STATE_TAG}* state.',
         '',
-        '        @todo FIXME',
+        '        :todo: FIXME',
         '        """',
         '        return',
     ]
@@ -124,13 +120,12 @@ class CodeGen(object):
     EXIT_FUNC_TEMPLATE = [
         '    # ===========================================================================',
         '    def {EXIT_FUNC_TAG}(self):',
-        '        """',
-        '        @brief *Exit* function processing for the *{STATE_TAG}* state.',
+        '        """ *Exit* function processing for the *{STATE_TAG}* state.',
         '',
-        '        @details State machine *exit* function processing for the *{STATE_TAG}* state.',
+        '        State machine *exit* function processing for the *{STATE_TAG}* state.',
         '        This function is called when the *{STATE_TAG}* state is exited.',
         '',
-        '        @todo FIXME',
+        '        :todo: FIXME',
         '        """',
         '        return',
     ]
@@ -377,7 +372,7 @@ class CodeGen(object):
 
     # =========================================================================
     def create_user_class_declaration(self):
-        # scan user code for class declaration
+        # Scan user code for class declaration
         for line in range(self.user_code_start, self.user_code_end):
             line_text = self.file.get_line(line)
             if line_text[1].startswith(self.USER_CODE_CLASS):
@@ -394,7 +389,7 @@ class CodeGen(object):
 
     # =========================================================================
     def create_user_class_init_function(self):
-        # scan user code for __init__() function declaration
+        # Scan user code for __init__() function declaration
         for line in range(self.user_code_start, self.user_code_end):
             line_text = self.file.get_line(line)
             if self.USER_CODE_DEF_INIT in line_text:
