@@ -5,7 +5,9 @@
 
 * ToDo - Add support for 'FinalState'
 
-**DiningPhilosophers UML**::
+.. code-block:: rest
+    :caption: **DiningPhilosophersUml**
+    :name: DiningPhilosophersUml
 
     @startuml
 

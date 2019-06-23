@@ -1,3 +1,14 @@
+"""
+The Customer Generator Module supplies customers to the Sleeping Barber Simulation.
+
+Customers are generated:
+
+* At a specified rate (e.g. 5 customers per unit of time)
+* With a randomization provided at the start of the simulation.
+
+This provides a random nature to the arrival of customers to the barber shop.
+"""
+
 # System imports
 import time
 from queue import Queue

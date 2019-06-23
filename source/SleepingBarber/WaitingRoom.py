@@ -1,6 +1,13 @@
 """
-    * Customer waiting room support for SleepingBarber(s) simulation
-    * Provides synchronized access to waiting room for barber(s) and customer(s)
+The Waiting Room module provides accommodations for customers who are waiting
+for a barber to be available to cut hair.
+The waiting room module utilizes a lock to ensure synchronized access to waiting
+room for barber(s) and customer(s)
+
+* The waiting room has a fixed number of chairs.
+* If there is an empty chair, a customer arriving at the waiting room is assigned a chair and entered into a waiting queue.
+* If there are no empty chairs the customer leaves without a haircut.
+* A barber that finishes cutting a customers hair checks the waiting room for a waiting customer.
 """
 
 # System imports

@@ -1,8 +1,13 @@
 """
-* State machine UML, tables and user state functions.
-* Contains auto-generated and user created custom code.
+The Customer Module provides the state machine execution logic to
+implement a Sleeping Barber Simulation *Customer*.
 
-**SleepingBarber Customer UML**::
+* State machine UML, tables and user state functions.
+* Auto-generated and user created custom code.
+
+.. code-block:: rest
+    :caption: **SleepingBarberCustomerUml**
+    :name: SleepingBarberCustomerUml
 
     @startuml
 

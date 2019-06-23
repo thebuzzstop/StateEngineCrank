@@ -1,8 +1,15 @@
 """
-* State machine UML, tables and user state functions.
-* Contains auto-generated and user created custom code.
+The Barber Module provides the state machine execution logic to
+implement a Sleeping Barber Simulation *Barber*.
 
-**SleepingBarber Barber UML**::
+The Barber Module contains:
+
+* State machine UML, tables and user state functions.
+* Auto-generated and user created custom code.
+
+.. code-block:: rest
+    :caption: **SleepingBarberUml**
+    :name: SleepingBarberUml
 
     @startuml
 

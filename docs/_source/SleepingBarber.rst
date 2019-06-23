@@ -3,6 +3,16 @@
 Sleeping Barber
 ===============
 
+This is a StateEngineCrank implementation of
+`The Sleeping Barber <https://en.wikipedia.org/wiki/Sleeping_barber_problem>`_
+concurrent algorithm design problem.
+
+There are multiple ways to solve the issue of concurrency and synchronization of
+barbers, customers and access to a waiting room.
+This implementation uses a lock on the waiting room to ensure that state changes
+for the barber(s) and customers do not overlap due to simultaneous access of the
+waiting room.
+
 Sleeping Barber State Diagram
 -----------------------------
 .. figure:: Barber.png
@@ -13,7 +23,7 @@ Sleeping Barber State Diagram
     SleepingBarber simulation Barber state diagram.
 
     This image was created using PlantUML with the UML
-    contained in the Barber.py docstring.
+    contained in the Barber.py docstring :ref:`SleepingBarberUml`.
 
 Customer State Diagram
 ----------------------
@@ -24,8 +34,8 @@ Customer State Diagram
 
     SleepingBarber simulation Customer state diagram.
 
-    This image was created using PlantUML with the UML
-    contained in the Customer.py docstring.
+    This image was created using PlantUML with the UML contained in
+    the Customer.py docstring :ref:`SleepingBarberCustomerUml`.
 
 Barber Module
 -------------
