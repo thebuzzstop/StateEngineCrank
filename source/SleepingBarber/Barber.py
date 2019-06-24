@@ -1,6 +1,6 @@
-"""
-The Barber Module provides the state machine execution logic to
-implement a Sleeping Barber Simulation *Barber*.
+""" SleepingBarber.Barber
+
+The Barber Module implements the Sleeping Barber Simulation *Barber* state machine.
 
 The Barber Module contains:
 
@@ -85,11 +85,6 @@ class StateTables(object):
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
 
-
-    def __init__(self, id=None):
-        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
-                              function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
 
 class UserCode(StateMachine):
     """ User code unique to the Barber state implementation of the SleepingBarber simulation """
@@ -295,6 +290,7 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},

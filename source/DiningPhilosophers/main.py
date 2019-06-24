@@ -1,7 +1,12 @@
-""" DiningPhilosophers
+""" DiningPhilosophers.main
 
-* DiningPhilosophers state machine UML, tables and user state functions
-* Contains auto-generated and user created custom code.
+The DiningPhilosophers main module implements the Dining Philosophers Simulation
+state machine.
+
+The main module contains:
+
+* State machine UML, tables and user state functions
+* Auto-generated and user created custom code.
 
 * ToDo - Add support for 'FinalState'
 
@@ -293,11 +298,6 @@ def seconds(minimum, maximum):
 # ==============================================================================
 
 
-    def __init__(self, id=None):
-        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
-                              function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
-
 class UserCode(StateMachine):
 
     def cleanup(self):
@@ -493,6 +493,7 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.Thinking, 'guard': None, 'transition': None},

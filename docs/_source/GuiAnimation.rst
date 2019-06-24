@@ -3,7 +3,6 @@ Gui Animation
 
 The GuiAnimation module provides animation for the :ref:`Sleeping Barber` and :ref:`Dining Philosophers` simulations.
 
-
 Main
 ----
 .. automodule:: main

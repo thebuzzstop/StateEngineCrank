@@ -1,4 +1,4 @@
-""" StateEngineCrank Error Handling Exceptions """
+""" StateEngineCrank.modules.ErrorHandling """
 
 # System imports
 import inspect

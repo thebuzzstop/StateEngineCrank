@@ -17,6 +17,7 @@ Sleeping Barber State Diagram
 -----------------------------
 .. figure:: Barber.png
     :alt: SleepingBarber state diagram (Barber)
+    :name: SleepingBarberUmlPng
 
 .. note::
 

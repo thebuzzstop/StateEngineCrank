@@ -1,6 +1,9 @@
-"""
-The Customer Module provides the state machine execution logic to
-implement a Sleeping Barber Simulation *Customer*.
+""" SleepingBarber.Customer
+
+The Customer Module implements the Sleeping Barber Simulation *Customer*
+state machine.
+
+The Customer Module contains:
 
 * State machine UML, tables and user state functions.
 * Auto-generated and user created custom code.
@@ -78,11 +81,6 @@ class StateTables(object):
 # ===== USER STATE CODE = BEGIN ================================================
 # ==============================================================================
 
-
-    def __init__(self, id=None):
-        StateMachine.__init__(self, id=id, startup_state=States.StartUp,
-                              function_table=StateTables.state_function_table,
-                              transition_table=StateTables.state_transition_table)
 
 class UserCode(StateMachine):
     """ User code unique to the Customer state implementation of the SleepingBarber simulation """
@@ -329,6 +327,7 @@ class UserCode(StateMachine):
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = START = DO NOT MODIFY =========================
 # ==============================================================================
+
 
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: [

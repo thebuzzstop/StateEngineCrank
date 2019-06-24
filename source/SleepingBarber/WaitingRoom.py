@@ -1,12 +1,14 @@
-"""
+""" SleepingBarber.WaitingRoom
+
 The Waiting Room module provides accommodations for customers who are waiting
 for a barber to be available to cut hair.
 The waiting room module utilizes a lock to ensure synchronized access to waiting
-room for barber(s) and customer(s)
+room for barber(s) and customer(s).
+The waiting room lock must be obtained by anyone wanting access to the waiting room.
 
 * The waiting room has a fixed number of chairs.
 * If there is an empty chair, a customer arriving at the waiting room is assigned a chair and entered into a waiting queue.
-* If there are no empty chairs the customer leaves without a haircut.
+* If there are no empty chairs the customer leaves the barber shop without a haircut.
 * A barber that finishes cutting a customers hair checks the waiting room for a waiting customer.
 """
 

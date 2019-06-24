@@ -1,4 +1,4 @@
-""" StateEngineCrank Main
+""" StateEngineCrank.main
 
 Main module for StateEngineCrank
 

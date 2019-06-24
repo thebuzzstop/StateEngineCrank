@@ -1,4 +1,6 @@
-""" StateEngineCrank UML Parsing Module
+""" StateEngineCrank.modules.UMLParse
+
+    UML Parsing Module
 
     Locates UML in source code and parses for states, transitions
     events, guards, transfer functions producing the UML data

@@ -1,4 +1,5 @@
-"""
+""" SleepingBarber.CustomerGen
+
 The Customer Generator Module supplies customers to the Sleeping Barber Simulation.
 
 Customers are generated:

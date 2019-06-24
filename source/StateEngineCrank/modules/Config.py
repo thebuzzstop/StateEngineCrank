@@ -1,4 +1,6 @@
-""" StateEngineCrank Configuration Module
+""" StateEngineCrank.modules.Config
+
+StateEngineCrank Configuration Module
 
 Implements TheConfig Class - pulls together options specified on the command line and in the configuration file.
 """

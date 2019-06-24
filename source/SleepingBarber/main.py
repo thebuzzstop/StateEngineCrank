@@ -1,5 +1,10 @@
 """ SleepingBarber.main
 
+The Sleeping Barber main module pulls together the various pieces of the Sleeping Barber
+simulation.
+
+The main module contains:
+
 * Top level code for SleepingBarber(s) simulation.
 * Main driver, instantiates Barber(s) and Customer(s) and drives the state machines
 """

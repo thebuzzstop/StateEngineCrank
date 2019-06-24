@@ -1,4 +1,4 @@
-""" StateEngineCrank Defines Module """
+""" StateEngineCrank.modules.Defines """
 
 DEFAULT_CONFIG_FILE = "StateEngine.cfg"
 

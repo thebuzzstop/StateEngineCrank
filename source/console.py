@@ -1,4 +1,4 @@
-""" StateEngineCrank Console View """
+""" StateEngineCrank.console """
 
 # System imports
 import datetime

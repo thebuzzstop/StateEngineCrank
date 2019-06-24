@@ -10,13 +10,15 @@ concurrent algorithm design problem.
 There are multiple ways to solve the issue of concurrency and synchronization between
 philosophers and their access to the forks necessary to eat.
 This implementation uses an arbitrator solution in the form of a **Waiter**.
+Access to the Waiter is controlled via a lock.
 A philosopher that is hungry and wishes to eat gains access to the necessary forks by
-asking the Waiter for permission.
+first acquiring the lock and then asking the Waiter for permission.
 
 Dining Philosophers State Diagram
 ---------------------------------
 .. figure:: DiningPhilosophers.png
 	:alt: DiningPhilosophers state diagram
+	:name: DiningPhilosophersUmlPng
 
 .. note::
 
