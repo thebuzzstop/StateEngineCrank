@@ -3,8 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to State Engine Crank's documentation!
-==============================================
+Welcome to State Engine Crank
+=============================
+This is the documentation for State Engine Crank, a tool that converts a `PlantUML <http://www.plantuml.com>`_
+state diagram into executable code.
+
+:todo: Provide an overview of the various topics covered.
 
 .. toctree::
    :maxdepth: 2
@@ -18,7 +22,6 @@ Welcome to State Engine Crank's documentation!
 
 Indices and tables
 ==================
-
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
