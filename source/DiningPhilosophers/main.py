@@ -11,7 +11,7 @@ The main module contains:
 * ToDo - Add support for 'FinalState'
 
 .. code-block:: rest
-    :caption: **DiningPhilosophersUml**
+    :caption: **Dining Philosophers UML**
     :name: DiningPhilosophersUml
 
     @startuml

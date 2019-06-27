@@ -2,8 +2,7 @@
 
 Sleeping Barber
 ===============
-
-This is a StateEngineCrank implementation of
+This is a State Engine Crank (SEC) implementation of
 `The Sleeping Barber <https://en.wikipedia.org/wiki/Sleeping_barber_problem>`_
 concurrent algorithm design problem.
 

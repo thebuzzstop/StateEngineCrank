@@ -1,13 +1,15 @@
-StateEngineCrank
-================
+State Engine Crank
+==================
 
 Background
 ----------
-The original StateEngineCrank tool, written in C#, was conceived and developed by
+The original State Engine Crank tool (SEC), written in C#, was conceived and developed by
 `Nelson Ferragut <https://www.linkedin.com/in/ferragut/>`_,
 a Lead Engineer in Controls & Electronics at Whirlpool Corporation in Benton Harber, MI.
-Subsequent versions of StateEngineCrank have been written in Ansi-C and Python by
+Subsequent versions of SEC have been written in Ansi-C and Python by
 `yours-truly <https://www.linkedin.com/in/markbsawyer/>`_.
+
+*Crankin' them bits, boss.*
 
 Goals
 -----

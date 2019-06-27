@@ -5,8 +5,10 @@
 
 Welcome to State Engine Crank
 =============================
-This is the documentation for State Engine Crank, a tool that converts a `PlantUML <http://www.plantuml.com>`_
+This is the documentation for State Engine Crank (SEC), a tool that converts a `PlantUML <http://www.plantuml.com>`_
 state diagram into executable code.
+
+State Engine Crank was so named because, given PlantUML as input, it *"cranks out a state engine executable."*
 
 :todo: Provide an overview of the various topics covered.
 

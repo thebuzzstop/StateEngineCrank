@@ -1,12 +1,33 @@
 StateEngineCrank modules
 ========================
 
+State Engine Crank (SEC) is capable of generating ANSI-C and Python source files.
+
+It is comprised of the following language independent modules:
+
+    * :ref:`Configuration`
+    * :ref:`Defines`
+    * :ref:`ErrorHandling`
+    * :ref:`FileSupport`
+    * :ref:`PyStateModule`
+    * :ref:`UmlParsing`
+
+Language specific support is provided by ANSI-C and Python modules:
+
+    * Code Generation
+    * Code Scanning
+    * UML Signature Support
+
+.. _Configuration:
+
 Configuration
 -------------
 .. automodule:: StateEngineCrank.modules.Config
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. _Defines:
 
 Defines
 -------
@@ -15,12 +36,16 @@ Defines
     :undoc-members:
     :show-inheritance:
 
+.. _ErrorHandling:
+
 ErrorHandling
 -------------
 .. automodule:: StateEngineCrank.modules.ErrorHandling
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. _FileSupport:
 
 FileSupport
 -----------
@@ -29,12 +54,16 @@ FileSupport
     :undoc-members:
     :show-inheritance:
 
-PyState module
+.. _PyStateModule:
+
+PyState Module
 --------------
 .. automodule:: StateEngineCrank.modules.PyState
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. _UmlParsing:
 
 UML Parsing
 -----------
