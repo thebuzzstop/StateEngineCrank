@@ -1,80 +1,84 @@
 """ StateEngineCrank.modules.UMLParse
 
-    UML Parsing Module
+UML Parsing Module
 
-    Locates UML in source code and parses for states, transitions
-    events, guards, transfer functions producing the UML data
-    structures containing all of the information required for the
-    rest of the modules for code generation.
+Locates UML in source code and parses for states, transitions
+events, guards, transfer functions producing the UML data
+structures containing all of the information required for the
+rest of the modules for code generation.
 
-    Example::
+.. code-block:: rest
+    :caption: **State Transition Syntax**
+    :name: StateTransitionSyntax
 
-        Typical syntax for a state transition
+    State1 --> State2 : Event [Guard] / Function
 
-        State1 --> State2 : Event [Guard] / Function
+    [Guard] syntax rules:
 
-        [Guard] syntax rules:
+        1) Guard may be a compound logic equation
+            e.g. Foo && Goo || Moo
+            Note: ()'s if specified will be removed
+        2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and 'NOT_'
+            respectively
+            e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
+        3) Spaces are replaced with '_' to concatenate logic expressions
+            e.g. [FooGuard AND GooGuard] ==> [FooGuard_AND_GooGuard]
+            This will allow for the creation of a hybrid guard function
+            which will perform any required logical operations.
 
-            1) Guard may be a compound logic equation
-                e.g. Foo && Goo || Moo
-                Note: ()'s if specified will be removed
-            2) &&'s, ||'s and !'s are replaced with '_AND_', '_OR_' and 'NOT_'
-                respectively
-                e.g. Foo && Goo || !Moo ==> Foo_AND_Goo_OR_NOT_Moo
-            3) Spaces are replaced with '_' to concatenate logic expressions
-                e.g. [FooGuard AND GooGuard] ==> [FooGuard_AND_GooGuard]
-                This will allow for the creation of a hybrid guard function
-                which will perform any required logical operations.
+.. code-block:: rest
+    :caption: **Sample UML**
+    :name: UmlParseSample
 
-        @startuml
+    @startuml
 
-            [*] --> FindStartUML
+        [*] --> FindStartUML
 
-            FindStartUML --> WrapUp : EOF
-            FindStartUML --> Parse  : StartUML
-            FindStartUML : entry : Enter
-            FindStartUML : do    : Do
-            FindStartUML : exit  : Exit
+        FindStartUML --> WrapUp : EOF
+        FindStartUML --> Parse  : StartUML
+        FindStartUML : entry : Enter
+        FindStartUML : do    : Do
+        FindStartUML : exit  : Exit
 
-            Parse --> WrapUp     : EndUML || EOF
-            Parse --> Transition : EvState_New
-            Parse --> Transition : EvState_Self
-            Parse --> Guard      : EvGuard
-            Parse --> Event      : EvEvent
-            Parse : entry : Enter
-            Parse : do    : Do
-            Parse : exit  : Exit
+        Parse --> WrapUp     : EndUML || EOF
+        Parse --> Transition : EvState_New
+        Parse --> Transition : EvState_Self
+        Parse --> Guard      : EvGuard
+        Parse --> Event      : EvEvent
+        Parse : entry : Enter
+        Parse : do    : Do
+        Parse : exit  : Exit
 
-            Transition --> Parse  : EvContinue
-            Transition --> WrapUp : EndUML || EOF
-            Transition : enter : Enter
-            Transition : do    : Do
-            Transition : exit  : Exit
+        Transition --> Parse  : EvContinue
+        Transition --> WrapUp : EndUML || EOF
+        Transition : enter : Enter
+        Transition : do    : Do
+        Transition : exit  : Exit
 
-            Guard --> Parse  : EvContinue
-            Guard --> WrapUp : EndUML || EOF
-            Guard : entry : Enter
-            Guard : do    : Do
-            Guard : exit  : Exit
+        Guard --> Parse  : EvContinue
+        Guard --> WrapUp : EndUML || EOF
+        Guard : entry : Enter
+        Guard : do    : Do
+        Guard : exit  : Exit
 
-            Event --> Parse  : EvContinue
-            Event --> WrapUp : EndUML || EOF
-            Event : entry : Enter
-            Event : do    : Do
-            Event : exit  : Exit
+        Event --> Parse  : EvContinue
+        Event --> WrapUp : EndUML || EOF
+        Event : entry : Enter
+        Event : do    : Do
+        Event : exit  : Exit
 
-            WrapUp --> Error : GotError
-            WrapUp --> [*]   : NoErrors
-            WrapUp : entry : Enter
-            WrapUp : do    : Do
-            WrapUp : exit  : Exit
+        WrapUp --> Error : GotError
+        WrapUp --> [*]   : NoErrors
+        WrapUp : entry : Enter
+        WrapUp : do    : Do
+        WrapUp : exit  : Exit
 
-            Error --> [*]
-            Error : enter : Enter
-            Error : do    : Do
-            Error : exit  : Exit
+        Error --> [*]
+        Error : enter : Enter
+        Error : do    : Do
+        Error : exit  : Exit
 
-        @enduml
+    @enduml
 """
 
 # System imports
