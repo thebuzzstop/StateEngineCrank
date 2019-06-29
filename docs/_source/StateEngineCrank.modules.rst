@@ -1,7 +1,7 @@
 StateEngineCrank modules
 ========================
 
-State Engine Crank (SEC) is capable of generating ANSI-C and Python source files.
+State Engine Crank is capable of generating ANSI-C and Python source files.
 
 It is comprised of the following language independent modules:
 

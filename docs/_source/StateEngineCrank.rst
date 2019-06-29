@@ -3,13 +3,13 @@ State Engine Crank
 
 Background
 ----------
-The original State Engine Crank tool (SEC), written in C#, was conceived and developed by
+The original State Engine Crank tool, written in C#, was conceived and developed by
 `Nelson Ferragut <https://www.linkedin.com/in/ferragut/>`_,
 a Lead Engineer in Controls & Electronics at Whirlpool Corporation in Benton Harber, MI.
 Subsequent versions of SEC have been written in Ansi-C and Python by
 `yours-truly <https://www.linkedin.com/in/markbsawyer/>`_.
 
-*Crankin' them bits, boss.*
+    *Crankin' them bits, boss.*
 
 Goals
 -----
@@ -37,7 +37,14 @@ Developing a State Engine Crank based solution involves the following steps:
     * State transition functions.
 
 #. Create state based design using PlantUML.
+
+    * Recommended usage is to incorporate the PlantUML in the header of the source file which will implement the state logic.
+
 #. Run State Engine Crank on the PlantUML.
+
+    * *The Crank* will search for the PlantUML @startuml and @enduml markers.
+    * *The Crank* will generate all necessary source infrastructure.
+
 #. State Engine Crank:
 
     * Parses the source file containing the PlantUML for known markers indicating the presence of a previous run.
@@ -51,18 +58,20 @@ Developing a State Engine Crank based solution involves the following steps:
 
 State Engine Crank Code
 -----------------------
-State Engine Crank code is structural and is created from scratch every time SEC is run.
-State Engine Crank code is readily identified within the source file.
 
-* Declarations for states and events.
-* Basic infrastructure code (e.g. startup)
-* State function tables (e.g. *enter, do, exit, transitions and guards*)
-* State transition tables
+* is structural and is created from scratch every time SEC is run.
+* is readily identified within the source file.
+
+    * Declarations for states and events.
+    * Basic infrastructure code (e.g. startup)
+    * State function tables (e.g. *enter, do, exit, transitions and guards*)
+    * State transition tables
 
 User Defined Code
 -----------------
-User defined code is application specific and needs to be written by the designer.
-User defined code is readily identified within the source file.
+* is application specific and needs to be written by the designer.
+* is readily identified within the source file.
+* is preserved over multiple runs of *The Crank*.
 
 Modules
 -------
