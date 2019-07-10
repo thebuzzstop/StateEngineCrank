@@ -90,7 +90,7 @@ class UserCode(StateMachine):
         StateMachine.cleanup(self)
 
     def __init__(self, id_=None, barbers=None):
-        """ Customer class constructor
+        """ Customer Class Constructor
 
             :param id_: customer ID, unique to this customer
             :param barbers[]: list of barbers in the simulation

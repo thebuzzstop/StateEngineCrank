@@ -80,7 +80,7 @@ class CustomerGenerator(mvc.Model):
         self.pool.wait_completion()
 
     def __init__(self, customer_rate, customer_variance, barbers):
-        """ Constructor
+        """ CustomerGenerator Class Constructor
 
             :param customer_rate: rate at which customers will be generated
             :param customer_variance: used to introduce variation in customer rate

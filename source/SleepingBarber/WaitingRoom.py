@@ -47,7 +47,7 @@ class WaitingRoom(Borg, Model):
         * Anyone calling a WaitingRoom function needs to obtain the lock before calling.
     """
     def __init__(self):
-        """ Class constructor
+        """ WaitingRoom Class Constructor
 
             :param chairs: number of chairs in the waiting room
         """

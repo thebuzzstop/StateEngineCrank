@@ -94,7 +94,7 @@ class UserCode(StateMachine):
         StateMachine.cleanup(self)
 
     def __init__(self, user_id=None, **kwargs):
-        """ Barber class constructor
+        """ Barber Class Constructor
 
             :param user_id: barber ID unique to this barber
         """

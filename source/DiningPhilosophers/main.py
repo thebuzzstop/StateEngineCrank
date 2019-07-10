@@ -299,12 +299,20 @@ def seconds(minimum, maximum):
 
 
 class UserCode(StateMachine):
+    """ UserCode class implements the user specific state machine code.
+
+        Skeletons for all user functions which are named in the state machine defining UML are automatically
+        created by *The Crank*. User functions are state machine *enter(), do(), exit()* and *transition()* functions.
+        The skeletons must be filled in with any custom code required to implement the desired functionality.
+        The skeletons are only generated if they are determined to be missing. In other words, all user code is
+        preserved over multiple runs of *The Crank*.
+    """
 
     def cleanup(self):
         StateMachine.cleanup(self)
 
     def __init__(self, user_id=None, **kwargs):
-        """ UserCode Constructor
+        """ UserCode Class Constructor
 
             :param user_id: unique identifier for this User
         """
@@ -547,7 +555,7 @@ class Philosopher(UserCode):
         UserCode.cleanup(self)
 
     def __init__(self, philosopher_id=None):
-        """ Philosopher Constructor - Extends the UserCode base class
+        """ Philosopher Class Constructor - Extends the UserCode base class
 
             :param philosopher_id: ID unique to this Philosopher
         """
@@ -564,7 +572,7 @@ class DiningPhilosophers(mvc.Model):
     """ Main DiningPhilosophers Class """
 
     def __init__(self, exit_when_done=None):
-        """ Constructor
+        """ DiningPhilosophers Class Constructor
 
             :param exit_when_done: True, then exit when done. False, run until program exit requested.
         """

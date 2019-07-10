@@ -67,7 +67,7 @@ class Event(Borg):
     def __init__(self):
         """ A Model-View-Controller Event
 
-            An Event contains::
+            An Event contains:
 
                 * class : the class the event belongs to
                 * event : the specific event
@@ -405,10 +405,10 @@ class MVC(ABC):
     def prepare(self, event, **kwargs):
         """ Prepare an event for logging and/or notification
 
-            1) Make a shallow copy of this event so we don't modify the original
-            2) Add a datetime if one is not present
-            3) Add 'text' if present in kwargs
-            4) Add 'data' if present in kwargs
+            #. Make a shallow copy of this event so we don't modify the original
+            #. Add a datetime if one is not present
+            #. Add 'text' if present in kwargs
+            #. Add 'data' if present in kwargs
 
             :param event: Event to prepare
             :param kwargs: Optional args (*text* and *data*)
