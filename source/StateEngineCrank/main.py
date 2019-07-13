@@ -2,6 +2,28 @@
 
 Main module for StateEngineCrank
 
+This is the main processing for The State Engine Crank aka *The Crank*
+
+Processing consists of the following steps:
+
+    #. Configuration file processing
+    #. Instantiate some support classes (File, Uml, Error)
+    #. Process input source files.
+    #. Based on input source file type (Python or Ansi-C):
+
+        * Instantiate signature scanner
+        * Instantiate code scanner
+        * Instantiate code generator
+
+    #. Read source file into memory for processing
+    #. Scan for PlantUML
+    #. Parse PlantUML
+    #. Scan for State Engine Crank :term:`signatures`
+    #. Create :term:`signatures` if not found
+    #. Scan for existing user state functions
+    #. Update code based on current PlantUML
+    #. Backup source file if changed
+
 .. todo::
     Need to handle the case where there is a [guard] / Transition
     but no Event to trigger the transition. This case will occur
@@ -9,6 +31,7 @@ Main module for StateEngineCrank
     if the [guard] condition is met. Not sure if this is actually
     valid UML but it came up during debugging of the Philosophers.
 """
+
 # System imports
 import logging
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')

@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. codeauthor:: Mark Sawyer <mark@markbsawyer.com>
+
 Welcome to State Engine Crank
 =============================
 This is the documentation for State Engine Crank, aka *"The Crank"*, a tool that converts a `PlantUML <http://www.plantuml.com>`_
@@ -29,6 +31,7 @@ This documentation is divided into the following sections:
    SleepingBarber
    GuiAnimation
    ModelViewController
+   glossary
 
 Indices and tables
 ------------------
