@@ -77,7 +77,7 @@ class Event(Borg):
                 * data : optional data payload
         """
         Borg.__init__(self)
-        if len(self._shared_state) > 0:
+        if self._shared_state:
             return
         self.events = {}        #: dictionary of events
         self.event_by_id = []   #: list of events, used for lookups by ID

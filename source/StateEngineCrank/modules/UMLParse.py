@@ -579,7 +579,10 @@ class UML(modules.Singleton.Singleton):
                 if self.event is not None:
                     trans = trans + 1
                 if trans != 0 and trans != 3:
-                    if self.state1 != self.INITIAL_STATE:
+                    if self.state1 == self.INITIAL_STATE or self.state2 == self.FINAL_STATE:
+                        self.event = 'EvTick'
+                        self.UML_PARSE['event'](self, self.event)
+                    else:
                         logging.debug('Transition Check: %s / %s / %s' % (self.state1, self.state2, self.event))
 
                 # substitute labels for initial and final states

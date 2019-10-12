@@ -64,7 +64,7 @@ class ConfigData(Borg):
 
     def __init__(self):
         Borg.__init__(self, 'config')
-        if len(self._shared_state['config']):
+        if self._shared_state['config']:
             return
         self.haircut_min = Config.HairCut_Min
         self.haircut_max = Config.HairCut_Max

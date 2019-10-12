@@ -115,7 +115,7 @@ class ConfigData(Borg):
 
     def __init__(self):
         Borg.__init__(self)
-        if len(self._shared_state):
+        if self._shared_state:
             return
         self.eat_max = Config.Eat_Max
         self.eat_min = Config.Eat_Min

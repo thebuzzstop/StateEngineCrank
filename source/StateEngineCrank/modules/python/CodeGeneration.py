@@ -41,10 +41,10 @@ class CodeGen(object):
     ENUM_FORMAT = '    %s = %s'
 
     USER_CODE_CLASS = 'class UserCode(StateMachine):'
-    USER_CODE_DEF_INIT = 'def __init__(self, id=None):'
+    USER_CODE_DEF_INIT = 'def __init__(self, id_=None):'
     USER_CODE_INIT_CODE = [
-        '    def __init__(self, id=None):',
-        '        StateMachine.__init__(self, id=id, startup_state=States.StartUp,',
+        '    def __init__(self, id_=None):',
+        '        StateMachine.__init__(self, id=id_, startup_state=States.StartUp,',
         '                              function_table=StateTables.state_function_table,',
         '                              transition_table=StateTables.state_transition_table)',
     ]
@@ -220,6 +220,7 @@ class CodeGen(object):
         self.current_line = self.sig.find_main_state_engine_tables_start()
         self.current_line = self.current_line + 2
         self.add_line(self.BLANK_LINE)
+        self.add_line(self.BLANK_LINE)
         self.create_state_transition_table()
         self.create_state_function_table()
 
@@ -381,6 +382,7 @@ class CodeGen(object):
 
         # if not found, create it
         self.current_line = self.user_code_start + 2
+        self.add_line(self.BLANK_LINE)
         self.add_line(self.BLANK_LINE)
         self.add_line(self.USER_CODE_CLASS)
 

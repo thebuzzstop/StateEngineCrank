@@ -52,7 +52,7 @@ class WaitingRoom(Borg, Model):
             :param chairs: number of chairs in the waiting room
         """
         Borg.__init__(self)
-        if len(self._shared_state) > 0:
+        if self._shared_state:
             return
         Model.__init__(self, name='WaitingRoom')
         self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods

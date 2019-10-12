@@ -35,7 +35,7 @@ class StateMachineEvent(Borg):
 
     def __init__(self):
         Borg.__init__(self)
-        if len(self._shared_state) > 0:
+        if self._shared_state:
             return
         self.class_name = 'SM'
         self.events = mvc.Event()

@@ -39,26 +39,27 @@ class TheConfig(Borg):
     """
     # =========================================================================
     def __init__(self):
-        if len(self._shared_state) is 0:
-            Borg.__init__(self)
-            self.config_file = Defines.DEFAULT_CONFIG_FILE  #: default configuration file if not given
-            self.debug = False      #: True - enable debug information
-            self.verbose = False    #: True - enable verbose execution
-            self.quiet = False      #: True - enable quiet execution
-            self.version = False    #: True - display version information
-            self.files = []         #: List of files to process
+        Borg.__init__(self)
+        if self._shared_state:
+            return
+        self.config_file = Defines.DEFAULT_CONFIG_FILE  #: default configuration file if not given
+        self.debug = False      #: True - enable debug information
+        self.verbose = False    #: True - enable verbose execution
+        self.quiet = False      #: True - enable quiet execution
+        self.version = False    #: True - display version information
+        self.files = []         #: List of files to process
 
-            self.cmd = ArgParser()  #: parse command line first first, may override config file
-            self.cfg = CfgParser()  #: parse configuration file last
+        self.cmd = ArgParser()  #: parse command line first first, may override config file
+        self.cfg = CfgParser()  #: parse configuration file last
 
-            # update configuration with any changes from command line or configuration file
-            self.debug = self.cfg.debug or self.cmd.debug
-            self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
-            self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
-            self.version = self.cmd.version or self.cfg.version
-            self.files.extend(self.cfg.files)
-            self.files.extend(self.cmd.files)
-            logging.debug('files: %s' % self.files)
+        # update configuration with any changes from command line or configuration file
+        self.debug = self.cfg.debug or self.cmd.debug
+        self.verbose = self.cmd.verbose or (self.cfg.verbose and not self.cmd.quiet)
+        self.quiet = self.cmd.quiet or (self.cfg.quiet and not self.cmd.verbose)
+        self.version = self.cmd.version or self.cfg.version
+        self.files.extend(self.cfg.files)
+        self.files.extend(self.cmd.files)
+        logging.debug('files: %s' % self.files)
 
 
 class ArgParser(argparse.ArgumentParser):
