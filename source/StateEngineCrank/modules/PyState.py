@@ -111,6 +111,8 @@ class StateMachine(mvc.Model):
             :param function_table: state machine function table
             :param transition_table: state machine transition table
         """
+        if not name:
+            name = 'PyState'
         mvc.Model.__init__(self, name=name, **kwargs)
         self.id = sm_id
         self.name = name

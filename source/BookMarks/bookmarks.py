@@ -10,35 +10,40 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 
     [*] --> StartUp
     StartUp --> ReadBookMarks : EvStart
-    StartUp : enter : BookMarksStart
+    StartUp : enter : BookMarksStart()
 
     ReadBookMarks --> Finish : EvFileDone
     ReadBookMarks --> Finish : EvStop
-    ReadBookMarks --> AddTopicHeader : EvTopicHeaderTag
-    ReadBookMarks --> AddTopicLink : EvTopicLinkTag
-    ReadBookMarks --> StartList : EvListTag
-    ReadBookMarks --> EndList : EvListEndTag
+
     ReadBookMarks --> AddMeta : EvMetaTag
     ReadBookMarks --> AddTitle : EvTitleTag
-    ReadBookMarks --> pTag : EvPTag
-    ReadBookMarks : do : ReadLine
+    ReadBookMarks --> AddHeader : EvHeaderTag
+    ReadBookMarks --> AddTopic : EvTopicTag
+    ReadBookMarks --> ReadBookMarks : EvPTag
+    ReadBookMarks --> StartList : EvListTag
 
     StartList --> ReadBookMarks : EvTick
-    StartList : enter : StartList
-    EndList --> ReadBookMarks : EvTick
-    EndList : enter : EndList
-    AddMeta --> ReadBookMarks : EvTick
-    AddMeta : enter : AddMeta
-    AddTitle --> ReadBookMarks : EvTick
-    AddTitle : enter : AddTitle
-    AddTopicLink --> ReadBookMarks : EvTick
-    AddTopicLink : enter : AddTopicLink
-    AddTopicHeader --> ReadBookMarks : EvTick
-    AddTopicHeader : enter : AddTopicHeader
-    pTag --> ReadBookMarks : EvTick
-    pTag : enter : Ignore
+    StartList : enter : StartNewList()
 
-    Finish : enter : BookMarksDone
+    AddTopic --> AddTopicHeader : EvTopicHeaderTag
+    AddTopic --> AddTopicLink : EvATag
+
+    AddTopicHeader --> ReadBookMarks : EvTopicHeaderEndTag
+    AddTopicHeader --> AddTopicHeader : EvData / SetTopicHeader()
+
+    AddTopicLink --> ReadBookMarks : EvAEndTag
+    AddTopicLink --> AddTopicLink : EvData / SetTopicLink()
+
+    AddMeta --> ReadBookMarks : EvTick
+    AddMeta : enter : SetMeta()
+
+    AddTitle --> ReadBookMarks : EvTitleEndTag
+    AddTitle --> AddTitle : EvData / SetTitle()
+
+    AddHeader --> ReadBookMarks : EvHeaderEndTag
+    AddHeader --> AddHeader : EvData / SetHeader()
+
+    Finish : enter : BookMarksDone()
     Finish --> [*]
 
     @enduml
@@ -50,29 +55,16 @@ from html.parser import HTMLParser
 from enum import Enum
 import sys
 import os
-import logging.handlers
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
+import logger
+import structures
 
-logger = logging.getLogger('bookmarks')
-logger.setLevel(logging.DEBUG)
-
-ch = logging.StreamHandler(stream=sys.stdout)
-ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
-ch.setLevel(logging.INFO)
-logger.addHandler(ch)
-
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-
-fh = logging.handlers.RotatingFileHandler('logs/bookmarks.log', backupCount=5, delay=True)
-fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-fh.setLevel(logging.DEBUG)
-logger.addHandler(fh)
-
+logger = logger.Logger(__name__)
+my_logger = logger.logger
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -80,16 +72,18 @@ logger.addHandler(fh)
 
 
 class States(Enum):
-    StartUp = 1
-    ReadBookMarks = 2
-    Finish = 3
-    AddTopicHeader = 4
-    AddTopicLink = 5
-    StartList = 6
-    EndList = 7
-    AddMeta = 8
-    AddTitle = 9
-    pTag = 10
+    InitialState = 1
+    FinalState = 2
+    StartUp = 3
+    ReadBookMarks = 4
+    Finish = 5
+    AddMeta = 6
+    AddTitle = 7
+    AddHeader = 8
+    AddTopic = 9
+    StartList = 10
+    AddTopicHeader = 11
+    AddTopicLink = 12
 
 
 class Events(Enum):
@@ -97,13 +91,19 @@ class Events(Enum):
     EvStart = 2
     EvFileDone = 3
     EvStop = 4
-    EvTopicHeaderTag = 5
-    EvTopicLinkTag = 6
-    EvListTag = 7
-    EvListEndTag = 8
-    EvMetaTag = 9
-    EvTitleTag = 10
-    EvPTag = 11
+    EvMetaTag = 5
+    EvTitleTag = 6
+    EvHeaderTag = 7
+    EvTopicTag = 8
+    EvPTag = 9
+    EvListTag = 10
+    EvTopicHeaderTag = 11
+    EvATag = 12
+    EvTopicHeaderEndTag = 13
+    EvData = 14
+    EvAEndTag = 15
+    EvTitleEndTag = 16
+    EvHeaderEndTag = 17
 
 
 class StateTables(object):
@@ -126,6 +126,51 @@ class UserCode(StateMachine):
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
+        self.bookmarks = {}         #: a dictionary of bookmarks that we create from HTML
+        self.parents = []           #: a list of parents
+
+        self.title = None           #: title of this collection of bookmarks
+        self.title_attrs = None     #: :todo: title attrs (is this really needed)
+        self.html_data = None       #: data for current html item
+        self.meta_attrs = None      #: attrs for meta tag
+        self.meta_data = None       #: :todo: data for meta tag (is this really needed)
+        self.h1_data = None         #: capture H1 data (there is only one)
+        self.h3_data = []           #: capture H3 data (there are many)
+        self.last_attrs = None      #: 'attrs' associated with most recent tag
+        self.list_level = None      #: current list level
+
+        my_logger.debug('UserCode: INIT done')
+
+    def set_attrs(self, attrs):
+        """ Function to set 'attrs' associated with most recent 'tag'
+            :param attrs: Most recent attributes
+        """
+        self.last_attrs = attrs
+        if self.last_attrs:
+            my_logger.info(f'attrs: {self.last_attrs}')
+
+    def set_html_data(self, data):
+        """ Function to set 'html data' associated with most recent 'tag'
+            :param data: Most recent attributes
+        """
+        self.html_data = data.strip()
+        if self.html_data:
+            my_logger.info(f'data: {self.html_data}')
+            self.event(Events.EvData)
+
+    # ===========================================================================
+    def AddMeta_SetMeta(self):
+        """ Enter function processing for *AddMeta* state.
+
+        State machine enter function processing for the *AddMeta* state.
+        This function is called when the *AddMeta* state is entered.
+        """
+        if self.meta_attrs:
+            raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.last_attrs}')
+        self.meta_attrs = self.last_attrs
+        my_logger.info(f'META: {self.meta_attrs}')
+        self.event(Events.EvTick)
+
     # ===========================================================================
     def Finish_BookMarksDone(self):
         """ Enter function processing for *Finish* state.
@@ -135,88 +180,54 @@ class UserCode(StateMachine):
 
         :todo: FIXME
         """
+        my_logger.debug('BookMarksDone')
         return
 
-    # ===========================================================================
-    def StartUp_BookMarksStartUp(self):
-        """ Enter function processing for *StartUp* state.
+    # =========================================================
+    def SetHeader(self):
+        """ State transition processing for *SetHeader*
 
-        State machine enter function processing for the *StartUp* state.
-        This function is called when the *StartUp* state is entered.
+        State machine state transition processing for *SetHeader*.
+        This function is called whenever the state transition *SetHeader* is taken.
 
         :todo: FIXME
         """
-        return
+        self.h1_data = self.html_data
+        my_logger.debug(f'SetHeader: {self.h1_data}')
 
-    # ===========================================================================
-    def AddMeta_AddMeta(self):
-        """ Enter function processing for *AddMeta* state.
+    # =========================================================
+    def SetTitle(self):
+        """ State transition processing for *SetTitle*
 
-        State machine enter function processing for the *AddMeta* state.
-        This function is called when the *AddMeta* state is entered.
-
-        :todo: FIXME
+        State machine state transition processing for *SetTitle*.
+        This function is called whenever the state transition *SetTitle* is taken.
         """
-        return
+        if self.title:
+            raise Exception(f'Title already set: {self.title}/{self.html_data}')
+        self.title = self.html_data
+        my_logger.info(f'TITLE: {self.title}')
 
-    # ===========================================================================
-    def AddTitle_AddTitle(self):
-        """ Enter function processing for *AddTitle* state.
+    # =========================================================
+    def SetTopicHeader(self):
+        """ State transition processing for *SetTopicHeader*
 
-        State machine enter function processing for the *AddTitle* state.
-        This function is called when the *AddTitle* state is entered.
-
-        :todo: FIXME
+        State machine state transition processing for *SetTopicHeader*.
+        This function is called whenever the state transition *SetTopicHeader* is taken.
         """
-        return
+        self.h3_data.append(self.html_data)
+        my_logger.info(f'TopicHeader: {self.html_data}')
 
-    # ===========================================================================
-    def AddTopicHeader_AddTopicHeader(self):
-        """ Enter function processing for *AddTopicHeader* state.
+    # =========================================================
+    def SetTopicLink(self):
+        """ State transition processing for *SetTopicLink*
 
-        State machine enter function processing for the *AddTopicHeader* state.
-        This function is called when the *AddTopicHeader* state is entered.
-
-        :todo: FIXME
+        State machine state transition processing for *SetTopicLink*.
+        This function is called whenever the state transition *SetTopicLink* is taken.
         """
-        return
+        my_logger.info(f'TopicLink: {self.html_data}')
 
     # ===========================================================================
-    def AddTopicLink_AddTopicLink(self):
-        """ Enter function processing for *AddTopicLink* state.
-
-        State machine enter function processing for the *AddTopicLink* state.
-        This function is called when the *AddTopicLink* state is entered.
-
-        :todo: FIXME
-        """
-        return
-
-    # ===========================================================================
-    def EndList_EndList(self):
-        """ Enter function processing for *EndList* state.
-
-        State machine enter function processing for the *EndList* state.
-        This function is called when the *EndList* state is entered.
-
-        :todo: FIXME
-        """
-        return
-
-    # ===========================================================================
-    def ReadBookMarks_ReadLine(self):
-        """ *Do* function processing for the *ReadBookMarks* state
-
-        State machine *do* function processing for the *ReadBookMarks* state.
-        This function is called once every state machine iteration to perform processing
-        for the *ReadBookMarks* state.
-
-        :todo: FIXME
-        """
-        return
-
-    # ===========================================================================
-    def StartList_StartList(self):
+    def StartList_StartNewList(self):
         """ Enter function processing for *StartList* state.
 
         State machine enter function processing for the *StartList* state.
@@ -237,17 +248,6 @@ class UserCode(StateMachine):
         """
         return
 
-    # ===========================================================================
-    def pTag_Ignore(self):
-        """ Enter function processing for *pTag* state.
-
-        State machine enter function processing for the *pTag* state.
-        This function is called when the *pTag* state is entered.
-
-        :todo: FIXME
-        """
-        return
-
 # ==============================================================================
 # ===== USER STATE CODE = END ==================================================
 # ==============================================================================
@@ -257,6 +257,13 @@ class UserCode(StateMachine):
 # ==============================================================================
 
 
+StateTables.state_transition_table[States.InitialState] = {
+    Events.EvTick: {'state2': States.StartUp, 'guard': None, 'transition': None},
+}
+
+StateTables.state_transition_table[States.FinalState] = {
+}
+
 StateTables.state_transition_table[States.StartUp] = {
     Events.EvStart: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
 }
@@ -264,33 +271,16 @@ StateTables.state_transition_table[States.StartUp] = {
 StateTables.state_transition_table[States.ReadBookMarks] = {
     Events.EvFileDone: {'state2': States.Finish, 'guard': None, 'transition': None},
     Events.EvStop: {'state2': States.Finish, 'guard': None, 'transition': None},
-    Events.EvTopicHeaderTag: {'state2': States.AddTopicHeader, 'guard': None, 'transition': None},
-    Events.EvTopicLinkTag: {'state2': States.AddTopicLink, 'guard': None, 'transition': None},
-    Events.EvListTag: {'state2': States.StartList, 'guard': None, 'transition': None},
-    Events.EvListEndTag: {'state2': States.EndList, 'guard': None, 'transition': None},
     Events.EvMetaTag: {'state2': States.AddMeta, 'guard': None, 'transition': None},
     Events.EvTitleTag: {'state2': States.AddTitle, 'guard': None, 'transition': None},
-    Events.EvPTag: {'state2': States.pTag, 'guard': None, 'transition': None},
+    Events.EvHeaderTag: {'state2': States.AddHeader, 'guard': None, 'transition': None},
+    Events.EvTopicTag: {'state2': States.AddTopic, 'guard': None, 'transition': None},
+    Events.EvPTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+    Events.EvListTag: {'state2': States.StartList, 'guard': None, 'transition': None},
 }
 
 StateTables.state_transition_table[States.Finish] = {
     Events.EvTick: {'state2': States.FinalState, 'guard': None, 'transition': None},
-}
-
-StateTables.state_transition_table[States.AddTopicHeader] = {
-    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
-}
-
-StateTables.state_transition_table[States.AddTopicLink] = {
-    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
-}
-
-StateTables.state_transition_table[States.StartList] = {
-    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
-}
-
-StateTables.state_transition_table[States.EndList] = {
-    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
 }
 
 StateTables.state_transition_table[States.AddMeta] = {
@@ -298,234 +288,150 @@ StateTables.state_transition_table[States.AddMeta] = {
 }
 
 StateTables.state_transition_table[States.AddTitle] = {
+    Events.EvTitleEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+    Events.EvData: {'state2': States.AddTitle, 'guard': None, 'transition': UserCode.SetTitle},
+}
+
+StateTables.state_transition_table[States.AddHeader] = {
+    Events.EvHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+    Events.EvData: {'state2': States.AddHeader, 'guard': None, 'transition': UserCode.SetHeader},
+}
+
+StateTables.state_transition_table[States.AddTopic] = {
+    Events.EvTopicHeaderTag: {'state2': States.AddTopicHeader, 'guard': None, 'transition': None},
+    Events.EvATag: {'state2': States.AddTopicLink, 'guard': None, 'transition': None},
+}
+
+StateTables.state_transition_table[States.StartList] = {
     Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
 }
 
-StateTables.state_transition_table[States.pTag] = {
-    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+StateTables.state_transition_table[States.AddTopicHeader] = {
+    Events.EvTopicHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+    Events.EvData: {'state2': States.AddTopicHeader, 'guard': None, 'transition': UserCode.SetTopicHeader},
 }
+
+StateTables.state_transition_table[States.AddTopicLink] = {
+    Events.EvAEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+    Events.EvData: {'state2': States.AddTopicLink, 'guard': None, 'transition': UserCode.SetTopicLink},
+}
+
+StateTables.state_function_table[States.InitialState] = \
+    {'enter': None, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.FinalState] = \
+    {'enter': None, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.StartUp] = \
     {'enter': UserCode.StartUp_BookMarksStart, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.ReadBookMarks] = \
-    {'enter': None, 'do': UserCode.ReadBookMarks_ReadLine, 'exit': None}
+    {'enter': None, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.Finish] = \
     {'enter': UserCode.Finish_BookMarksDone, 'do': None, 'exit': None}
 
-StateTables.state_function_table[States.AddTopicHeader] = \
-    {'enter': UserCode.AddTopicHeader_AddTopicHeader, 'do': None, 'exit': None}
-
-StateTables.state_function_table[States.AddTopicLink] = \
-    {'enter': UserCode.AddTopicLink_AddTopicLink, 'do': None, 'exit': None}
-
-StateTables.state_function_table[States.StartList] = \
-    {'enter': UserCode.StartList_StartList, 'do': None, 'exit': None}
-
-StateTables.state_function_table[States.EndList] = \
-    {'enter': UserCode.EndList_EndList, 'do': None, 'exit': None}
-
 StateTables.state_function_table[States.AddMeta] = \
-    {'enter': UserCode.AddMeta_AddMeta, 'do': None, 'exit': None}
+    {'enter': UserCode.AddMeta_SetMeta, 'do': None, 'exit': None}
 
 StateTables.state_function_table[States.AddTitle] = \
-    {'enter': UserCode.AddTitle_AddTitle, 'do': None, 'exit': None}
+    {'enter': None, 'do': None, 'exit': None}
 
-StateTables.state_function_table[States.pTag] = \
-    {'enter': UserCode.pTag_Ignore, 'do': None, 'exit': None}
+StateTables.state_function_table[States.AddHeader] = \
+    {'enter': None, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.AddTopic] = \
+    {'enter': None, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.StartList] = \
+    {'enter': UserCode.StartList_StartNewList, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.AddTopicHeader] = \
+    {'enter': None, 'do': None, 'exit': None}
+
+StateTables.state_function_table[States.AddTopicLink] = \
+    {'enter': None, 'do': None, 'exit': None}
 
 # ==============================================================================
 # ===== MAIN STATE CODE TABLES = END = DO NOT MODIFY ===========================
 # ==============================================================================
 
 
-class Heading(object):
-    """ A bookmark heading """
-    def __init__(self, title, parent, add_date, last_modified):
-        """ Constructor """
-        self.title = title
-        self.parent = parent
-        self.add_date = add_date
-        self.last_modified = last_modified
-
-
-class List(object):
-    """ A bookmark list """
-    def __init__(self, parent, level):
-        """ Constructor """
-        self.parent = parent
-        self.level = level
-        self.list = []
-
-
-class Bookmark(object):
-    """ A bookmark """
-    def __init__(self, text, href, add_date, icon=None):
-        self.text = text
-        self.link = href
-        self.add_date = add_date
-        self.icon = icon
-
-
 class MyHTMLParser(HTMLParser, ABC):
-
+    """
+        EvTick = 1
+        EvStart = 2
+        EvFileDone = 3
+        EvStop = 4
+        EvTopicLinkTag = 8
+        EvListEndTag = 10
+    """
     def __init__(self):
         super().__init__()
-        self.open_tag_handlers = {
-            'meta': self.meta_handler,
-            'title': self.title_handler,
-            'h1': self.h1_handler,
-            'h3': self.h3_handler,
-            'dl': self.dl_handler,
-            'dt': self.dt_handler,
-            'p': self.p_handler,
-            'a': self.a_handler,
+        self.open_tag_events = {
+            'meta': Events.EvMetaTag,
+            'title': Events.EvTitleTag,
+            'h1': Events.EvHeaderTag,
+            'h3': Events.EvTopicHeaderTag,
+            'dl': Events.EvListTag,
+            'dt': Events.EvTopicTag,
+            'p': Events.EvPTag,
+            'a': Events.EvATag,
         }
-        self.close_tag_handlers = {
-            'meta': self.meta_handler_close,
-            'title': self.title_handler_close,
-            'h1': self.h1_handler_close,
-            'h3': self.h3_handler_close,
-            'dl': self.dl_handler_close,
-            'dt': self.dt_handler_close,
-            'p': self.p_handler_close,
-            'a': self.a_handler_close,
+        self.close_tag_events = {
+            'meta': Events.EvTick,
+            'title': Events.EvTitleEndTag,
+            'h1': Events.EvHeaderEndTag,
+            'h3': Events.EvTopicHeaderEndTag,
+            'dl': Events.EvTick,
+            'dt': Events.EvTick,
+            'p': Events.EvTick,
+            'a': Events.EvTick,
         }
 
-        self.bookmarks = {}         #: a dictionary of bookmarks that we create from HTML
-        self.parents = []           #: a list of parents
+        # environment initialization is complete so start the parser engine
+        self.parser = UserCode()
+        self.parser.event(Events.EvStart)
+        pass
 
-        self.title = None           #: title of this collection of bookmarks
-        self.title_attrs = None     #: :todo: title attrs (is this really needed)
-        self.html_data = None       #: data for current html item
-        self.meta_attrs = None      #: attrs for meta tag
-        self.meta_data = None       #: :todo: data for meta tag (is this really needed)
-        self.h1_data = None         #: capture H1 data (there is only one)
-        self.h3_data = []           #: capture H3 data (there are many)
-
-        self.list_level = None      #: current list level
-
+    # =================================================
+    # HTML Parser Base Class Methods
+    # =================================================
     def handle_starttag(self, tag, attrs):
-        """ Handle start tags
+        """ ABC: Handle start tags
 
             :param tag: html tag being processed
             :param attrs: html attributes associated with tag
         """
-        logger.debug(f'start tag: {tag}')
-        if tag in self.open_tag_handlers:
-            self.open_tag_handlers[tag](attrs)
+        my_logger.debug(f'start tag: {tag}')
+        if tag in self.open_tag_events:
+            self.parser.set_attrs(attrs)
+            self.parser.event(self.open_tag_events[tag])
+            pass
         else:
             msg = f'no handler for tag [{tag}]'
-            logger.error(msg)
+            my_logger.error(msg)
             raise Exception(msg)
 
     def handle_endtag(self, tag):
-        """ Handle end tags """
-        logger.debug(f'end tag: {tag}')
-        if tag in self.close_tag_handlers:
-            self.close_tag_handlers[tag]()
+        """ ABC: Handle end tags """
+        my_logger.debug(f'end tag: {tag}')
+        if tag in self.close_tag_events:
+            self.parser.event(self.close_tag_events[tag])
+            pass
         else:
-            logger.exception(f'no handler for tag {tag}')
+            msg = f'no handler for tag [{tag}]'
+            my_logger.error(msg)
+            raise Exception(msg)
 
     def handle_data(self, data):
-        """ Handle data """
-        self.html_data = data.strip()
-        if self.html_data:
-            logger.info(f'data: {self.html_data}')
-
-    def meta_handler(self, attrs):
-        """ Handle <META> tag """
-        self.meta_attrs = attrs
-        if not self.meta_attrs:
-            return
-        logger.info(f'meta: {self.meta_attrs}')
-
-    def title_handler(self, attrs):
-        """ Handle <TITLE> tag """
-        if not attrs:
-            return
-        logger.info(f'title: {attrs}')
-
-    def a_handler(self, attrs):
-        """ Handle <A> tag """
-        if not attrs:
-            return
-        logger.info(f'a: {attrs}')
-
-    def dl_handler(self, attrs):
-        """ Handle <DL> tag - starts a list """
-        if self.list_level is None:
-            self.list_level = 0
-        else:
-            self.list_level += 1
-        if not attrs:
-            return
-        logger.info(f'dl: {attrs}')
-
-    def dt_handler(self, attrs):
-        """ Handle <DT> tag - adds an entry into current list """
-        if not attrs:
-            return
-        logger.info(f'dt: {attrs}')
-
-    def p_handler(self, attrs):
-        """ Handle <P> tag """
-        if not attrs:
-            return
-        logger.info(f'p: {attrs}')
-
-    def h1_handler(self, attrs):
-        """ Handle <H1> tag """
-        if not attrs:
-            return
-        logger.info(f'h1: {attrs}')
-
-    def h3_handler(self, attrs):
-        """ Handle <H3> tag """
-        self.h3_level += 1
-        if not attrs:
-            return
-        logger.info(f'h3: {attrs}')
-
-    def meta_handler_close(self):
-        """ Handle <META> tag """
-        self.meta_data = self.html_data
-        logger.debug(f'meta: close')
-
-    def title_handler_close(self):
-        """ Handle <TITLE> tag """
-        self.title = self.html_data
-        logger.debug(f'title: {self.title} [close]')
-
-    def a_handler_close(self):
-        """ Handle <A> tag """
-        logger.debug(f'a: close')
-
-    def dt_handler_close(self):
-        """ Handle <DT> tag - adds an entry into current list """
-        logger.debug(f'dt: close')
-
-    def dl_handler_close(self):
-        """ Handle <DL> tag - starts a list """
-        logger.debug(f'dl: close')
-
-    def p_handler_close(self):
-        """ Handle <P> tag """
-        logger.debug(f'p: close')
-
-    def h1_handler_close(self):
-        """ Handle <H1> tag """
-        self.h1_data = self.html_data
-        logger.debug(f'h1: close')
-
-    def h3_handler_close(self):
-        """ Handle <H3> tag """
-        self.h3_data = self.html_data
-        logger.debug(f'h3: close')
+        """ ABC: Handle data """
+        self.parser.set_html_data(data)
+        pass
 
 
-def main():
+if __name__ == '__main__':
+
     parser = MyHTMLParser()
     try:
         with open(r'bookmarks_10_5_19.html', mode='r', encoding='utf-8') as html:
@@ -535,9 +441,4 @@ def main():
     except Exception as e:
         print(f'Exception reading file: {e}')
     finally:
-        fh.doRollover()
-
-
-if __name__ == '__main__':
-
-    main()
+        logger.rollover()

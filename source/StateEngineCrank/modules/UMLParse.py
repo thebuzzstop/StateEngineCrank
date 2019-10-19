@@ -222,7 +222,11 @@ class UML(modules.Singleton.Singleton):
         self.do_func_states = {}    #: dictionary of do function states
         self.exit_func_states = {}  #: dictionary of exit function states
 
-        self.states = []            #: list of states, associated with enter/do/exit
+        #: list of states, associated with enter/do/exit
+        self.states = [
+            'InitialState',         # state associated with state machine entry
+            'FinalState'            # state associated with state machine exit
+        ]
         self.enters = {}            #: dictionary of functions, enter
         self.dos = {}               #: dictionary of functions, do
         self.exits = {}             #: dictionary of functions, exit
