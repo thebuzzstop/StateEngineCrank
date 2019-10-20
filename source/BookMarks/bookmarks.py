@@ -21,9 +21,13 @@ The BookMarks module processes bookmarks exported from Google Chrome.
     ReadBookMarks --> AddTopic : EvTopicTag
     ReadBookMarks --> ReadBookMarks : EvPTag
     ReadBookMarks --> StartList : EvListTag
+    ReadBookMarks --> EndList : EvEndListTag
 
     StartList --> ReadBookMarks : EvTick
     StartList : enter : StartNewList()
+
+    EndList --> ReadBookMarks : EvTick
+    EndList : enter : EndCurrentList()
 
     AddTopic --> AddTopicHeader : EvTopicHeaderTag
     AddTopic --> AddTopicLink : EvATag
@@ -60,9 +64,9 @@ import os
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
-import logger
-import structures
+from structures import BookMarks
 
+import logger
 logger = logger.Logger(__name__)
 my_logger = logger.logger
 
@@ -82,8 +86,9 @@ class States(Enum):
     AddHeader = 8
     AddTopic = 9
     StartList = 10
-    AddTopicHeader = 11
-    AddTopicLink = 12
+    EndList = 11
+    AddTopicHeader = 12
+    AddTopicLink = 13
 
 
 class Events(Enum):
@@ -97,13 +102,14 @@ class Events(Enum):
     EvTopicTag = 8
     EvPTag = 9
     EvListTag = 10
-    EvTopicHeaderTag = 11
-    EvATag = 12
-    EvTopicHeaderEndTag = 13
-    EvData = 14
-    EvAEndTag = 15
-    EvTitleEndTag = 16
-    EvHeaderEndTag = 17
+    EvEndListTag = 11
+    EvTopicHeaderTag = 12
+    EvATag = 13
+    EvTopicHeaderEndTag = 14
+    EvData = 15
+    EvAEndTag = 16
+    EvTitleEndTag = 17
+    EvHeaderEndTag = 18
 
 
 class StateTables(object):
@@ -126,18 +132,15 @@ class UserCode(StateMachine):
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.bookmarks = {}         #: a dictionary of bookmarks that we create from HTML
-        self.parents = []           #: a list of parents
-
-        self.title = None           #: title of this collection of bookmarks
-        self.title_attrs = None     #: :todo: title attrs (is this really needed)
-        self.html_data = None       #: data for current html item
-        self.meta_attrs = None      #: attrs for meta tag
-        self.meta_data = None       #: :todo: data for meta tag (is this really needed)
-        self.h1_data = None         #: capture H1 data (there is only one)
-        self.h3_data = []           #: capture H3 data (there are many)
-        self.last_attrs = None      #: 'attrs' associated with most recent tag
-        self.list_level = None      #: current list level
+        self.bookmarks = BookMarks()    #: bookmarks data collection
+        self.title = None               #: title of this collection of bookmarks
+        self.title_attrs = None         #: :todo: title attrs (is this really needed)
+        self.header = None              #: header of this collection of bookmarks
+        self.html_data = None           #: data for current html item
+        self.meta_attrs = None          #: attrs for meta tag
+        self.meta_data = None           #: :todo: data for meta tag (is this really needed)
+        self.last_attrs = None          #: 'attrs' associated with most recent tag
+        self.list_level = None          #: current list level
 
         my_logger.debug('UserCode: INIT done')
 
@@ -188,12 +191,16 @@ class UserCode(StateMachine):
         """ State transition processing for *SetHeader*
 
         State machine state transition processing for *SetHeader*.
-        This function is called whenever the state transition *SetHeader* is taken.
+        This function is called when the state transition *SetHeader* is taken.
 
-        :todo: FIXME
+        HTML *H1* tags are used to declare *TheHeader*.
+        There is only one (1) HTML *H1* tag in a BookMark file.
         """
-        self.h1_data = self.html_data
-        my_logger.debug(f'SetHeader: {self.h1_data}')
+        if self.header:
+            raise Exception(f'H1_DATA already defined: {self.header}/{self.html_data}')
+        self.header = self.html_data
+        my_logger.debug(f'HEADER: {self.header}')
+        self.bookmarks.add_heading(self.header)
 
     # =========================================================
     def SetTitle(self):
@@ -203,7 +210,7 @@ class UserCode(StateMachine):
         This function is called whenever the state transition *SetTitle* is taken.
         """
         if self.title:
-            raise Exception(f'Title already set: {self.title}/{self.html_data}')
+            raise Exception(f'TITLE already defined: {self.title}/{self.html_data}')
         self.title = self.html_data
         my_logger.info(f'TITLE: {self.title}')
 
@@ -213,9 +220,11 @@ class UserCode(StateMachine):
 
         State machine state transition processing for *SetTopicHeader*.
         This function is called whenever the state transition *SetTopicHeader* is taken.
+
+        The HTML *H3* tag handler calls this function.
         """
-        self.h3_data.append(self.html_data)
-        my_logger.info(f'TopicHeader: {self.html_data}')
+        self.bookmarks.add_heading(self.html_data)
+        my_logger.info(f'HEADING: {self.html_data}')
 
     # =========================================================
     def SetTopicLink(self):
@@ -232,10 +241,19 @@ class UserCode(StateMachine):
 
         State machine enter function processing for the *StartList* state.
         This function is called when the *StartList* state is entered.
-
-        :todo: FIXME
         """
-        return
+        self.bookmarks.start_list()
+        self.event(Events.EvTick)
+
+    # ===========================================================================
+    def EndList_EndCurrentList(self):
+        """ Enter function processing for *EndList* state.
+
+        State machine enter function processing for the *EndList* state.
+        This function is called when the *EndList* state is entered.
+        """
+        self.bookmarks.end_list()
+        self.event(Events.EvTick)
 
     # ===========================================================================
     def StartUp_BookMarksStart(self):
@@ -243,10 +261,9 @@ class UserCode(StateMachine):
 
         State machine enter function processing for the *StartUp* state.
         This function is called when the *StartUp* state is entered.
-
-        :todo: FIXME
+        We stay in this state until *EvStart* is received.
         """
-        return
+        pass
 
 # ==============================================================================
 # ===== USER STATE CODE = END ==================================================
@@ -277,6 +294,7 @@ StateTables.state_transition_table[States.ReadBookMarks] = {
     Events.EvTopicTag: {'state2': States.AddTopic, 'guard': None, 'transition': None},
     Events.EvPTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
     Events.EvListTag: {'state2': States.StartList, 'guard': None, 'transition': None},
+    Events.EvEndListTag: {'state2': States.EndList, 'guard': None, 'transition': None},
 }
 
 StateTables.state_transition_table[States.Finish] = {
@@ -303,6 +321,10 @@ StateTables.state_transition_table[States.AddTopic] = {
 }
 
 StateTables.state_transition_table[States.StartList] = {
+    Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
+}
+
+StateTables.state_transition_table[States.EndList] = {
     Events.EvTick: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
 }
 
@@ -346,6 +368,9 @@ StateTables.state_function_table[States.AddTopic] = \
 StateTables.state_function_table[States.StartList] = \
     {'enter': UserCode.StartList_StartNewList, 'do': None, 'exit': None}
 
+StateTables.state_function_table[States.EndList] = \
+    {'enter': UserCode.EndList_EndCurrentList, 'do': None, 'exit': None}
+
 StateTables.state_function_table[States.AddTopicHeader] = \
     {'enter': None, 'do': None, 'exit': None}
 
@@ -383,10 +408,10 @@ class MyHTMLParser(HTMLParser, ABC):
             'title': Events.EvTitleEndTag,
             'h1': Events.EvHeaderEndTag,
             'h3': Events.EvTopicHeaderEndTag,
-            'dl': Events.EvTick,
+            'dl': Events.EvEndListTag,
             'dt': Events.EvTick,
             'p': Events.EvTick,
-            'a': Events.EvTick,
+            'a': Events.EvAEndTag,
         }
 
         # environment initialization is complete so start the parser engine
