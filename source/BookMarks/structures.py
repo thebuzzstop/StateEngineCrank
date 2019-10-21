@@ -29,23 +29,25 @@ class Bookmark(object):
         self.icon = icon
 
 
-class Heading(object):
-    """ A bookmark heading """
-    def __init__(self, level, heading, add_date, last_modified):
-        """ Constructor """
-        self.level = level
-        self.heading = heading
-        self.add_date = add_date
-        self.last_modified = last_modified
-
-
 class List(object):
     """ A bookmark list """
-    def __init__(self, level, heading):
+    def __init__(self, level, heading_label):
         """ Constructor """
         self.level = level
-        self.heading = heading
+        self.heading_label = heading_label
         self.list = []
+
+
+class Heading(object):
+    """ A bookmark heading """
+    def __init__(self, level, label, add_date, last_modified):
+        """ Constructor """
+        self.level = level
+        self.label = label
+        self.add_date = add_date
+        self.last_modified = last_modified
+        #: list of topic links and other sub-headings
+        self.list = None
 
 
 class BookMarks(object):
@@ -57,10 +59,9 @@ class BookMarks(object):
 
         self.level = 0              #: Current level
         self.heading = None         #: Heading for current level
-        self.current_list = None    #: current list being created
 
+        self.heading_labels = []    #: Heading labels, used in post-processing
         self.headings_dict = {}     #: Headings: Dict
-        self.headings_list = []     #: Headings: List
         self.headings_stack = []    #: Headings: Stack (first-in, last-out)
         self.bookmarks = {}         #: Dictionary of bookmarks
 
@@ -70,22 +71,27 @@ class BookMarks(object):
             The last header passed to us will be used as the heading
             :raises: DuplicateKey
         """
+        if not self.heading:
+            raise Exception("No heading for list")
+        if self.heading.list:
+            raise Exception("List already active")
+
         self.level += 1
-        self.debug(f'LIST: {self.level} {self.heading}')
+        self.debug(f'LIST: {self.level} {self.heading.label}')
 
         # keep a list of all headings passed to us
-        if self.heading not in self.headings_list:
-            self.headings_list.append(self.heading)
+        if self.heading not in self.heading_labels:
+            self.heading_labels.append(self.heading.label)
 
         # create a key for this heading
-        key = self.bookmarks_key(self.level, self.heading)
+        key = self.bookmarks_key(self.level, self.heading.label)
         if key in self.headings_dict:
             raise Exception(f'DUPLICATE KEY: {key}')
 
         # create a new list, add it to our dictionary and push it onto the stack
-        self.current_list = List(self.level, self.heading)
-        self.headings_dict[key] = self.current_list
-        self.headings_stack.append(self.current_list)
+        self.heading.list = List(self.level, self.heading.label)
+        self.headings_dict[key] = self.heading.list
+        self.headings_stack.append(self.heading)
 
     # =================================================================
     def end_list(self):
@@ -101,18 +107,23 @@ class BookMarks(object):
         self.headings_stack.pop()
         # new current heading is now the top of the stack
         self.heading = self.headings_stack[-1]
-        self.current_list = self.heading
 
     # =================================================================
-    def add_heading(self, text):
+    def add_heading(self, label):
         """ Add a new heading to the list
-            :param text: Text for the heading
+            :param label: Text for the heading
         """
-        self.debug(f'Heading: {text}')
-        if text not in self.headings_list:
-            self.headings_list.append(text)
-        self.headings_stack.append(text)
-        self.heading = text
+        self.debug(f'Heading: {label}')
+        if label not in self.heading_labels:
+            self.heading_labels.append(label)
+        self.heading = Heading(self.level, label, None, None)
+
+    def set_attrs(self, attrs):
+        """ Set attributes for current list
+
+            :param attrs: Attributes
+        """
+        self.debug(f'Attrs: {attrs}')
 
     # =================================================================
     def add_bookmark(self, text):
@@ -124,13 +135,13 @@ class BookMarks(object):
 
     # =================================================================
     @staticmethod
-    def bookmarks_key(level, heading):
+    def bookmarks_key(level, label):
         """ Make a bookmarks key given a level and a heading
 
             :param level: Current level
-            :param heading: Text string for heading
+            :param label: Text string for heading
         """
-        return f'{level:02d}-{heading}'
+        return f'{level:02d}-{label}'
 
     # =================================================================
     def debug(self, text):

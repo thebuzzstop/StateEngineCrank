@@ -31,6 +31,7 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 
     AddTopic --> AddTopicHeader : EvTopicHeaderTag
     AddTopic --> AddTopicLink : EvATag
+    AddTopic --> AddTopic : EvAttr / SetTopicAttr()
 
     AddTopicHeader --> ReadBookMarks : EvTopicHeaderEndTag
     AddTopicHeader --> AddTopicHeader : EvData / SetTopicHeader()
@@ -57,8 +58,6 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 from abc import ABC
 from html.parser import HTMLParser
 from enum import Enum
-import sys
-import os
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
@@ -107,9 +106,10 @@ class Events(Enum):
     EvATag = 13
     EvTopicHeaderEndTag = 14
     EvData = 15
-    EvAEndTag = 16
-    EvTitleEndTag = 17
-    EvHeaderEndTag = 18
+    EvAttr = 16
+    EvAEndTag = 17
+    EvTitleEndTag = 18
+    EvHeaderEndTag = 19
 
 
 class StateTables(object):
@@ -151,6 +151,7 @@ class UserCode(StateMachine):
         self.last_attrs = attrs
         if self.last_attrs:
             my_logger.info(f'attrs: {self.last_attrs}')
+            self.event(Events.EvAttr)
 
     def set_html_data(self, data):
         """ Function to set 'html data' associated with most recent 'tag'
@@ -180,11 +181,8 @@ class UserCode(StateMachine):
 
         State machine enter function processing for the *Finish* state.
         This function is called when the *Finish* state is entered.
-
-        :todo: FIXME
         """
         my_logger.debug('BookMarksDone')
-        return
 
     # =========================================================
     def SetHeader(self):
@@ -223,8 +221,30 @@ class UserCode(StateMachine):
 
         The HTML *H3* tag handler calls this function.
         """
-        self.bookmarks.add_heading(self.html_data)
         my_logger.info(f'HEADING: {self.html_data}')
+        self.bookmarks.add_heading(self.html_data)
+
+    # =========================================================
+    def SetHeaderAttr(self):
+        """ State transition processing for *SetHeaderAttr*
+
+        State machine state transition processing for *SetHeaderAttr*.
+        This function is called whenever the state transition *SetHeaderAttr* is taken.
+        """
+        my_logger.info(f'ATTR: {self.last_attrs}')
+        self.bookmarks.set_attrs(self.last_attrs)
+        self.last_attrs = None
+
+    # =========================================================
+    def SetTopicAttr(self):
+        """ State transition processing for *SetTopicAttr*
+
+        State machine state transition processing for *SetTopicAttr*.
+        This function is called whenever the state transition *SetTopicAttr* is taken.
+
+        :todo: FIXME
+        """
+        return
 
     # =========================================================
     def SetTopicLink(self):
@@ -313,6 +333,7 @@ StateTables.state_transition_table[States.AddTitle] = {
 StateTables.state_transition_table[States.AddHeader] = {
     Events.EvHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
     Events.EvData: {'state2': States.AddHeader, 'guard': None, 'transition': UserCode.SetHeader},
+    Events.EvAttr: {'state2': States.AddHeader, 'guard': None, 'transition': UserCode.SetHeaderAttr},
 }
 
 StateTables.state_transition_table[States.AddTopic] = {
@@ -331,6 +352,7 @@ StateTables.state_transition_table[States.EndList] = {
 StateTables.state_transition_table[States.AddTopicHeader] = {
     Events.EvTopicHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
     Events.EvData: {'state2': States.AddTopicHeader, 'guard': None, 'transition': UserCode.SetTopicHeader},
+    Events.EvAttr: {'state2': States.AddTopicHeader, 'guard': None, 'transition': UserCode.SetTopicAttr},
 }
 
 StateTables.state_transition_table[States.AddTopicLink] = {
