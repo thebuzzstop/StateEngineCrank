@@ -22,11 +22,13 @@ my_logger = logger.logger
 
 class Bookmark(object):
     """ A bookmark """
-    def __init__(self, text, href, add_date, icon=None):
-        self.text = text
-        self.link = href
-        self.add_date = add_date
-        self.icon = icon
+    def __init__(self, label, href, add_date, icon=None):
+        self.label = label
+        self.attrs = {
+            'href': href,
+            'add_date': add_date,
+            'icon': icon
+        }
 
 
 class List(object):
@@ -40,14 +42,30 @@ class List(object):
 
 class Heading(object):
     """ A bookmark heading """
+
     def __init__(self, level, label, add_date, last_modified):
         """ Constructor """
         self.level = level
         self.label = label
-        self.add_date = add_date
-        self.last_modified = last_modified
+        self.attrs = {
+            'add_date': add_date,
+            'last_modified': last_modified,
+            'personal_toolbar_folder': None
+        }
         #: list of topic links and other sub-headings
         self.list = None
+
+    def set_attrs(self, attrs):
+        """ Set attributes for current heading
+            :param attrs: List of attribute tuples
+        """
+        # process all attribute tuples list
+        for attr, value in attrs:
+            if attr not in self.attrs:
+                raise Exception(f'Unknown attribute: {attr}/{value}')
+            if self.attrs[attr]:
+                raise Exception(f'Attribute already set: {attr}/{value}/{self.attrs[attr]}')
+            self.attrs[attr] = value
 
 
 class BookMarks(object):
@@ -101,7 +119,7 @@ class BookMarks(object):
         """
         if not self.level:
             raise Exception("NoList")
-        self.debug(f'ListEnd: {self.level}')
+        self.debug(f'LISTEND: {self.level}')
         self.level -= 1
         # pop the current heading off the stack
         self.headings_stack.pop()
@@ -113,7 +131,7 @@ class BookMarks(object):
         """ Add a new heading to the list
             :param label: Text for the heading
         """
-        self.debug(f'Heading: {label}')
+        self.debug(f'HEADING: {label}')
         if label not in self.heading_labels:
             self.heading_labels.append(label)
         self.heading = Heading(self.level, label, None, None)
@@ -123,7 +141,8 @@ class BookMarks(object):
 
             :param attrs: Attributes
         """
-        self.debug(f'Attrs: {attrs}')
+        self.debug(f'ATTRS: {attrs}')
+        self.heading.set_attrs(attrs)
 
     # =================================================================
     def add_bookmark(self, text):

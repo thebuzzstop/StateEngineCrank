@@ -104,9 +104,9 @@ class Events(Enum):
     EvEndListTag = 11
     EvTopicHeaderTag = 12
     EvATag = 13
-    EvTopicHeaderEndTag = 14
-    EvData = 15
-    EvAttr = 16
+    EvAttr = 14
+    EvTopicHeaderEndTag = 15
+    EvData = 16
     EvAEndTag = 17
     EvTitleEndTag = 18
     EvHeaderEndTag = 19
@@ -225,26 +225,15 @@ class UserCode(StateMachine):
         self.bookmarks.add_heading(self.html_data)
 
     # =========================================================
-    def SetHeaderAttr(self):
-        """ State transition processing for *SetHeaderAttr*
-
-        State machine state transition processing for *SetHeaderAttr*.
-        This function is called whenever the state transition *SetHeaderAttr* is taken.
-        """
-        my_logger.info(f'ATTR: {self.last_attrs}')
-        self.bookmarks.set_attrs(self.last_attrs)
-        self.last_attrs = None
-
-    # =========================================================
     def SetTopicAttr(self):
         """ State transition processing for *SetTopicAttr*
 
         State machine state transition processing for *SetTopicAttr*.
         This function is called whenever the state transition *SetTopicAttr* is taken.
-
-        :todo: FIXME
         """
-        return
+        my_logger.info(f'ATTR: {self.last_attrs}')
+        self.bookmarks.set_attrs(self.last_attrs)
+        self.last_attrs = None
 
     # =========================================================
     def SetTopicLink(self):
@@ -333,12 +322,12 @@ StateTables.state_transition_table[States.AddTitle] = {
 StateTables.state_transition_table[States.AddHeader] = {
     Events.EvHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
     Events.EvData: {'state2': States.AddHeader, 'guard': None, 'transition': UserCode.SetHeader},
-    Events.EvAttr: {'state2': States.AddHeader, 'guard': None, 'transition': UserCode.SetHeaderAttr},
 }
 
 StateTables.state_transition_table[States.AddTopic] = {
     Events.EvTopicHeaderTag: {'state2': States.AddTopicHeader, 'guard': None, 'transition': None},
     Events.EvATag: {'state2': States.AddTopicLink, 'guard': None, 'transition': None},
+    Events.EvAttr: {'state2': States.AddTopic, 'guard': None, 'transition': UserCode.SetTopicAttr},
 }
 
 StateTables.state_transition_table[States.StartList] = {
@@ -352,7 +341,6 @@ StateTables.state_transition_table[States.EndList] = {
 StateTables.state_transition_table[States.AddTopicHeader] = {
     Events.EvTopicHeaderEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
     Events.EvData: {'state2': States.AddTopicHeader, 'guard': None, 'transition': UserCode.SetTopicHeader},
-    Events.EvAttr: {'state2': States.AddTopicHeader, 'guard': None, 'transition': UserCode.SetTopicAttr},
 }
 
 StateTables.state_transition_table[States.AddTopicLink] = {
