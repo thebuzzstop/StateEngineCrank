@@ -122,9 +122,13 @@ class BookMarks(object):
         self.debug(f'LISTEND: {self.level}')
         self.level -= 1
         # pop the current heading off the stack
-        self.headings_stack.pop()
+        if self.headings_stack:
+            self.headings_stack.pop()
         # new current heading is now the top of the stack
-        self.heading = self.headings_stack[-1]
+        if self.headings_stack:
+            self.heading = self.headings_stack[-1]
+        else:
+            self.heading = None
 
     # =================================================================
     def add_heading(self, label):

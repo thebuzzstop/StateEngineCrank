@@ -440,8 +440,8 @@ class MyHTMLParser(HTMLParser, ABC):
         """
         my_logger.debug(f'start tag: {tag}')
         if tag in self.open_tag_events:
-            self.parser.set_attrs(attrs)
             self.parser.event(self.open_tag_events[tag])
+            self.parser.set_attrs(attrs)
             pass
         else:
             msg = f'no handler for tag [{tag}]'
@@ -469,11 +469,9 @@ if __name__ == '__main__':
 
     parser = MyHTMLParser()
     try:
-        with open(r'bookmarks_10_5_19.html', mode='r', encoding='utf-8') as html:
+        with open(r'Bookmarks/bookmarks_10_5_19.html', mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
         pass
     except Exception as e:
         print(f'Exception reading file: {e}')
-    finally:
-        logger.rollover()
