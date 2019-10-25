@@ -20,7 +20,7 @@ logger = logger.Logger(__name__)
 my_logger = logger.logger
 
 
-class Bookmark(object):
+class BookMark(object):
     """ A bookmark """
     def __init__(self, label, href, add_date, icon=None):
         self.label = label
@@ -82,6 +82,8 @@ class BookMarks(object):
         self.headings_dict = {}     #: Headings: Dict
         self.headings_stack = []    #: Headings: Stack (first-in, last-out)
         self.bookmarks = {}         #: Dictionary of bookmarks
+
+        self.bookmark = None
 
     # =================================================================
     def start_list(self):
@@ -149,12 +151,23 @@ class BookMarks(object):
         self.heading.set_attrs(attrs)
 
     # =================================================================
-    def add_bookmark(self, text):
-        """ Add a new bookmark to the dictionary
+    def set_bookmark_data(self, data):
+        """ Set data for current bookmark """
+        self.debug(f'BookMark: {data}')
+        self.bookmark.label = data
 
-            :param text: Text for the bookmark
-        """
-        self.debug(f'BookMark: {text}')
+    # =================================================================
+    def new_bookmark(self):
+        """ Add a new bookmark to the dictionary """
+        if self.bookmark:
+            raise Exception(f'Overwriting bookmark {self.bookmark}')
+        self.bookmark = BookMark(None, None, None, None)
+        self.debug(f'BookMark: {self.bookmark}')
+
+    # =================================================================
+    def add_bookmark(self):
+        """ Add a new bookmark to the dictionary """
+        self.debug(f'BookMark: bookmark')
 
     # =================================================================
     @staticmethod

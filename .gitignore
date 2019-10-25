@@ -6,6 +6,9 @@
 **.c.0??
 **.py.0??
 
+# BookMark logfiles
+source/logs/*.log.*
+
 # CAN DBC related secondary files
 CanBus/data/*.bak
 CanBus/data/*.dat

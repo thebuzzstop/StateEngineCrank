@@ -30,14 +30,14 @@ The BookMarks module processes bookmarks exported from Google Chrome.
     EndList : enter : EndCurrentList()
 
     AddTopic --> AddTopicHeader : EvTopicHeaderTag
-    AddTopic --> AddTopicLink : EvATag
+    AddTopic --> AddTopicLink : EvATag / NewBookMark()
     AddTopic --> AddTopic : EvAttr / SetTopicAttr()
 
     AddTopicHeader --> ReadBookMarks : EvTopicHeaderEndTag
     AddTopicHeader --> AddTopicHeader : EvData / SetTopicHeader()
 
-    AddTopicLink --> ReadBookMarks : EvAEndTag
-    AddTopicLink --> AddTopicLink : EvData / SetTopicLink()
+    AddTopicLink --> ReadBookMarks : EvAEndTag / AddBookMark()
+    AddTopicLink --> AddTopicLink : EvData / SetBookMarkData()
 
     AddMeta --> ReadBookMarks : EvTick
     AddMeta : enter : SetMeta()
@@ -137,9 +137,9 @@ class UserCode(StateMachine):
         self.title_attrs = None         #: :todo: title attrs (is this really needed)
         self.header = None              #: header of this collection of bookmarks
         self.html_data = None           #: data for current html item
+        self.html_attrs = None          #: 'attrs' associated with most recent tag
         self.meta_attrs = None          #: attrs for meta tag
         self.meta_data = None           #: :todo: data for meta tag (is this really needed)
-        self.last_attrs = None          #: 'attrs' associated with most recent tag
         self.list_level = None          #: current list level
 
         my_logger.debug('UserCode: INIT done')
@@ -148,9 +148,9 @@ class UserCode(StateMachine):
         """ Function to set 'attrs' associated with most recent 'tag'
             :param attrs: Most recent attributes
         """
-        self.last_attrs = attrs
-        if self.last_attrs:
-            my_logger.info(f'attrs: {self.last_attrs}')
+        self.html_attrs = attrs
+        if self.html_attrs:
+            my_logger.info(f'attrs: {self.html_attrs}')
             self.event(Events.EvAttr)
 
     def set_html_data(self, data):
@@ -170,8 +170,8 @@ class UserCode(StateMachine):
         This function is called when the *AddMeta* state is entered.
         """
         if self.meta_attrs:
-            raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.last_attrs}')
-        self.meta_attrs = self.last_attrs
+            raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
+        self.meta_attrs = self.html_attrs
         my_logger.info(f'META: {self.meta_attrs}')
         self.event(Events.EvTick)
 
@@ -231,18 +231,9 @@ class UserCode(StateMachine):
         State machine state transition processing for *SetTopicAttr*.
         This function is called whenever the state transition *SetTopicAttr* is taken.
         """
-        my_logger.info(f'ATTR: {self.last_attrs}')
-        self.bookmarks.set_attrs(self.last_attrs)
-        self.last_attrs = None
-
-    # =========================================================
-    def SetTopicLink(self):
-        """ State transition processing for *SetTopicLink*
-
-        State machine state transition processing for *SetTopicLink*.
-        This function is called whenever the state transition *SetTopicLink* is taken.
-        """
-        my_logger.info(f'TopicLink: {self.html_data}')
+        my_logger.info(f'ATTR: {self.html_attrs}')
+        self.bookmarks.set_attrs(self.html_attrs)
+        self.html_attrs = None
 
     # ===========================================================================
     def StartList_StartNewList(self):
@@ -273,6 +264,33 @@ class UserCode(StateMachine):
         We stay in this state until *EvStart* is received.
         """
         pass
+
+    # =========================================================
+    def NewBookMark(self):
+        """ State transition processing for *NewBookMark*
+
+        State machine state transition processing for *NewBookMark*.
+        This function is called whenever the state transition *NewBookMark* is taken.
+        """
+        self.bookmarks.new_bookmark()
+
+    # =========================================================
+    def AddBookMark(self):
+        """ State transition processing for *AddBookMark*
+
+        State machine state transition processing for *AddBookMark*.
+        This function is called whenever the state transition *AddBookMark* is taken.
+        """
+        self.bookmarks.add_bookmark()
+
+    # =========================================================
+    def SetBookMarkData(self):
+        """ State transition processing for *SetBookMarkData*
+
+        State machine state transition processing for *SetBookMarkData*.
+        This function is called whenever the state transition *SetBookMarkData* is taken.
+        """
+        self.bookmarks.set_bookmark_data(self.html_data)
 
 # ==============================================================================
 # ===== USER STATE CODE = END ==================================================
@@ -326,7 +344,7 @@ StateTables.state_transition_table[States.AddHeader] = {
 
 StateTables.state_transition_table[States.AddTopic] = {
     Events.EvTopicHeaderTag: {'state2': States.AddTopicHeader, 'guard': None, 'transition': None},
-    Events.EvATag: {'state2': States.AddTopicLink, 'guard': None, 'transition': None},
+    Events.EvATag: {'state2': States.AddTopicLink, 'guard': None, 'transition': UserCode.NewBookMark},
     Events.EvAttr: {'state2': States.AddTopic, 'guard': None, 'transition': UserCode.SetTopicAttr},
 }
 
@@ -344,8 +362,8 @@ StateTables.state_transition_table[States.AddTopicHeader] = {
 }
 
 StateTables.state_transition_table[States.AddTopicLink] = {
-    Events.EvAEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': None},
-    Events.EvData: {'state2': States.AddTopicLink, 'guard': None, 'transition': UserCode.SetTopicLink},
+    Events.EvAEndTag: {'state2': States.ReadBookMarks, 'guard': None, 'transition': UserCode.AddBookMark},
+    Events.EvData: {'state2': States.AddTopicLink, 'guard': None, 'transition': UserCode.SetBookMarkData},
 }
 
 StateTables.state_function_table[States.InitialState] = \
