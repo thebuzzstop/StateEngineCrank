@@ -31,7 +31,6 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 
     AddTopic --> AddTopicHeader : EvTopicHeaderTag
     AddTopic --> AddTopicLink : EvATag / NewBookMark()
-    AddTopic --> AddTopic : EvAttr / SetTopicAttr()
 
     AddTopicHeader --> ReadBookMarks : EvTopicHeaderEndTag
     AddTopicHeader --> AddTopicHeader : EvData / SetTopicHeader()
@@ -104,12 +103,11 @@ class Events(Enum):
     EvEndListTag = 11
     EvTopicHeaderTag = 12
     EvATag = 13
-    EvAttr = 14
-    EvTopicHeaderEndTag = 15
-    EvData = 16
-    EvAEndTag = 17
-    EvTitleEndTag = 18
-    EvHeaderEndTag = 19
+    EvTopicHeaderEndTag = 14
+    EvData = 15
+    EvAEndTag = 16
+    EvTitleEndTag = 17
+    EvHeaderEndTag = 18
 
 
 class StateTables(object):
@@ -151,7 +149,7 @@ class UserCode(StateMachine):
         self.html_attrs = attrs
         if self.html_attrs:
             my_logger.info(f'attrs: {self.html_attrs}')
-            self.event(Events.EvAttr)
+            # self.event(Events.EvAttr)
 
     def set_html_data(self, data):
         """ Function to set 'html data' associated with most recent 'tag'
@@ -224,17 +222,6 @@ class UserCode(StateMachine):
         my_logger.info(f'HEADING: {self.html_data}')
         self.bookmarks.add_heading(self.html_data)
 
-    # =========================================================
-    def SetTopicAttr(self):
-        """ State transition processing for *SetTopicAttr*
-
-        State machine state transition processing for *SetTopicAttr*.
-        This function is called whenever the state transition *SetTopicAttr* is taken.
-        """
-        my_logger.info(f'ATTR: {self.html_attrs}')
-        self.bookmarks.set_attrs(self.html_attrs)
-        self.html_attrs = None
-
     # ===========================================================================
     def StartList_StartNewList(self):
         """ Enter function processing for *StartList* state.
@@ -281,7 +268,7 @@ class UserCode(StateMachine):
         State machine state transition processing for *AddBookMark*.
         This function is called whenever the state transition *AddBookMark* is taken.
         """
-        self.bookmarks.add_bookmark()
+        self.bookmarks.add_bookmark(self.html_data, self.html_attrs)
 
     # =========================================================
     def SetBookMarkData(self):
@@ -345,7 +332,6 @@ StateTables.state_transition_table[States.AddHeader] = {
 StateTables.state_transition_table[States.AddTopic] = {
     Events.EvTopicHeaderTag: {'state2': States.AddTopicHeader, 'guard': None, 'transition': None},
     Events.EvATag: {'state2': States.AddTopicLink, 'guard': None, 'transition': UserCode.NewBookMark},
-    Events.EvAttr: {'state2': States.AddTopic, 'guard': None, 'transition': UserCode.SetTopicAttr},
 }
 
 StateTables.state_transition_table[States.StartList] = {

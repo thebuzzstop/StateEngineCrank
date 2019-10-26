@@ -27,7 +27,8 @@ class BookMark(object):
         self.attrs = {
             'href': href,
             'add_date': add_date,
-            'icon': icon
+            'icon': icon,
+            'attrs': []
         }
 
 
@@ -54,18 +55,6 @@ class Heading(object):
         }
         #: list of topic links and other sub-headings
         self.list = None
-
-    def set_attrs(self, attrs):
-        """ Set attributes for current heading
-            :param attrs: List of attribute tuples
-        """
-        # process all attribute tuples list
-        for attr, value in attrs:
-            if attr not in self.attrs:
-                raise Exception(f'Unknown attribute: {attr}/{value}')
-            if self.attrs[attr]:
-                raise Exception(f'Attribute already set: {attr}/{value}/{self.attrs[attr]}')
-            self.attrs[attr] = value
 
 
 class BookMarks(object):
@@ -100,7 +89,7 @@ class BookMarks(object):
         self.debug(f'LIST: {self.level} {self.heading.label}')
 
         # keep a list of all headings passed to us
-        if self.heading not in self.heading_labels:
+        if self.heading.label not in self.heading_labels:
             self.heading_labels.append(self.heading.label)
 
         # create a key for this heading
@@ -142,14 +131,6 @@ class BookMarks(object):
             self.heading_labels.append(label)
         self.heading = Heading(self.level, label, None, None)
 
-    def set_attrs(self, attrs):
-        """ Set attributes for current list
-
-            :param attrs: Attributes
-        """
-        self.debug(f'ATTRS: {attrs}')
-        self.heading.set_attrs(attrs)
-
     # =================================================================
     def set_bookmark_data(self, data):
         """ Set data for current bookmark """
@@ -165,9 +146,30 @@ class BookMarks(object):
         self.debug(f'BookMark: {self.bookmark}')
 
     # =================================================================
-    def add_bookmark(self):
-        """ Add a new bookmark to the dictionary """
-        self.debug(f'BookMark: bookmark')
+    def add_bookmark(self, label, attrs):
+        """ Add a new bookmark to the dictionary
+
+            :param label: Bookmark label
+            :param attrs: Bookmark attrs
+        """
+        self.debug(f'BookMark: {label}:{attrs}')
+        self.bookmark.label = label
+        # process all attributes passed to us
+        for attr, value in attrs:
+            if attr in self.bookmark.attrs:
+                self.bookmark.attrs[attr] = value
+            else:
+                self.bookmark.attrs['attrs'].append((attr, value))
+
+        # add new bookmark to main bookmark dictionary
+        # if the key already exists then convert the entry to a list
+        key = self.bookmarks_key(self.level, label)
+        if key not in self.bookmarks:
+            self.bookmarks[key] = [self.bookmark]
+        else:
+            self.bookmarks[key].append(self.bookmark)
+        # zap the bookmark for logic error detection
+        self.bookmark = None
 
     # =================================================================
     @staticmethod
