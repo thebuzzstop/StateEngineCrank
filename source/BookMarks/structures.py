@@ -60,6 +60,12 @@ class Heading(object):
 class BookMarks(object):
     """ Class implementing a multi-level list """
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
     # =================================================================
     def __init__(self):
         my_logger.debug('INIT')
