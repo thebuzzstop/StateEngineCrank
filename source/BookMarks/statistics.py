@@ -21,8 +21,6 @@ my_logger = logger.logger
 
 class Statistics(object):
 
-    DOMAIN_RE = re.compile(r"([a-zA-Z0-9]+\.[a-zA-Z0-9]+)$")
-
     def __init__(self, bookmarks, headings_labels, headings_dict):
         """ Statistics constructor """
         self.bookmarks = bookmarks
@@ -39,6 +37,5 @@ class Statistics(object):
                     self.schemes.append(url_parts.scheme)
                 if url_parts.hostname and not url_parts.hostname in self.hosts:
                     self.hosts.append(url_parts.hostname)
-                groups = self.DOMAIN_RE
-                domain = self.DOMAIN_RE.match(url_parts.hostname)
-                pass
+                    parts = url_parts.hostname.split('.')
+                    pass
