@@ -25,17 +25,58 @@ class Statistics(object):
         """ Statistics constructor """
         self.bookmarks = bookmarks
         self.schemes = []
-        self.hosts = []
-        self.domains = []
-        self.subdomains = []
+        self.hostnames = []
+        self.domains = {}
+        self.subdomains = {}
+        self.domain_types = {}
+        self.duplicates = {}
 
         # process all bookmarks
         for bm_key, bm_value in bookmarks.items():
             for bm in bm_value:
                 url_parts = urlparse(bm.attrs['href'])
+
+                # ============================================
+                # scheme (http, https, etc)
+                # ============================================
                 if url_parts.scheme and not url_parts.scheme in self.schemes:
                     self.schemes.append(url_parts.scheme)
-                if url_parts.hostname and not url_parts.hostname in self.hosts:
-                    self.hosts.append(url_parts.hostname)
+
+                # ============================================
+                # hostnames (target pages)
+                # ============================================
+                if url_parts.hostname and not url_parts.hostname in self.hostnames:
+                    self.hostnames.append(url_parts.hostname)
+
+                    # primary domains
                     parts = url_parts.hostname.split('.')
+                    if len(parts) >= 1:
+                        dom = parts[-1]
+                        if dom not in self.domain_types:
+                            self.domain_types[dom] = 1
+                        else:
+                            self.domain_types[dom] += 1
+
+                    # sub-domains (primary)
+                    if len(parts) >= 2:
+                        dom = f'{parts[-2]}.{parts[-1]}'
+                        if dom not in self.domains:
+                            self.domains[dom] = 1
+                        else:
+                            self.domains[dom] += 1
+
+                    # sub-domains (secondary)
+                    if len(parts) >= 3:
+                        dom = f'{parts[-3]}.{parts[-2]}.{parts[-1]}'
+                        if dom not in self.subdomains:
+                            self.subdomains[dom] = 1
+                        else:
+                            self.subdomains[dom] += 1
+
+                # ============================================
+                # check for duplicates
+                # ============================================
+                if url_parts.hostname and url_parts.path:
                     pass
+
+        pass
