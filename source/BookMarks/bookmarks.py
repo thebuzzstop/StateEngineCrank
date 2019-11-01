@@ -473,8 +473,10 @@ class MyHTMLParser(HTMLParser, ABC):
 if __name__ == '__main__':
 
     parser = MyHTMLParser()
+    bookmarks1 = r'Bookmarks/bookmarks_10_5_19.html'
+    bookmarks2 = r'Bookmarks/bookmarks_10_31_19.html'
     try:
-        with open(r'Bookmarks/bookmarks_10_5_19.html', mode='r', encoding='utf-8') as html:
+        with open(bookmarks2, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
         with parser.parser.bookmarks as b:

@@ -101,7 +101,9 @@ class BookMarks(object):
         # create a key for this heading
         key = self.bookmarks_key(self.level, self.heading.label)
         if key in self.headings_dict:
-            raise Exception(f'DUPLICATE KEY: {key}')
+            key = f'{key} (DUP)'
+            if key in self.headings_dict:
+                raise Exception(f'DUPLICATE KEY: {key}')
 
         # create a new list, add it to our dictionary and push it onto the stack
         self.heading.list = List(self.level, self.heading.label)
@@ -167,6 +169,9 @@ class BookMarks(object):
             else:
                 self.bookmark.attrs['attrs'].append((attr, value))
 
+        # add new bookmark to the list associated with the current heading
+        self.heading.list.list.append(self.bookmark)
+
         # add new bookmark to main bookmark dictionary
         # if the key already exists then convert the entry to a list
         key = self.bookmarks_key(self.level, label)
@@ -174,6 +179,7 @@ class BookMarks(object):
             self.bookmarks[key] = [self.bookmark]
         else:
             self.bookmarks[key].append(self.bookmark)
+
         # zap the bookmark for logic error detection
         self.bookmark = None
 

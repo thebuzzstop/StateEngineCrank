@@ -26,6 +26,7 @@ class Statistics(object):
         self.bookmarks = bookmarks
         self.schemes = []
         self.hostnames = []
+        self.pathnames = {}
         self.domains = {}
         self.subdomains = {}
         self.domain_types = {}
@@ -45,7 +46,7 @@ class Statistics(object):
                 # ============================================
                 # hostnames (target pages)
                 # ============================================
-                if url_parts.hostname and not url_parts.hostname in self.hostnames:
+                if url_parts.hostname and url_parts.hostname not in self.hostnames:
                     self.hostnames.append(url_parts.hostname)
 
                     # primary domains
@@ -66,7 +67,7 @@ class Statistics(object):
                             self.domains[dom] += 1
 
                     # sub-domains (secondary)
-                    if len(parts) >= 3:
+                    if len(parts) >= 3 and parts[-3] != 'www':
                         dom = f'{parts[-3]}.{parts[-2]}.{parts[-1]}'
                         if dom not in self.subdomains:
                             self.subdomains[dom] = 1
@@ -76,7 +77,13 @@ class Statistics(object):
                 # ============================================
                 # check for duplicates
                 # ============================================
-                if url_parts.hostname and url_parts.path:
-                    pass
+                if not (url_parts.hostname and url_parts.path):
+                    continue
+                if url_parts.hostname not in self.pathnames.keys():
+                    self.pathnames[url_parts.hostname] = [url_parts.path]
+                elif url_parts.path not in self.pathnames[url_parts.hostname]:
+                    self.pathnames[url_parts.hostname].append(url_parts.path)
+                else:
+                    self.duplicates[url_parts.hostname] = [url_parts.path]
 
         pass
