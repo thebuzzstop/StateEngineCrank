@@ -10,8 +10,6 @@ The BookMarks Statistics module performs calculations on the bookmarks::
 """
 
 # System imports
-import re
-from urllib.parse import urlparse
 
 # Project imports
 import logger
@@ -19,7 +17,25 @@ logger = logger.Logger(__name__)
 my_logger = logger.logger
 
 
+class Keywords(object):
+    """ Keywords from bookmarks """
+
+    def __init__(self):
+        self.keywords = {}
+
+    def add_word(self, word, bookmark):
+        if word == b'':
+            return
+        if word not in self.keywords:
+            self.keywords[word] = [bookmark]
+        else:
+            self.keywords[word].append(bookmark)
+
+
 class Statistics(object):
+
+    # characters to strip from strings when gathering statistics
+    strip_chars = '~!@#$%^&*()_+-=`:;<>,.?/[]{}|"\"\\'
 
     def __init__(self, bookmarks, headings_labels, headings_dict):
         """ Statistics constructor """
@@ -31,26 +47,39 @@ class Statistics(object):
         self.subdomains = {}
         self.domain_types = {}
         self.duplicates = {}
+        self.deleted_bookmarks = []
+        self.empty_bookmarks = []
 
-        # process all bookmarks
-        for bm_key, bm_value in bookmarks.items():
-            for bm in bm_value:
-                url_parts = urlparse(bm.attrs['href'])
+        self.keyword_database = Keywords()
+        self.href_database = Keywords()
+
+        self.scan_bookmarks()
+        self.delete_empty_bookmarks()
+        self.build_keyword_dictionary()
+        pass
+
+    # =========================================================================
+    def scan_bookmarks(self):
+        """ scan all bookmarks, gather some statistics """
+        for bm_key, bm_value in self.bookmarks.items():
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
 
                 # ============================================
                 # scheme (http, https, etc)
                 # ============================================
-                if url_parts.scheme and not url_parts.scheme in self.schemes:
-                    self.schemes.append(url_parts.scheme)
+                if bm.href_urlparts.scheme and bm.href_urlparts.scheme not in self.schemes:
+                    self.schemes.append(bm.href_urlparts.scheme)
 
                 # ============================================
                 # hostnames (target pages)
                 # ============================================
-                if url_parts.hostname and url_parts.hostname not in self.hostnames:
-                    self.hostnames.append(url_parts.hostname)
+                if bm.href_urlparts.hostname and bm.href_urlparts.hostname not in self.hostnames:
+                    self.hostnames.append(bm.href_urlparts.hostname)
 
                     # primary domains
-                    parts = url_parts.hostname.split('.')
+                    parts = bm.href_urlparts.hostname.split('.')
                     if len(parts) >= 1:
                         dom = parts[-1]
                         if dom not in self.domain_types:
@@ -75,15 +104,79 @@ class Statistics(object):
                             self.subdomains[dom] += 1
 
                 # ============================================
-                # check for duplicates
+                # delete any duplicates
                 # ============================================
-                if not (url_parts.hostname and url_parts.path):
+                if not (bm.href_urlparts.hostname and bm.href_urlparts.path):
                     continue
-                if url_parts.hostname not in self.pathnames.keys():
-                    self.pathnames[url_parts.hostname] = [url_parts.path]
-                elif url_parts.path not in self.pathnames[url_parts.hostname]:
-                    self.pathnames[url_parts.hostname].append(url_parts.path)
+                if bm.href_urlparts.hostname not in self.pathnames.keys():
+                    self.pathnames[bm.href_urlparts.hostname] = [bm.href_urlparts.path]
+                elif bm.href_urlparts.path not in self.pathnames[bm.href_urlparts.hostname]:
+                    self.pathnames[bm.href_urlparts.hostname].append(bm.href_urlparts.path)
+                elif bm.href_urlparts.hostname not in self.duplicates:
+                    self.duplicates[bm.href_urlparts.hostname] = [(bm.href_urlparts.path, bm)]
+                    if len(bm_value) == 1:
+                        pass
+                    del bm_value[i-1]
                 else:
-                    self.duplicates[url_parts.hostname] = [url_parts.path]
+                    self.duplicates[bm.href_urlparts.hostname].append((bm.href_urlparts.path, bm))
+                    if len(bm_value) == 1:
+                        pass
+                    del bm_value[i-1]
 
+            # see if all bookmarks for this list were deleted
+            if not len(self.bookmarks[bm_key]):
+                self.empty_bookmarks.append(bm_key)
         pass
+
+    # =========================================================================
+    def delete_empty_bookmarks(self):
+        """ delete any empty bookmarks """
+        for bm_key in self.empty_bookmarks:
+            logger.logger.info(f'Deleting {bm_key}')
+            if bm_key not in self.deleted_bookmarks:
+                self.deleted_bookmarks.append(bm_key)
+            del self.bookmarks[bm_key]
+        pass
+
+    # =========================================================================
+    def build_keyword_dictionary(self):
+        """ build keywords dictionary """
+        for bm_key, bm_value in self.bookmarks.items():
+            for bm in bm_value:
+                self.add_keywords(bm)
+                self.add_href_parts(bm)
+        pass
+
+    def add_keywords(self, bookmark):
+        """ Add bookmark text to dictionary
+            :param bookmark: Bookmark associated with text
+        """
+        text = bookmark.label
+        for ch in self.strip_chars:
+            text = text.replace(ch, ' ')
+        for word in text.split(' '):
+            if word:
+                self.keyword_database.add_word(word, bookmark)
+
+    def add_href_parts(self, bookmark):
+        """ Add link parts to dictionary
+            :param bookmark: Bookmark associated with link
+        """
+        if not bookmark.attrs['href']:
+            return
+        href_parts = [
+            bookmark.href_urlparts.scheme,
+            bookmark.href_urlparts.hostname,
+            bookmark.href_urlparts.path,
+            bookmark.href_urlparts.port,
+        ]
+        for parts in href_parts:
+            if not parts:
+                continue
+            if isinstance(parts, int):
+                parts = f'{parts}'
+            for ch in self.strip_chars:
+                parts = parts.replace(ch, ' ')
+            for part in parts.split(' '):
+                if len(part):
+                    self.href_database.add_word(part, bookmark)

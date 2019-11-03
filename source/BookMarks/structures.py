@@ -13,6 +13,7 @@ The BookMarks Structures module maintains bookmark structures::
 """
 
 # System imports
+from urllib.parse import urlparse
 
 # Project imports
 import logger
@@ -30,6 +31,19 @@ class BookMark(object):
             'icon': icon,
             'attrs': []
         }
+        self.href_urlparts = None
+
+    def add_attr(self, attr, value):
+        """ add attribute 'attr' / 'value' to bookmark
+            :param attr: Attribute designation
+            :param value: Attribute value
+        """
+        if attr in self.attrs:
+            self.attrs[attr] = value
+            if attr == 'href':
+                self.href_urlparts = urlparse(value)
+        else:
+            self.attrs['attrs'].append({attr: value})
 
 
 class List(object):
@@ -165,9 +179,7 @@ class BookMarks(object):
         # process all attributes passed to us
         for attr, value in attrs:
             if attr in self.bookmark.attrs:
-                self.bookmark.attrs[attr] = value
-            else:
-                self.bookmark.attrs['attrs'].append((attr, value))
+                self.bookmark.add_attr(attr, value)
 
         # add new bookmark to the list associated with the current heading
         self.heading.list.list.append(self.bookmark)

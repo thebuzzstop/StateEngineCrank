@@ -18,7 +18,7 @@ class Logger(object):
         if not os.path.exists('logs'):
             os.makedirs('logs')
 
-        self.fh = logging.handlers.RotatingFileHandler('logs/bookmarks.log', maxBytes=100000, backupCount=5, delay=True)
+        self.fh = logging.handlers.RotatingFileHandler('logs/bookmarks.log', maxBytes=200000, backupCount=5, delay=True)
         self.fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         self.fh.setLevel(logging.DEBUG)
         self.logger.addHandler(self.fh)
