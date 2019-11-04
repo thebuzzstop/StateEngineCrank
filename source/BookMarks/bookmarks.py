@@ -479,9 +479,10 @@ if __name__ == '__main__':
         with open(bookmarks2, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
-        with parser.parser.bookmarks as b:
-            statistics = Statistics(b.bookmarks, b.heading_labels, b.headings_dict)
+        bookmarks = parser.parser.bookmarks
+        statistics = Statistics(bookmarks.bookmarks)
         # grab the variables we want to post process
         pass
+
     except Exception as e:
         print(f'Exception reading file: {e}')

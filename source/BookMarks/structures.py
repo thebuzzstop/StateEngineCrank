@@ -21,10 +21,20 @@ logger = logger.Logger(__name__)
 my_logger = logger.logger
 
 
+class List(object):
+    """ A bookmark list """
+    def __init__(self, level, label):
+        """ Constructor """
+        self.level = level
+        self.label = label
+        self.list = []
+
+
 class BookMark(object):
     """ A bookmark """
-    def __init__(self, label, href, add_date, icon=None):
+    def __init__(self, label, heading, href, add_date, icon=None):
         self.label = label
+        self.heading = heading
         self.attrs = {
             'href': href,
             'add_date': add_date,
@@ -46,19 +56,10 @@ class BookMark(object):
             self.attrs['attrs'].append({attr: value})
 
 
-class List(object):
-    """ A bookmark list """
-    def __init__(self, level, heading_label):
-        """ Constructor """
-        self.level = level
-        self.heading_label = heading_label
-        self.list = []
-
-
 class Heading(object):
     """ A bookmark heading """
 
-    def __init__(self, level, label, add_date, last_modified):
+    def __init__(self, level, label, heading_stack, add_date, last_modified):
         """ Constructor """
         self.level = level
         self.label = label
@@ -67,8 +68,48 @@ class Heading(object):
             'last_modified': last_modified,
             'personal_toolbar_folder': None
         }
+        #: current state of heading_stack when created
+        self.heading_stack = heading_stack
+
+        #: current state of heading_stack when created - label text only
+        self.heading_stack_text = []
+        for heading in heading_stack:
+            self.heading_stack_text.append(heading.label)
+
         #: list of topic links and other sub-headings
         self.list = None
+
+
+class HeadingLabel(object):
+    """ Bookmark heading label """
+
+    def __init__(self, label, level):
+        """ Constructor """
+        self.label = label
+        self.levels = []
+        self.count = 1
+
+    def add_label(self, level):
+        self.count += 1
+        if level not in self.levels:
+            self.levels.append(level)
+
+
+class HeadingLabels(object):
+    """ Bookmark heading label collection """
+
+    def __init__(self):
+        """ Constructor """
+        self.labels = {}
+
+    def add_label(self, heading):
+        """ Add a heading label to the dictionary
+            :param heading:
+        """
+        if heading.label not in self.labels:
+            self.labels[heading.label] = HeadingLabel(heading.label, heading.level)
+        else:
+            self.labels[heading.label].add_label(heading.level)
 
 
 class BookMarks(object):
@@ -87,7 +128,9 @@ class BookMarks(object):
         self.level = 0              #: Current level
         self.heading = None         #: Heading for current level
 
-        self.heading_labels = []    #: Heading labels, used in post-processing
+        #: Heading labels, used in post-processing
+        self.heading_labels = HeadingLabels()
+
         self.headings_dict = {}     #: Headings: Dict
         self.headings_stack = []    #: Headings: Stack (first-in, last-out)
         self.bookmarks = {}         #: Dictionary of bookmarks
@@ -109,8 +152,7 @@ class BookMarks(object):
         self.debug(f'LIST: {self.level} {self.heading.label}')
 
         # keep a list of all headings passed to us
-        if self.heading.label not in self.heading_labels:
-            self.heading_labels.append(self.heading.label)
+        self.heading_labels.add_label(self.heading)
 
         # create a key for this heading
         key = self.bookmarks_key(self.level, self.heading.label)
@@ -149,9 +191,8 @@ class BookMarks(object):
             :param label: Text for the heading
         """
         self.debug(f'HEADING: {label}')
-        if label not in self.heading_labels:
-            self.heading_labels.append(label)
-        self.heading = Heading(self.level, label, None, None)
+        self.heading = Heading(self.level, label, self.headings_stack, None, None)
+        self.heading_labels.add_label(self.heading)
 
     # =================================================================
     def set_bookmark_data(self, data):
@@ -164,7 +205,7 @@ class BookMarks(object):
         """ Add a new bookmark to the dictionary """
         if self.bookmark:
             raise Exception(f'Overwriting bookmark {self.bookmark}')
-        self.bookmark = BookMark(None, None, None, None)
+        self.bookmark = BookMark(None, None, None, None, None)
         self.debug(f'BookMark: {self.bookmark}')
 
     # =================================================================
@@ -176,6 +217,7 @@ class BookMarks(object):
         """
         self.debug(f'BookMark: {label}:{attrs}')
         self.bookmark.label = label
+        self.bookmark.heading = self.heading
         # process all attributes passed to us
         for attr, value in attrs:
             if attr in self.bookmark.attrs:

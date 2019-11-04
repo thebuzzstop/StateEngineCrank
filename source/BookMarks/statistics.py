@@ -33,11 +33,22 @@ class Keywords(object):
 
 
 class Statistics(object):
+    """ Class to gather statistics on bookmarks """
 
-    # characters to strip from strings when gathering statistics
+    #: hex representations to convert to chars
+    hex2char = [
+        ('%20', ' '), ('%21', '!'), ('%22', '"'), ('%23', '#'),
+        ('%24', '$'), ('%25', '%'), ('%26', '&'), ('%27', "'"),
+        ('%28', '('), ('%29', ')'), ('%2A', '*'), ('%2B', '+'),
+        ('%2C', ','), ('%2D', '-'), ('%2E', '.'), ('%2F', '/'),
+        ('%3A', ':'), ('%3B', ';'), ('%3C', '<'), ('%3D', '='),
+        ('%3E', '>'), ('%3F', '?'), ('%40', '@')
+    ]
+
+    #: characters to strip from strings when gathering statistics
     strip_chars = '~!@#$%^&*()_+-=`:;<>,.?/[]{}|"\"\\'
 
-    def __init__(self, bookmarks, headings_labels, headings_dict):
+    def __init__(self, bookmarks):
         """ Statistics constructor """
         self.bookmarks = bookmarks
         self.schemes = []
@@ -147,6 +158,7 @@ class Statistics(object):
                 self.add_href_parts(bm)
         pass
 
+    # =========================================================================
     def add_keywords(self, bookmark):
         """ Add bookmark text to dictionary
             :param bookmark: Bookmark associated with text
@@ -158,25 +170,33 @@ class Statistics(object):
             if word:
                 self.keyword_database.add_word(word, bookmark)
 
+    # =========================================================================
     def add_href_parts(self, bookmark):
         """ Add link parts to dictionary
             :param bookmark: Bookmark associated with link
         """
         if not bookmark.attrs['href']:
             return
+        # href parts that go into the database
         href_parts = [
             bookmark.href_urlparts.scheme,
             bookmark.href_urlparts.hostname,
             bookmark.href_urlparts.path,
             bookmark.href_urlparts.port,
         ]
+        # process all bookmark href parts
         for parts in href_parts:
             if not parts:
                 continue
             if isinstance(parts, int):
                 parts = f'{parts}'
+            # convert hex encodings to chars
+            for hx, ch in self.hex2char:
+                parts = parts.replace(hx, ch)
+            # strip special characters
             for ch in self.strip_chars:
                 parts = parts.replace(ch, ' ')
+            # split into the parts and add to the database
             for part in parts.split(' '):
                 if len(part):
                     self.href_database.add_word(part, bookmark)
