@@ -83,16 +83,18 @@ class Heading(object):
 class HeadingLabel(object):
     """ Bookmark heading label """
 
-    def __init__(self, label, level):
+    def __init__(self, label, level, stack):
         """ Constructor """
         self.label = label
-        self.levels = []
+        self.levels = [level]
+        self.stack = [stack]
         self.count = 1
 
-    def add_label(self, level):
+    def add_label(self, level, stack):
         self.count += 1
         if level not in self.levels:
             self.levels.append(level)
+            self.stack.append(stack)
 
 
 class HeadingLabels(object):
@@ -107,9 +109,9 @@ class HeadingLabels(object):
             :param heading:
         """
         if heading.label not in self.labels:
-            self.labels[heading.label] = HeadingLabel(heading.label, heading.level)
+            self.labels[heading.label] = HeadingLabel(heading.label, heading.level, heading.heading_stack_text)
         else:
-            self.labels[heading.label].add_label(heading.level)
+            self.labels[heading.label].add_label(heading.level, heading.heading_stack_text)
 
 
 class BookMarks(object):
