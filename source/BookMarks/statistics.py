@@ -61,6 +61,10 @@ class Statistics(object):
         self.deleted_bookmarks = []
         self.empty_bookmarks = []
 
+        self.ford_domains = [
+            'at', 'eassets', 'itsdchat', 'sp',
+            'changepassword',
+        ]
         self.keyword_database = Keywords()
         self.href_database = Keywords()
 
@@ -143,7 +147,7 @@ class Statistics(object):
     def delete_empty_bookmarks(self):
         """ delete any empty bookmarks """
         for bm_key in self.empty_bookmarks:
-            logger.logger.info(f'Deleting {bm_key}')
+            logger.logger.info(f'Deleting {logger.clean(bm_key)}')
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]

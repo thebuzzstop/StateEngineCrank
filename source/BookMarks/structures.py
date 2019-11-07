@@ -208,7 +208,7 @@ class BookMarks(object):
         if self.bookmark:
             raise Exception(f'Overwriting bookmark {self.bookmark}')
         self.bookmark = BookMark(None, None, None, None, None)
-        self.debug(f'BookMark: {self.bookmark}')
+        self.debug(f'BookMark: NEW')
 
     # =================================================================
     def add_bookmark(self, label, attrs):
@@ -256,4 +256,4 @@ class BookMarks(object):
             :param text: debug text to display
         """
         level_plus = '+'*self.level
-        my_logger.debug(f'{self.level:02d}{level_plus} {text}')
+        my_logger.debug(f'{self.level:02d}{level_plus} {logger.clean(text)}')
