@@ -1,6 +1,6 @@
-""" BookMarks Statistics module
+""" BookMarks Analysis module
 
-The BookMarks Statistics module performs calculations on the bookmarks::
+The BookMarks Analysis module parses and categorizes bookmarks::
 
  + Protocols
  + Domains
@@ -32,8 +32,8 @@ class Keywords(object):
             self.keywords[word].append(bookmark)
 
 
-class Statistics(object):
-    """ Class to gather statistics on bookmarks """
+class Analyze(object):
+    """ Class to analyze and categorize bookmarks """
 
     #: hex representations to convert to chars
     hex2char = [
@@ -45,11 +45,11 @@ class Statistics(object):
         ('%3E', '>'), ('%3F', '?'), ('%40', '@')
     ]
 
-    #: characters to strip from strings when gathering statistics
+    #: characters to strip from strings when parsing
     strip_chars = '~!@#$%^&*()_+-=`:;<>,.?/[]{}|"\"\\'
 
     def __init__(self, bookmarks):
-        """ Statistics constructor """
+        """ Analyze constructor """
         self.bookmarks = bookmarks
         self.schemes = []
         self.hostnames = []
@@ -75,7 +75,7 @@ class Statistics(object):
 
     # =========================================================================
     def scan_bookmarks(self):
-        """ scan all bookmarks, gather some statistics """
+        """ scan all bookmarks and categorize """
         for bm_key, bm_value in self.bookmarks.items():
             bm_values = len(bm_value)
             for i in range(bm_values, 0, -1):

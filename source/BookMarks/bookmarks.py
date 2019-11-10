@@ -57,13 +57,16 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 from abc import ABC
 from html.parser import HTMLParser
 from enum import Enum
+import typing
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
+from config import (CfgParser, TheConfig)
 from structures import BookMarks
-from statistics import Statistics
+from analyze import Analyze
+from reformat import Reformat
 
 import logger
 logger = logger.Logger(__name__)
@@ -472,17 +475,33 @@ class MyHTMLParser(HTMLParser, ABC):
 
 if __name__ == '__main__':
 
+    config = CfgParser()
     parser = MyHTMLParser()
     bookmarks1 = r'Bookmarks/bookmarks_10_5_19.html'
     bookmarks2 = r'Bookmarks/bookmarks_10_31_19.html'
+
+    # open bookmarks file and feed to the parser
+    bookmarks = None
     try:
         with open(bookmarks2, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
         bookmarks = parser.parser.bookmarks
-        statistics = Statistics(bookmarks.bookmarks)
-        # grab the variables we want to post process
-        pass
-
     except Exception as e:
-        print(f'Exception reading file: {e}')
+        print(f'Exception parsing file: {e}')
+
+    # analyze bookmarks just parsed
+    analysis = None
+    try:
+        analysis = Analyze(bookmarks.bookmarks)
+    except Exception as e:
+        print(f'Exception analyzing file: {e}')
+
+    # create bookmark output structure
+    output = None
+    try:
+        output = Reformat(analysis)
+    except Exception as e:
+        print(f'Exception reformatting file: {e}')
+
+    pass
