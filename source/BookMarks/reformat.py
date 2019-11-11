@@ -27,17 +27,13 @@ class Reformat(object):
     def __init__(self, analysis: Analyze):
         """ Analyze constructor """
         self.analysis = analysis
-        self.headings = TheConfig().headings
+        self.headings = TheConfig.headings
+        self.menubar = TheConfig.menubar
+        self.output = None
 
-        self.create_template()
-        self.populate_template()
-
+        self.scan_bookmarks()
         pass
 
-    def create_template(self):
-        """ Output bookmarks template based on configuration """
-        pass
-
-    def populate_template(self):
-        """ Populate template with analysis data """
+    def scan_bookmarks(self):
+        """ Scan bookmarks database and match with headings & topics """
         pass
