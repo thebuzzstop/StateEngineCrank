@@ -10,8 +10,10 @@ The BookMarks Analysis module parses and categorizes bookmarks::
 """
 
 # System imports
+import typing
 
 # Project imports
+from config import TheConfig
 import logger
 logger = logger.Logger(__name__)
 my_logger = logger.logger
@@ -61,16 +63,19 @@ class Analyze(object):
         self.deleted_bookmarks = []
         self.empty_bookmarks = []
 
-        self.ford_domains = [
-            'at', 'eassets', 'itsdchat', 'sp',
-            'changepassword',
-        ]
+        self.ford_domains = []      #: populated as we discover '*.ford.com' domains
+        self.partner_domains = []   #: populated as we discover partner domains
+        self.project_sites = []     #: populated as we discover project sites
+        self.projects = []          #: populated as we discover projects
+
         self.keyword_database = Keywords()
         self.href_database = Keywords()
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
         self.build_keyword_dictionary()
+        self.scan_bookmark_hosts()
+        self.scan_bookmark_projects()
         pass
 
     # =========================================================================
@@ -204,3 +209,50 @@ class Analyze(object):
             for part in parts.split(' '):
                 if len(part):
                     self.href_database.add_word(part, bookmark)
+
+    # =========================================================================
+    def scan_bookmark_hosts(self):
+        """ scan all bookmarks for known Ford/hostnames """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            for bm in bm_value:
+                hostname = bm.href_urlparts.hostname
+                if not hostname:
+                    continue
+                if self.scan_for_hostname(hostname, TheConfig.projects, self.projects, 'Project'):
+                    continue
+                elif self.scan_for_hostname(hostname, TheConfig.project_sites, self.project_sites, 'Project Sites'):
+                    continue
+                elif self.scan_for_hostname(hostname, TheConfig.ford_sites, self.ford_domains, 'Ford'):
+                    continue
+                elif self.scan_for_hostname(hostname, TheConfig.partner_sites, self.partner_domains, 'Partner'):
+                    continue
+        pass
+
+    # =========================================================================
+    @staticmethod
+    def scan_for_hostname(hostname: str, config_list: list, scan_list: list, label: str):
+        """ Scan for hostname contained in list
+            :param hostname: hostname to search for
+            :param config_list: configuration file list of sites
+            :param scan_list: list to update if found
+            :param label: string to use for logging
+            :return: True if site found, else false
+        """
+        for site in config_list:
+            if site in hostname:
+                if hostname not in scan_list:
+                    scan_list.append(hostname)
+                    logger.logger.debug(f'{label}: {site}/{hostname}')
+                return True
+        return False
+
+    # =========================================================================
+    def scan_bookmark_projects(self):
+        """ scan all bookmarks for known Ford/project domain(s) """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            for bm in bm_value:
+                pass

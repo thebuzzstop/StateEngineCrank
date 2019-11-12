@@ -500,7 +500,7 @@ if __name__ == '__main__':
     # create bookmark output structure
     output = None
     try:
-        output = Reformat(analysis)
+        output = Reformat(analysis, bookmarks.headings_data())
     except Exception as e:
         print(f'Exception reformatting file: {e}')
 

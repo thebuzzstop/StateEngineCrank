@@ -16,9 +16,13 @@ class TheConfig:
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
     # configuration items initialized by config parser
-    config = None       #: configuration items
-    headings = None     #: headings declared in config.ini
-    menubar = None      #: menubar constructed by config parser
+    config = None           #: configuration items
+    headings = None         #: headings declared in config.ini
+    menubar = None          #: menubar constructed by config parser
+    ford_sites = None       #: Ford domain sites
+    partner_sites = None    #: Partner domain sites (e.g. ElektroBit)
+    project_sites = None    #: Project sites
+    projects = None         #: Projects
 
 
 class CfgParser(configparser.ConfigParser):
@@ -57,6 +61,11 @@ class CfgParser(configparser.ConfigParser):
         TheConfig.config = config
         TheConfig.headings = headings
         TheConfig.menubar = menubar
+        TheConfig.ford_sites = self.get_list(config['ford']['sites'])
+        TheConfig.projects = self.get_list(config['projects']['projects'])
+        TheConfig.project_sites = self.get_list(config['projects']['sites'])
+        TheConfig.partner_sites = self.get_list(config['projects']['partners'])
+        pass
 
     @staticmethod
     def get_list(config_item: str):

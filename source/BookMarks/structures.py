@@ -129,9 +129,18 @@ class BookMarks(object):
 
         self.headings_dict = {}     #: Headings: Dict
         self.headings_stack = []    #: Headings: Stack (first-in, last-out)
+        self.headings_dups = []     #: Headings: Duplicates
         self.bookmarks = {}         #: Dictionary of bookmarks
 
         self.bookmark = None
+
+    # =================================================================
+    def headings_data(self):
+        return {
+            'dict': self.headings_dict,
+            'dups': self.headings_dups,
+            'labels': self.heading_labels,
+        }
 
     # =================================================================
     def start_list(self):
@@ -153,6 +162,7 @@ class BookMarks(object):
         # create a key for this heading
         key = self.bookmarks_key(self.level, self.heading.label)
         if key in self.headings_dict:
+            self.headings_dups.append(key)
             key = f'{key} (DUP)'
             if key in self.headings_dict:
                 raise Exception(f'DUPLICATE KEY: {key}')
