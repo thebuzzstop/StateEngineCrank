@@ -66,7 +66,8 @@ class Analyze(object):
         self.ford_domains = []      #: populated as we discover '*.ford.com' domains
         self.partner_domains = []   #: populated as we discover partner domains
         self.project_sites = []     #: populated as we discover project sites
-        self.projects = []          #: populated as we discover projects
+        #: initialize with configuration projects, populated with bookmarks as we discover projects
+        self.projects = {project.lower(): [] for project in TheConfig.projects}
 
         self.keyword_database = Keywords()
         self.href_database = Keywords()
@@ -75,7 +76,7 @@ class Analyze(object):
         self.delete_empty_bookmarks()
         self.build_keyword_dictionary()
         self.scan_bookmark_hosts()
-        self.scan_bookmark_projects()
+        self.scan_bookmark_projects(TheConfig.projects, self.projects)
         pass
 
     # =========================================================================
@@ -220,9 +221,8 @@ class Analyze(object):
                 hostname = bm.href_urlparts.hostname
                 if not hostname:
                     continue
-                if self.scan_for_hostname(hostname, TheConfig.projects, self.projects, 'Project'):
-                    continue
-                elif self.scan_for_hostname(hostname, TheConfig.project_sites, self.project_sites, 'Project Sites'):
+                hostname = hostname.lower()
+                if self.scan_for_hostname(hostname, TheConfig.project_sites, self.project_sites, 'Project Sites'):
                     continue
                 elif self.scan_for_hostname(hostname, TheConfig.ford_sites, self.ford_domains, 'Ford'):
                     continue
@@ -249,10 +249,17 @@ class Analyze(object):
         return False
 
     # =========================================================================
-    def scan_bookmark_projects(self):
+    def scan_bookmark_projects(self, config_list: list, scan_list: dict):
         """ scan all bookmarks for known Ford/project domain(s) """
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
+            # scan all book marks for current value
             for bm in bm_value:
+                label = bm.label.lower()
+                logger.logger.debug(f'BookMark Label: {label}')
+                # scan for configuration projects
+                for project in config_list:
+                    if project in label and label not in scan_list[project]:
+                        scan_list[project].append(bm)
                 pass

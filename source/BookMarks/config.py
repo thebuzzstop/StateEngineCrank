@@ -74,7 +74,7 @@ class CfgParser(configparser.ConfigParser):
             Do not return an empty/null/'' item
             :param config_item: Configuration file item
         """
-        items = config_item.replace('\n', '').split(',')
+        items = config_item.lower().replace('\n', '').replace(', ', ',').split(',')
         for i in range(len(items)):
             if not items[i]:
                 del items[i]
