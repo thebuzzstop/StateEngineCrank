@@ -62,7 +62,9 @@ class Analyze(object):
         self.duplicates = {}
         self.deleted_bookmarks = []
         self.empty_bookmarks = []
+        self.processed_bookmarks = []
 
+        self.personal = []          #: populated as we discover personal sites
         self.ford_domains = []      #: populated as we discover '*.ford.com' domains
         self.partner_domains = []   #: populated as we discover partner domains
         self.project_sites = []     #: populated as we discover project sites
@@ -76,7 +78,9 @@ class Analyze(object):
         self.delete_empty_bookmarks()
         self.build_keyword_dictionary()
         self.scan_bookmark_hosts()
-        self.scan_bookmark_projects(TheConfig.projects, self.projects)
+        self.scan_bookmarks_projects(TheConfig.projects, self.projects)
+        self.scan_bookmarks_personal(TheConfig.personal_sites, self.personal)
+        self.delete_found_bookmarks()
         pass
 
     # =========================================================================
@@ -249,7 +253,7 @@ class Analyze(object):
         return False
 
     # =========================================================================
-    def scan_bookmark_projects(self, config_list: list, scan_list: dict):
+    def scan_bookmarks_projects(self, config_list: list, scan_list: dict):
         """ scan all bookmarks for known Ford/project domain(s) """
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
@@ -257,9 +261,45 @@ class Analyze(object):
             # scan all book marks for current value
             for bm in bm_value:
                 label = bm.label.lower()
-                logger.logger.debug(f'BookMark Label: {label}')
+                if not len(label):
+                    continue
+                logger.logger.debug(f'BookMark Label: "{label}"')
                 # scan for configuration projects
                 for project in config_list:
                     if project in label and label not in scan_list[project]:
                         scan_list[project].append(bm)
                 pass
+
+    # =========================================================================
+    def scan_bookmarks_personal(self, config_list: list, scan_list: list):
+        """ scan all bookmarks for personal sites """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            for bm in bm_value:
+                href = bm.href_urlparts
+                if not href.hostname:
+                    continue
+                logger.logger.debug(f'BookMark Label: "{href}"')
+                # scan for configuration personal sites matching href
+                for personal in config_list:
+                    if personal in href.hostname and href.hostname not in scan_list:
+                        scan_list.append(bm)
+                pass
+
+    def delete_found_bookmarks(self):
+        """ rescan bookmarks and delete any that were identified (e.g. projects, personal) """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
+                # project?
+                # personal?
+                if bm in self.personal:
+                    del bm_value[i-1]
+            if not len(bm_value):
+                self.processed_bookmarks.append(bm_key)

@@ -23,6 +23,7 @@ class TheConfig:
     partner_sites = None    #: Partner domain sites (e.g. ElektroBit)
     project_sites = None    #: Project sites
     projects = None         #: Projects
+    personal_sites = None   #: Personal sites
 
 
 class CfgParser(configparser.ConfigParser):
@@ -65,6 +66,7 @@ class CfgParser(configparser.ConfigParser):
         TheConfig.projects = self.get_list(config['projects']['projects'])
         TheConfig.project_sites = self.get_list(config['projects']['sites'])
         TheConfig.partner_sites = self.get_list(config['projects']['partners'])
+        TheConfig.personal_sites = self.get_list(config['personal']['sites'])
         pass
 
     @staticmethod
