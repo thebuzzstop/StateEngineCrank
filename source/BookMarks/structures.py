@@ -35,6 +35,7 @@ class BookMark(object):
     def __init__(self, label, heading, href, add_date, icon=None):
         self.label = label
         self.heading = heading
+        self.scanned = False
         self.attrs = {
             'href': href,
             'add_date': add_date,

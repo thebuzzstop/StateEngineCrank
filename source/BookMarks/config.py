@@ -19,11 +19,8 @@ class TheConfig:
     config = None           #: configuration items
     headings = None         #: headings declared in config.ini
     menubar = None          #: menubar constructed by config parser
-    ford_sites = None       #: Ford domain sites
-    partner_sites = None    #: Partner domain sites (e.g. ElektroBit)
-    project_sites = None    #: Project sites
-    projects = None         #: Projects
-    personal_sites = None   #: Personal sites
+    scanning_order = None   #: order in which scanning processing will occur
+    sections = None         #: menutab sections (topic groups)
 
 
 class CfgParser(configparser.ConfigParser):
@@ -44,11 +41,11 @@ class CfgParser(configparser.ConfigParser):
 
         # establish menubar structure
         menubar = {
-            'head': self.get_list(config['menubar structure']['head']),
-            'tail': self.get_list(config['menubar structure']['tail'])
+            'head': self.get_list(config['menubar']['head']),
+            'tail': self.get_list(config['menubar']['tail'])
         }
         # enumerate menubar heading topics
-        headings = self.get_list(config['menubar structure']['headings'])
+        headings = self.get_list(config['menubar']['headings'])
         for heading in headings:
             menubar[heading] = {topic: None for topic in config.options(heading)}
 
@@ -59,14 +56,16 @@ class CfgParser(configparser.ConfigParser):
                     topic: None for topic in self.get_list(config[heading][topic])
                 }
 
+        # get scanning order
+        TheConfig.scanning_order = self.get_list(config['scanning']['order'])
         TheConfig.config = config
         TheConfig.headings = headings
         TheConfig.menubar = menubar
-        TheConfig.ford_sites = self.get_list(config['ford']['sites'])
-        TheConfig.projects = self.get_list(config['projects']['projects'])
-        TheConfig.project_sites = self.get_list(config['projects']['sites'])
-        TheConfig.partner_sites = self.get_list(config['projects']['partners'])
-        TheConfig.personal_sites = self.get_list(config['personal']['sites'])
+        TheConfig.sections = {}
+        for menubar in self.get_list(config['menubar']['headings']):
+            TheConfig.sections[menubar] = {}
+            for section in config.options(menubar):
+                TheConfig.sections[menubar][section] = self.get_list(config[menubar][section])
         pass
 
     @staticmethod

@@ -57,13 +57,12 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 from abc import ABC
 from html.parser import HTMLParser
 from enum import Enum
-import typing
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
-from config import (CfgParser, TheConfig)
+from config import CfgParser
 from structures import BookMarks
 from analyze import Analyze
 from reformat import Reformat
@@ -165,6 +164,7 @@ class UserCode(StateMachine):
             self.event(Events.EvData)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def AddMeta_SetMeta(self):
         """ Enter function processing for *AddMeta* state.
 
@@ -178,6 +178,7 @@ class UserCode(StateMachine):
         self.event(Events.EvTick)
 
     # ===========================================================================
+    # noinspection PyPep8Naming,PyMethodMayBeStatic
     def Finish_BookMarksDone(self):
         """ Enter function processing for *Finish* state.
 
@@ -187,6 +188,7 @@ class UserCode(StateMachine):
         my_logger.debug('BookMarksDone')
 
     # =========================================================
+    # noinspection PyPep8Naming
     def SetHeader(self):
         """ State transition processing for *SetHeader*
 
@@ -203,6 +205,7 @@ class UserCode(StateMachine):
         self.bookmarks.add_heading(self.header)
 
     # =========================================================
+    # noinspection PyPep8Naming
     def SetTitle(self):
         """ State transition processing for *SetTitle*
 
@@ -215,6 +218,7 @@ class UserCode(StateMachine):
         my_logger.info(f'TITLE: {self.title}')
 
     # =========================================================
+    # noinspection PyPep8Naming
     def SetTopicHeader(self):
         """ State transition processing for *SetTopicHeader*
 
@@ -227,6 +231,7 @@ class UserCode(StateMachine):
         self.bookmarks.add_heading(self.html_data)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def StartList_StartNewList(self):
         """ Enter function processing for *StartList* state.
 
@@ -237,6 +242,7 @@ class UserCode(StateMachine):
         self.event(Events.EvTick)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def EndList_EndCurrentList(self):
         """ Enter function processing for *EndList* state.
 
@@ -247,6 +253,7 @@ class UserCode(StateMachine):
         self.event(Events.EvTick)
 
     # ===========================================================================
+    # noinspection PyPep8Naming
     def StartUp_BookMarksStart(self):
         """ Enter function processing for *StartUp* state.
 
@@ -257,6 +264,7 @@ class UserCode(StateMachine):
         pass
 
     # =========================================================
+    # noinspection PyPep8Naming
     def NewBookMark(self):
         """ State transition processing for *NewBookMark*
 
@@ -266,6 +274,7 @@ class UserCode(StateMachine):
         self.bookmarks.new_bookmark()
 
     # =========================================================
+    # noinspection PyPep8Naming
     def AddBookMark(self):
         """ State transition processing for *AddBookMark*
 
@@ -275,6 +284,7 @@ class UserCode(StateMachine):
         self.bookmarks.add_bookmark(self.html_data, self.html_attrs)
 
     # =========================================================
+    # noinspection PyPep8Naming
     def SetBookMarkData(self):
         """ State transition processing for *SetBookMarkData*
 

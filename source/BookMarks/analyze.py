@@ -10,7 +10,6 @@ The BookMarks Analysis module parses and categorizes bookmarks::
 """
 
 # System imports
-import typing
 
 # Project imports
 from config import TheConfig
@@ -63,24 +62,127 @@ class Analyze(object):
         self.deleted_bookmarks = []
         self.empty_bookmarks = []
         self.processed_bookmarks = []
-
-        self.personal = []          #: populated as we discover personal sites
-        self.ford_domains = []      #: populated as we discover '*.ford.com' domains
-        self.partner_domains = []   #: populated as we discover partner domains
-        self.project_sites = []     #: populated as we discover project sites
-        #: initialize with configuration projects, populated with bookmarks as we discover projects
-        self.projects = {project.lower(): [] for project in TheConfig.projects}
-
+        self.file_bookmarks = {}
         self.keyword_database = Keywords()
         self.href_database = Keywords()
+
+        #: local copy of TheConfig for debugging reference
+        self.the_config = TheConfig
+
+        #: populated as we discover various sites
+        self.host_sites = {section: [] for section in TheConfig.sections}
+
+        #: populated as we parse the various sections
+        self.menubar = {section: {
+            topic: [] for topic in TheConfig.sections[section].keys()
+        } for section in TheConfig.sections}
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
         self.build_keyword_dictionary()
+
+        # build a list of bookmark hosts for all of the sections
         self.scan_bookmark_hosts()
-        self.scan_bookmarks_projects(TheConfig.projects, self.projects)
-        self.scan_bookmarks_personal(TheConfig.personal_sites, self.personal)
-        self.delete_found_bookmarks()
+
+        # build a list of bookmarks that reference a file
+        self.scan_bookmarks_files()
+
+        # scan bookmarks in the order specified in the configuration file
+        for section in TheConfig.scanning_order:
+            for topic in self.menubar[section].keys():
+                logger.logger.debug(f'Scanning: {section}/{topic}')
+                config_list = TheConfig.sections[section][topic]
+                scan_list = self.menubar[section][topic]
+                self.scan_bookmarks_section(config_list, scan_list)
+            pass
+
+        self.delete_scanned_bookmarks()
+        pass
+
+    # =========================================================================
+    def scan_bookmarks_files(self):
+        """ scan bookmarks for any with a 'file' scheme """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
+                if bm.href_urlparts.scheme == 'file':
+                    bm_key = self.bookmark_key(bm)
+                    if bm_key not in self.file_bookmarks:
+                        self.file_bookmarks[bm_key] = [bm]
+                    else:
+                        bm_path = self.href_path(bm)
+                        for bm_ in self.file_bookmarks[bm_key]:
+                            if self.href_path(bm_) != bm_path:
+                                self.file_bookmarks[bm_key].append(bm)
+                    bm.scanned = True
+        pass
+
+    @staticmethod
+    def href_path(bookmark):
+        """ return href path for given bookmark
+            :param bookmark: bookmark to process
+            :return: path component for given href
+        """
+        return bookmark.href_urlparts.path
+
+    @staticmethod
+    def bookmark_key(bookmark):
+        """ return a bookmark key
+            :param bookmark: bookmark for which to generate a key
+            :return: bookmark key
+        """
+        return f'{bookmark.heading.label}'
+
+    # =========================================================================
+    def scan_bookmarks_section(self, config_list, scan_list):
+        """ scan all bookmarks for section match
+            :param config_list: Section/topic configuration list to scan for
+            :param scan_list: Section/topic target scan list
+        """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            for bm in bm_value:
+                # check for hostname natch
+                hostname = bm.href_urlparts.hostname
+                if not bm.scanned and hostname is not None and len(hostname):
+                    for item in config_list:
+                        if item in hostname and hostname not in scan_list:
+                            scan_list.append(bm)
+                            bm.scanned = True
+                # check for label match
+                label = bm.label.lower()
+                if not bm.scanned and label is not None and len(label):
+                    for item in config_list:
+                        if item in label and label not in scan_list:
+                            scan_list.append(bm)
+                            bm.scanned = True
+                pass
+
+    # =========================================================================
+    def delete_scanned_bookmarks(self):
+        """ rescan bookmarks and delete any that were identified (e.g. projects, personal) """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
+                if bm.scanned:
+                    del bm_value[i-1]
+            # see if any bookmarks remain for this key
+            if not len(bm_value):
+                self.processed_bookmarks.append(bm_key)
+        # delete all bookmarks marked 'scanned'
+        for bm_key in self.processed_bookmarks:
+            if bm_key in self.bookmarks:
+                del self.bookmarks[bm_key]
         pass
 
     # =========================================================================
@@ -217,7 +319,7 @@ class Analyze(object):
 
     # =========================================================================
     def scan_bookmark_hosts(self):
-        """ scan all bookmarks for known Ford/hostnames """
+        """ scan all bookmarks for known previously identified hostnames """
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
@@ -226,80 +328,11 @@ class Analyze(object):
                 if not hostname:
                     continue
                 hostname = hostname.lower()
-                if self.scan_for_hostname(hostname, TheConfig.project_sites, self.project_sites, 'Project Sites'):
-                    continue
-                elif self.scan_for_hostname(hostname, TheConfig.ford_sites, self.ford_domains, 'Ford'):
-                    continue
-                elif self.scan_for_hostname(hostname, TheConfig.partner_sites, self.partner_domains, 'Partner'):
-                    continue
+                # loop through all menubar sections
+                for section in TheConfig.sections:
+                    for key in TheConfig.sections[section].keys():
+                        for host in TheConfig.sections[section][key]:
+                            if host in hostname and hostname not in self.host_sites[section]:
+                                self.host_sites[section].append(hostname)
+                                logger.logger.debug(f'{section}: {host}/{hostname}')
         pass
-
-    # =========================================================================
-    @staticmethod
-    def scan_for_hostname(hostname: str, config_list: list, scan_list: list, label: str):
-        """ Scan for hostname contained in list
-            :param hostname: hostname to search for
-            :param config_list: configuration file list of sites
-            :param scan_list: list to update if found
-            :param label: string to use for logging
-            :return: True if site found, else false
-        """
-        for site in config_list:
-            if site in hostname:
-                if hostname not in scan_list:
-                    scan_list.append(hostname)
-                    logger.logger.debug(f'{label}: {site}/{hostname}')
-                return True
-        return False
-
-    # =========================================================================
-    def scan_bookmarks_projects(self, config_list: list, scan_list: dict):
-        """ scan all bookmarks for known Ford/project domain(s) """
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            # scan all book marks for current value
-            for bm in bm_value:
-                label = bm.label.lower()
-                if not len(label):
-                    continue
-                logger.logger.debug(f'BookMark Label: "{label}"')
-                # scan for configuration projects
-                for project in config_list:
-                    if project in label and label not in scan_list[project]:
-                        scan_list[project].append(bm)
-                pass
-
-    # =========================================================================
-    def scan_bookmarks_personal(self, config_list: list, scan_list: list):
-        """ scan all bookmarks for personal sites """
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            # scan all book marks for current value
-            for bm in bm_value:
-                href = bm.href_urlparts
-                if not href.hostname:
-                    continue
-                logger.logger.debug(f'BookMark Label: "{href}"')
-                # scan for configuration personal sites matching href
-                for personal in config_list:
-                    if personal in href.hostname and href.hostname not in scan_list:
-                        scan_list.append(bm)
-                pass
-
-    def delete_found_bookmarks(self):
-        """ rescan bookmarks and delete any that were identified (e.g. projects, personal) """
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            # scan all book marks for current value
-            bm_values = len(bm_value)
-            for i in range(bm_values, 0, -1):
-                bm = bm_value[i-1]
-                # project?
-                # personal?
-                if bm in self.personal:
-                    del bm_value[i-1]
-            if not len(bm_value):
-                self.processed_bookmarks.append(bm_key)
