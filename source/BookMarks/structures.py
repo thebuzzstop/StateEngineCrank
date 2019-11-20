@@ -136,14 +136,6 @@ class BookMarks(object):
         self.bookmark = None
 
     # =================================================================
-    def headings_data(self):
-        return {
-            'dict': self.headings_dict,
-            'dups': self.headings_dups,
-            'labels': self.heading_labels,
-        }
-
-    # =================================================================
     def start_list(self):
         """ Start a new list
             The last header passed to us will be used as the heading

@@ -10,12 +10,10 @@ The BookMarks reformat module reorders and reorganizes the bookmarks::
 """
 
 # System imports
-import typing
+import datetime
 
 # Project imports
 from analyze import Analyze
-from structures import HeadingLabels
-
 from config import TheConfig
 
 import logger
@@ -26,24 +24,45 @@ my_logger = logger.logger
 class Reformat(object):
     """ Class to reformat bookmarks """
 
-    def __init__(self, analysis: Analyze, headings_data: dict):
+    def __init__(self, analysis: Analyze):
         """ Analyze constructor
 
             :param analysis: Analize object after processing
-            :param headings_data: Dictionary of headings data
         """
         self.analysis = analysis
-        self.headings_dict = headings_data['dict']
-        self.headings_labels = headings_data['labels']
-        self.headings_dups = headings_data['dups']
+        self.headings = TheConfig.headings      #: users headings configuration
+        self.menubar = TheConfig.menubar        #: user menubar configuration
+        self.output = [TheConfig.HEADER_HTML]   #: start with bookmarks file header
 
-        self.headings = TheConfig.headings  #: users headings configuration
-        self.menubar = TheConfig.menubar    #: user menubar configuration
-        self.output = None
+        #: date stamp for all html entities we create
+        self.datestamp = int(datetime.datetime.now().timestamp())
 
-        self.scan_bookmarks()
+        # create output structure
+        self.write(TheConfig.LIST_HTML)
+        self.write(
+            TheConfig.TOOLBAR_HTML_FORMAT.format(self.datestamp, self.datestamp, 'Bookmarks Bar')
+        )
+        self.write_section('head')
+        for section in self.headings:
+            self.write_section(section)
+        self.write_section('tail')
+        self.write(TheConfig.LIST_HTML_END)
         pass
 
-    def scan_bookmarks(self):
-        """ Scan bookmarks database and match with headings & topics """
-        pass
+    def write(self, html):
+        """ write html to output string
+            :param html: html string(s) to output, may be a list
+        """
+        if isinstance(html, list):
+            for h in html:
+                self.write(h)
+            return
+        self.output.append(html)
+
+    def write_section(self, section):
+        """ write entire section to output string
+            :param section: bookmarks section to output
+        """
+
+        for bm in self.menubar[section]:
+            pass

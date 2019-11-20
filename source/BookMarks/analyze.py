@@ -73,7 +73,7 @@ class Analyze(object):
         self.host_sites = {section: [] for section in TheConfig.sections}
 
         #: populated as we parse the various sections
-        self.menubar = {section: {
+        self._menubar = {section: {
             topic: [] for topic in TheConfig.sections[section].keys()
         } for section in TheConfig.sections}
 
@@ -89,15 +89,29 @@ class Analyze(object):
 
         # scan bookmarks in the order specified in the configuration file
         for section in TheConfig.scanning_order:
-            for topic in self.menubar[section].keys():
+            for topic in self._menubar[section].keys():
                 logger.logger.debug(f'Scanning: {section}/{topic}')
                 config_list = TheConfig.sections[section][topic]
-                scan_list = self.menubar[section][topic]
+                scan_list = self._menubar[section][topic]
                 self.scan_bookmarks_section(config_list, scan_list)
             pass
 
+        # add an unscanned bookmarks to the miscellaneous section
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            for bm in bm_value:
+                self._menubar['misc']['misc'] = bm
+                bm.scanned = True
+
         self.delete_scanned_bookmarks()
+
         pass
+
+    # =========================================================================
+    def menubar(self):
+        """ returns menubar constructed during analysis """
+        return self._menubar
 
     # =========================================================================
     def scan_bookmarks_files(self):

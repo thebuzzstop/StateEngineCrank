@@ -12,6 +12,22 @@ import os
 class TheConfig:
     """ Global Configuration Parsing for Command Line and Configuration File """
 
+    HEADER_HTML = """
+        <!DOCTYPE NETSCAPE-Bookmark-file-1>
+        <!-- This is an automatically generated file.
+            It will be read and overwritten.
+            DO NOT EDIT! -->
+        <META HTTP - EQUIV = "Content-Type" CONTENT = "text/html; charset=UTF-8">
+        <TITLE>Bookmarks</TITLE>
+        <H1>Bookmarks</H1>
+        """
+    LIST_HTML = '<DL><p>'
+    LIST_HTML_END = '</DL><p>'
+    TOOLBAR_HTML_FORMAT = """
+        <DT><H3 ADD_DATE="{0}" LAST_MODIFIED="{1}" PERSONAL_TOOLBAR_FOLDER="true">{2}</H3>
+        <DL><p>
+    """
+
     # global configuration variables initialized to default values
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
