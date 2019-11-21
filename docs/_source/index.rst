@@ -21,6 +21,7 @@ This documentation is divided into the following sections:
 * Sleeping Barber(s) - a simulation demonstrating use of *"The Crank"* (see`WikiBarbers <https://en.wikipedia.org/wiki/Sleeping_barber_problem>`_)
 * GUI Animation - an exercise in Tkinter to provide some life to the simulations
 * Model-View-Controller - a package of routines used to bring together the various simulation components utilizing an MVC architecture.
+* BookMarks - a package using *"The Crank"* to parse html
 
 .. toctree::
    :maxdepth: 2
@@ -31,6 +32,7 @@ This documentation is divided into the following sections:
    SleepingBarber
    GuiAnimation
    ModelViewController
+   BookMarks
    glossary
 
 Indices and tables

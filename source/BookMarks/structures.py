@@ -8,7 +8,7 @@ The BookMarks Structures module maintains bookmark structures::
  + Lists
 
 .. code-block:: rest
-    :caption **BookMarks List UML**
+    :caption: **BookMarks List UML**
     :name: BookMarksListUml
 """
 

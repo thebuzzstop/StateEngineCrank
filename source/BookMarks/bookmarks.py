@@ -1,9 +1,9 @@
-""" BookMarks main module
+""" BookMarks.bookmarks
 
 The BookMarks module processes bookmarks exported from Google Chrome.
 
 .. code-block:: rest
-    :caption **BookMarks UML**
+    :caption: **BookMarksUml**
     :name: BookMarksUml
 
     @startuml
