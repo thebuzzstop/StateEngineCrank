@@ -2,10 +2,10 @@
 
 The BookMarks Analysis module parses and categorizes bookmarks::
 
- + Protocols
- + Domains
- + Subdomains
- + Headings
+ * Protocols
+ * Domains
+ * Subdomains
+ * Headings
 
 """
 

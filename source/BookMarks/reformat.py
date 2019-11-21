@@ -2,10 +2,10 @@
 
 The BookMarks reformat module reorders and reorganizes the bookmarks::
 
- + Protocols
- + Domains
- + Subdomains
- + Headings
+ * Protocols
+ * Domains
+ * Subdomains
+ * Headings
 
 """
 
@@ -63,6 +63,8 @@ class Reformat(object):
         """ write entire section to output string
             :param section: bookmarks section to output
         """
-
+        self.write(TheConfig.LIST_HTML)
         for bm in self.menubar[section]:
-            pass
+            self.write(bm)
+        self.write(TheConfig.LIST_HTML_END)
+        pass

@@ -2,10 +2,10 @@
 
 The BookMarks Structures module maintains bookmark structures::
 
- + Bookmarks
- + Headings
- + Topics
- + Lists
+ * Bookmarks
+ * Headings
+ * Topics
+ * Lists
 
 .. code-block:: rest
     :caption: **BookMarks List UML**
