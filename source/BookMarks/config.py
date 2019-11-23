@@ -37,6 +37,8 @@ class TheConfig:
     menubar = None          #: menubar constructed by config parser
     scanning_order = None   #: order in which scanning processing will occur
     sections = None         #: menutab sections (topic groups)
+    head = None             #: menutab 'head' section
+    tail = None             #: menutab 'tail' section
 
 
 class CfgParser(configparser.ConfigParser):

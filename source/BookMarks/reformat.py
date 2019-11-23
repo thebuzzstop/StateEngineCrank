@@ -31,7 +31,8 @@ class Reformat(object):
         """
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
-        self.menubar = TheConfig.menubar        #: user menubar configuration
+        self.menubar_spec = TheConfig.menubar   #: user menubar configuration
+        self.menubar_data = analysis.menubar()  #: menubar scanned data
         self.output = [TheConfig.HEADER_HTML]   #: start with bookmarks file header
 
         #: date stamp for all html entities we create
@@ -64,7 +65,13 @@ class Reformat(object):
             :param section: bookmarks section to output
         """
         self.write(TheConfig.LIST_HTML)
-        for bm in self.menubar[section]:
-            self.write(bm)
+        if section in self.headings:
+            for subsection in self.menubar_spec[section]:
+                for bm in self.menubar_data[section][subsection]:
+                    self.write(bm)
+        else:
+            for bm in self.menubar_data[section]:
+                self.write(bm)
+
         self.write(TheConfig.LIST_HTML_END)
         pass
