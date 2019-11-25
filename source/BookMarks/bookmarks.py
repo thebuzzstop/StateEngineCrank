@@ -510,7 +510,14 @@ if __name__ == '__main__':
     # create bookmark output structure
     output = None
     try:
-        output = Reformat(analysis)
+        output = Reformat(analysis).output
+        with open('bookmarks.html', 'w') as file:
+            for s in output:
+                if isinstance(s, list):
+                    for s_ in s:
+                        file.write(s_+'\n')
+                else:
+                    file.write(s+'\n')
     except Exception as e:
         print(f'Exception reformatting file: {e}')
 

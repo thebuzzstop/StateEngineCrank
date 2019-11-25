@@ -12,21 +12,30 @@ import os
 class TheConfig:
     """ Global Configuration Parsing for Command Line and Configuration File """
 
-    HEADER_HTML = """
-        <!DOCTYPE NETSCAPE-Bookmark-file-1>
-        <!-- This is an automatically generated file.
-            It will be read and overwritten.
-            DO NOT EDIT! -->
-        <META HTTP - EQUIV = "Content-Type" CONTENT = "text/html; charset=UTF-8">
-        <TITLE>Bookmarks</TITLE>
-        <H1>Bookmarks</H1>
-        """
+    HEADER_HTML = [
+        '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+        '<!-- This is an automatically generated file.',
+        'It will be read and overwritten.',
+        'DO NOT EDIT! -->',
+        '<META HTTP - EQUIV = "Content-Type" CONTENT = "text/html; charset=UTF-8">',
+        '<TITLE>Bookmarks</TITLE>',
+        '<H1>Bookmarks</H1>',
+    ]
     LIST_HTML = '<DL><p>'
     LIST_HTML_END = '</DL><p>'
-    TOOLBAR_HTML_FORMAT = """
-        <DT><H3 ADD_DATE="{0}" LAST_MODIFIED="{1}" PERSONAL_TOOLBAR_FOLDER="true">{2}</H3>
-        <DL><p>
-    """
+    TOOLBAR_HTML_FORMAT = '<DT><H2 ADD_DATE="{0}" LAST_MODIFIED="{1}" PERSONAL_TOOLBAR_FOLDER="true">{2}</H2>'
+    HEADING_HTML_FORMAT = '<DT><H3 ADD_DATE="{0}" LAST_MODIFIED="{1}">{2}</H3>'
+    BOOKMARK_HTML_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}">{2}</A>'
+    BOOKMARK_HTML_ICON_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}">{3}</A>'
+
+    NO_SECTION_HEADING = {
+        'reference': 'reference',
+        'projects': 'sites',
+        'ford': 'sites',
+        'personal': 'sites',
+        'tools': 'tools',
+        'misc': 'misc',
+    }
 
     # global configuration variables initialized to default values
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']

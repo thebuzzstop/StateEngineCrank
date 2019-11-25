@@ -66,9 +66,6 @@ class Analyze(object):
         self.keyword_database = Keywords()
         self.href_database = Keywords()
 
-        #: local copy of TheConfig for debugging reference
-        self.the_config = TheConfig
-
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
 
@@ -160,11 +157,12 @@ class Analyze(object):
         return f'{bookmark.heading.label}'
 
     # =========================================================================
-    def scan_bookmarks_site(self, site, scan_list):
+    def scan_bookmarks_site(self, site: str, scan_list):
         """ scan all bookmarks for section match
             :param site: BookMark site to scan for
             :param scan_list: Section/topic target scan list
         """
+        site_ = site.lower()
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
@@ -172,9 +170,11 @@ class Analyze(object):
             for bm in bm_value:
                 # check for hostname match
                 hostname = bm.href_urlparts.hostname
+                if hostname is not None:
+                    hostname = hostname.lower()
                 path = bm.href_urlparts.path
                 if not bm.scanned and hostname is not None and len(hostname):
-                    if hostname.endswith(site) and path == '/':
+                    if hostname.endswith(site_) and path == '/':
                         scan_list.append(bm)
                         bm.scanned = True
                 pass
@@ -190,13 +190,16 @@ class Analyze(object):
                 continue
             # scan all book marks for current value
             for bm in bm_value:
-                # check for hostname natch
-                hostname = bm.href_urlparts.hostname
-                if not bm.scanned and hostname is not None and len(hostname):
+                if bm.scanned:
+                    continue
+                # check for hostname match
+                hostname = bm.href_urlparts.hostname.lower()
+                if hostname is not None and len(hostname):
                     for item in config_list:
                         if item in hostname and hostname not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = True
+                            break
                 # check for label match
                 label = bm.label.lower()
                 if not bm.scanned and label is not None and len(label):
@@ -204,7 +207,8 @@ class Analyze(object):
                         if item in label and label not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = True
-                pass
+                            break
+        pass
 
     # =========================================================================
     def delete_scanned_bookmarks(self):
@@ -283,13 +287,9 @@ class Analyze(object):
                     self.pathnames[bm.href_urlparts.hostname].append(bm.href_urlparts.path)
                 elif bm.href_urlparts.hostname not in self.duplicates:
                     self.duplicates[bm.href_urlparts.hostname] = [(bm.href_urlparts.path, bm)]
-                    if len(bm_value) == 1:
-                        pass
                     del bm_value[i-1]
                 else:
                     self.duplicates[bm.href_urlparts.hostname].append((bm.href_urlparts.path, bm))
-                    if len(bm_value) == 1:
-                        pass
                     del bm_value[i-1]
 
             # see if all bookmarks for this list were deleted
