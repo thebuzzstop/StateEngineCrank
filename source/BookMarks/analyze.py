@@ -107,8 +107,9 @@ class Analyze(object):
             if not bm_value:
                 continue
             for bm in bm_value:
-                self._menubar['misc']['misc'].append(bm)
-                bm.scanned = True
+                if not bm.scanned:
+                    self._menubar['misc']['misc'].append(bm)
+                    bm.scanned = True
 
         self.delete_scanned_bookmarks()
         pass

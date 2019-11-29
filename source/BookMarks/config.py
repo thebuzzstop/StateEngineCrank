@@ -43,11 +43,13 @@ class TheConfig:
     # configuration items initialized by config parser
     config = None           #: configuration items
     headings = None         #: headings declared in config.ini
+    noheadings = None       #: section.subsection combinations not to have a heading
     menubar = None          #: menubar constructed by config parser
     scanning_order = None   #: order in which scanning processing will occur
     sections = None         #: menutab sections (topic groups)
     head = None             #: menutab 'head' section
     tail = None             #: menutab 'tail' section
+    capitalized = None      #: menubar capitalized label words
 
 
 class CfgParser(configparser.ConfigParser):
@@ -87,7 +89,9 @@ class CfgParser(configparser.ConfigParser):
         TheConfig.scanning_order = self.get_list(config['scanning']['order'])
         TheConfig.config = config
         TheConfig.headings = headings
+        TheConfig.noheadings = self.get_list(config['menubar']['noheadings'])
         TheConfig.menubar = menubar
+        TheConfig.capitalized = self.get_list_tuples(config['menubar']['capitalized'])
         TheConfig.sections = {}
         for menubar in self.get_list(config['menubar']['headings']):
             TheConfig.sections[menubar] = {}
@@ -107,3 +111,19 @@ class CfgParser(configparser.ConfigParser):
             if not items[i]:
                 del items[i]
         return items
+
+    @staticmethod
+    def get_list_tuples(config_item: str):
+        """ Return a [list] of configuration items which are parsed as tuples
+
+            Do not return an empty/null/'' item
+            :param config_item: Configuration file item
+        """
+        items = config_item.replace('\n', '').replace(', ', ',').split(',')
+        tuples = []
+        for i in range(0, len(items), 2):
+            if items[i]:
+                tuples.append((items[i], items[i+1]))
+            else:
+                del items[i]
+        return tuples

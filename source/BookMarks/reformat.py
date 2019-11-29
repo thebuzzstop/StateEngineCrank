@@ -59,17 +59,40 @@ class Reformat(object):
         if section in self.headings:
             self.write_heading(section)
             self.begin_list()
+            deferred = []
             for subsection in self.menubar_spec[section]:
+                if not self.has_heading(section, subsection):
+                    deferred.append(subsection)
+                    continue
                 self.write_heading(subsection)
                 self.begin_list()
-                sorted_bm = sorted(self.menubar_data[section][subsection], key=lambda x: getattr(x, 'label'))
-                for bm in sorted_bm:
-                    self.write_bm(bm)
+                self.output_subsection(section, subsection)
                 self.end_list()
+            # output any subsection(s) that were deferred
+            for subsection in deferred:
+                self.output_subsection(section, subsection)
             self.end_list()
         else:
             for bm in self.menubar_data[section]:
                 self.write_bm(bm)
+
+    def output_subsection(self, section, subsection):
+        """ output bookmarks for section.subsection
+            :param section: Active section name
+            :param subsection: Active subsection name
+        """
+        sorted_bm = sorted(self.menubar_data[section][subsection], key=lambda x: getattr(x, 'label'))
+        for bm in sorted_bm:
+            self.write_bm(bm)
+
+    @staticmethod
+    def has_heading(section, subsection):
+        """ function to determine if subsection has a heading
+            :param section: Active section name
+            :param subsection: Active subsection name
+            :return: True if section.subsection has a heading
+        """
+        return f'{section}.{subsection}' not in TheConfig.noheadings
 
     def write_bm(self, bm: BookMark):
         """ write a single bookmark to output string
@@ -98,13 +121,13 @@ class Reformat(object):
         """ write heading data to output string
             :param heading: heading text
         """
-        self.write(TheConfig.HEADING_HTML_FORMAT.format(self.datestamp, self.datestamp, heading.title()))
+        self.write(TheConfig.HEADING_HTML_FORMAT.format(self.datestamp, self.datestamp, self.my_title(heading)))
 
     def write_toolbar_heading(self, heading: str):
         """ write heading data to output string
             :param heading: heading text
         """
-        self.write(TheConfig.TOOLBAR_HTML_FORMAT.format(self.datestamp, self.datestamp, heading.title()))
+        self.write(TheConfig.TOOLBAR_HTML_FORMAT.format(self.datestamp, self.datestamp, self.my_title(heading)))
 
     def begin_list(self):
         """ starts an HTML list and bumps the indent level """
@@ -126,3 +149,13 @@ class Reformat(object):
             return
         self.output.append('    '*self.indent + html.strip())
         pass
+
+    def my_title(self, heading):
+        """ format a heading string the way we like it
+            :param heading: Heading string to format
+            :return: Heading formatted as we like it
+        """
+        heading = heading.title()
+        for original, replacement in TheConfig.capitalized:
+            heading = str.replace(heading, original, replacement)
+        return heading
