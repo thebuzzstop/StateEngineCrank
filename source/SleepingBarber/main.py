@@ -16,6 +16,8 @@ import threading
 # Project imports
 import mvc
 import exceptions
+# from exceptions import JoinFailure
+
 import Defines
 
 from SleepingBarber.Common import ConfigData as ConfigData
@@ -240,12 +242,12 @@ class SleepingBarber(mvc.Model):
                     self.join_thread(b.thread)
                     del b
                 except exceptions.JoinFailure:
+                    self.logger(f'JoinFailure: Barber={b}')
                     join_list_b.append(b)
             if len(join_list_b) == 0:
                 self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
             # Cleanup and Join customer generator
-            join_list_c = self.cg.cleanup()
             self.join_thread(self.cg.thread)
             del self.cg
             self.cg = None
@@ -272,4 +274,9 @@ if __name__ == '__main__':
     sleeping_barbers.set_running()
     while sleeping_barbers.running:
         time.sleep(1)
-    print('Done')
+        
+    print('Sleeping Barber(s) Simulation Done')
+    with sleeping_barbers.statistics as s:
+        print(s.customer_stats())
+        print(s.barber_stats())
+        print(s.summary_stats())

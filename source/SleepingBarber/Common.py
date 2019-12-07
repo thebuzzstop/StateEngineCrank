@@ -6,6 +6,8 @@
 import random
 from threading import Lock as Lock
 import time
+from pip._internal import self_outdated_check
+from contextlib import contextmanager
 
 # Project imports
 
@@ -31,7 +33,7 @@ class Config(object):
     WaitingChairsMax = 5                #: maximum number of waiters for animation
     CustomerRate = 5                    #: rate for new customers
     CustomerVariance = 2                #: variance in the customer rate
-    SimulationLoops = 500               #: total number of loops (seconds) to run
+    SimulationLoops = 100               #: total number of loops (seconds) to run
     Class_Name = 'barbers'              #: class name for Event registration
     Actor_Base_Name = 'barber'          #: used when identifying actors
     Customer_Class_Name = 'customers'   #: class name for Event registration
@@ -98,6 +100,12 @@ class Statistics(Borg):
 
         Implemented as a Borg, it can be instantiated as many times as necessary.
     """
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, *exc):
+        return False
+    
     def __init__(self):
         Borg.__init__(self, 'statistics')
         if len(self._shared_state['statistics']):

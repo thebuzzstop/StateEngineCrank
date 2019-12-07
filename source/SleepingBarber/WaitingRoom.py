@@ -13,7 +13,6 @@ The waiting room lock must be obtained by anyone wanting access to the waiting r
 """
 
 # System imports
-import sys
 from threading import Lock as Lock
 from collections import deque
 

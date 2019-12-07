@@ -487,13 +487,13 @@ if __name__ == '__main__':
 
     config = CfgParser()
     parser = MyHTMLParser()
-    bookmarks1 = r'Bookmarks/bookmarks_10_5_19.html'
     bookmarks2 = r'Bookmarks/bookmarks_10_31_19.html'
+    bookmarks3 = r'Bookmarks/bookmarks_12_7_19.html'
 
     # open bookmarks file and feed to the parser
     bookmarks = None
     try:
-        with open(bookmarks2, mode='r', encoding='utf-8') as html:
+        with open(bookmarks3, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
         bookmarks = parser.parser.bookmarks

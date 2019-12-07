@@ -56,14 +56,18 @@ class Reformat(object):
         """ write entire section to output string
             :param section: bookmarks section to output
         """
+        # see if current section has a heading
         if section in self.headings:
             self.write_heading(section)
             self.begin_list()
             deferred = []
+            # process each subsection in the current menubar section
             for subsection in self.menubar_spec[section]:
+                # add to deferred list if subsection does not have a heading
                 if not self.has_heading(section, subsection):
                     deferred.append(subsection)
                     continue
+                # create a heading and start a list for this subsection
                 self.write_heading(subsection)
                 self.begin_list()
                 self.output_subsection(section, subsection)
@@ -73,15 +77,17 @@ class Reformat(object):
                 self.output_subsection(section, subsection)
             self.end_list()
         else:
+            # process section without a heading
             for bm in self.menubar_data[section]:
-                self.write_bm(bm)
+                self.write_bm(bm, has_label=False)
 
     def output_subsection(self, section, subsection):
         """ output bookmarks for section.subsection
             :param section: Active section name
             :param subsection: Active subsection name
         """
-        sorted_bm = sorted(self.menubar_data[section][subsection], key=lambda x: getattr(x, 'label'))
+        sorted_bm = sorted(self.menubar_data[section][subsection],
+                           key=lambda x: (getattr(x, 'hostname'), getattr(x, 'path'), getattr(x, 'label')))
         for bm in sorted_bm:
             self.write_bm(bm)
 
@@ -94,27 +100,40 @@ class Reformat(object):
         """
         return f'{section}.{subsection}' not in TheConfig.noheadings
 
-    def write_bm(self, bm: BookMark):
+    def write_bm(self, bm: BookMark, has_label=True):
         """ write a single bookmark to output string
             :param bm: Bookmark to output
+            :param has_label: Bookmark has a label
         """
-        if 'icon' in bm.attrs:
-            self.write(
-                TheConfig.BOOKMARK_HTML_ICON_FORMAT.format(
-                    bm.attrs['href'],
-                    bm.attrs['add_date'],
-                    bm.attrs['icon'],
-                    bm.label
+        if has_label:
+            if 'icon' in bm.attrs:
+                self.write(
+                    TheConfig.BOOKMARK_HTML_ICON_FORMAT.format(
+                        bm.attrs['href'],
+                        bm.attrs['add_date'],
+                        bm.attrs['icon'],
+                        bm.label
+                    )
                 )
-            )
+            else:
+                self.write(
+                    TheConfig.BOOKMARK_HTML_FORMAT.format(
+                        bm.attrs['href'],
+                        bm.attrs['add_date'],
+                        bm.label
+                    )
+                )
         else:
-            self.write(
-                TheConfig.BOOKMARK_HTML_FORMAT.format(
-                    bm.attrs['href'],
-                    bm.attrs['add_date'],
-                    bm.label
+            if 'icon' in bm.attrs:
+                self.write(
+                    TheConfig.BOOKMARK_HTML_ICON_FORMAT_NO_LABEL.format(
+                        bm.attrs['href'],
+                        bm.attrs['add_date'],
+                        bm.attrs['icon']
+                    )
                 )
-            )
+            else:
+                raise Exception("Can't output BM with no LABEL and no ICON")
         pass
 
     def write_heading(self, heading: str):

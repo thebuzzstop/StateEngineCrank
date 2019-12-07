@@ -44,6 +44,11 @@ class BookMark(object):
         }
         self.href_urlparts = None
 
+        # populate the following for ease of parsing later during reformat
+        self.scheme = None
+        self.hostname = None
+        self.path = None
+
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark
             :param attr: Attribute designation
@@ -53,6 +58,9 @@ class BookMark(object):
             self.attrs[attr] = value
             if attr == 'href':
                 self.href_urlparts = urlparse(value)
+                self.scheme = self.href_urlparts.scheme
+                self.hostname = self.href_urlparts.hostname
+                self.path = self.href_urlparts.path
         else:
             self.attrs['attrs'].append({attr: value})
 

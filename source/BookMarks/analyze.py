@@ -66,6 +66,8 @@ class Analyze(object):
         self.keyword_database = Keywords()
         self.href_database = Keywords()
 
+        self.the_config = TheConfig
+
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
 
@@ -174,10 +176,11 @@ class Analyze(object):
                 if hostname is not None:
                     hostname = hostname.lower()
                 path = bm.href_urlparts.path
-                if not bm.scanned and hostname is not None and len(hostname):
-                    if hostname.endswith(site_) and path == '/':
-                        scan_list.append(bm)
-                        bm.scanned = True
+                if not bm.scanned:
+                    if hostname is not None and len(hostname):
+                        if hostname.endswith(site_) and path == '/' or site_ in bm.label.lower():
+                            scan_list.append(bm)
+                            bm.scanned = True
                 pass
 
     # =========================================================================

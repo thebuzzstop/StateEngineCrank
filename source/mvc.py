@@ -318,7 +318,7 @@ class MVC(ABC):
             if not thread.is_alive():
                 return True
         if thread.is_alive():
-            raise exceptions.JoinFailure(thread)
+            raise exceptions.JoinFailure(self.name)
         return True
 
     def set_running(self):

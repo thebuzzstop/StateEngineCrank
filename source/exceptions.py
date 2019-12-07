@@ -18,7 +18,7 @@ class MyException(Exception):
 
 
 class InvalidThread(MyException):
-    """ Thread operation on inavlid thread object """
+    """ Thread operation on invalid thread object """
     pass
 
 
@@ -83,4 +83,6 @@ class ActorNotRegistered(MyException):
 
 class JoinFailure(MyException):
     """ Failure to join thread """
-    pass
+    
+    def __init__(self, text):
+        super().__init__(text=text)

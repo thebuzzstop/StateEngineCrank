@@ -27,6 +27,7 @@ class TheConfig:
     HEADING_HTML_FORMAT = '<DT><H3 ADD_DATE="{0}" LAST_MODIFIED="{1}">{2}</H3>'
     BOOKMARK_HTML_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}">{2}</A>'
     BOOKMARK_HTML_ICON_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}">{3}</A>'
+    BOOKMARK_HTML_ICON_FORMAT_NO_LABEL = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}"></A>'
 
     NO_SECTION_HEADING = {
         'reference': 'reference',
@@ -106,11 +107,13 @@ class CfgParser(configparser.ConfigParser):
             Do not return an empty/null/'' item
             :param config_item: Configuration file item
         """
-        items = config_item.lower().replace('\n', '').replace(', ', ',').split(',')
-        for i in range(len(items)):
-            if not items[i]:
-                del items[i]
-        return items
+        items0 = config_item.replace('\\,', '&&')
+        items1 = items0.lower().replace('\n', '').replace(', ', ',').split(',')
+        for i in range(len(items1)):
+            items1[i] = items1[i].replace('&&', ',')
+            if not items1[i]:
+                del items1[i]
+        return items1
 
     @staticmethod
     def get_list_tuples(config_item: str):
