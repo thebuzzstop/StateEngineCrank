@@ -1,6 +1,6 @@
 """ BookMarks Reformat module
 
-The BookMarks reformat module reorders and reorganizes the bookmarks::
+The BookMarks reformat module reorders and reorganizes the bookmarks:
 
  * Protocols
  * Domains
@@ -78,7 +78,10 @@ class Reformat(object):
             self.end_list()
         else:
             # process section without a heading
-            for bm in self.menubar_data[section]:
+            sorted_section = \
+                sorted(self.menubar_data[section],
+                       key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
+            for bm in sorted_section:
                 self.write_bm(bm, has_label=False)
 
     def output_subsection(self, section, subsection):
@@ -87,7 +90,7 @@ class Reformat(object):
             :param subsection: Active subsection name
         """
         sorted_bm = sorted(self.menubar_data[section][subsection],
-                           key=lambda x: (getattr(x, 'hostname'), getattr(x, 'path'), getattr(x, 'label')))
+                           key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
         for bm in sorted_bm:
             self.write_bm(bm)
 

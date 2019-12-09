@@ -1,6 +1,6 @@
 """ BookMarks Analysis module
 
-The BookMarks Analysis module parses and categorizes bookmarks::
+The BookMarks Analysis module parses and categorizes bookmarks:
 
  * Protocols
  * Domains

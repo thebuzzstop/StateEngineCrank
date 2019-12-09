@@ -51,6 +51,8 @@ class TheConfig:
     head = None             #: menutab 'head' section
     tail = None             #: menutab 'tail' section
     capitalized = None      #: menubar capitalized label words
+    input_file = None       #: bookmarks input file to be processed
+    output_file = None      #: bookmarks output file (after processing)
 
 
 class CfgParser(configparser.ConfigParser):
@@ -78,6 +80,10 @@ class CfgParser(configparser.ConfigParser):
         headings = self.get_list(config['menubar']['headings'])
         for heading in headings:
             menubar[heading] = {topic: None for topic in config.options(heading)}
+
+        # get files to be processed
+        TheConfig.input_file = config['files']['input']
+        TheConfig.output_file = config['files']['output']
 
         # enumerate menubar heading sub-topics
         for heading in headings:

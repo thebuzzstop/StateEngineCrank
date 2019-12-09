@@ -2,6 +2,13 @@
 
 The BookMarks module processes bookmarks exported from Google Chrome.
 
+Application processing:
+
+    #. Initialization and startup. Instantiate Configuration parser and the HTML parser (State Engine)
+    #. Open the bookmarks file and feed it to the parser.
+    #. Analyze the bookmarks. Categorize and Scan for duplicates.
+    #. Create the output bookmarks file for importing into a browser.
+
 .. code-block:: rest
     :caption: **BookMarksUml**
     :name: BookMarksUml
@@ -63,6 +70,7 @@ from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
 from config import CfgParser
+from config import TheConfig
 from structures import BookMarks
 from analyze import Analyze
 from reformat import Reformat
@@ -133,14 +141,15 @@ class UserCode(StateMachine):
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table)
 
-        self.bookmarks = BookMarks()    #: bookmarks data collection
+        #: Bookmarks data collection.
+        #: Bookmarks are added to the collection as they are parsed by the state machine.
+        self.bookmarks = BookMarks()
+
         self.title = None               #: title of this collection of bookmarks
-        self.title_attrs = None         #: :todo: title attrs (is this really needed)
         self.header = None              #: header of this collection of bookmarks
         self.html_data = None           #: data for current html item
         self.html_attrs = None          #: 'attrs' associated with most recent tag
         self.meta_attrs = None          #: attrs for meta tag
-        self.meta_data = None           #: :todo: data for meta tag (is this really needed)
         self.list_level = None          #: current list level
 
         my_logger.debug('UserCode: INIT done')
@@ -484,16 +493,17 @@ class MyHTMLParser(HTMLParser, ABC):
 
 
 if __name__ == '__main__':
+    """ Main application processing for BookMarks """
 
+    # initialization and setup
     config = CfgParser()
     parser = MyHTMLParser()
-    bookmarks2 = r'Bookmarks/bookmarks_10_31_19.html'
-    bookmarks3 = r'Bookmarks/bookmarks_12_7_19.html'
 
     # open bookmarks file and feed to the parser
     bookmarks = None
     try:
-        with open(bookmarks3, mode='r', encoding='utf-8') as html:
+        my_logger.info(f'Processing input file: {TheConfig.input_file}')
+        with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         parser.feed(bookmarks_html)
         bookmarks = parser.parser.bookmarks
@@ -511,7 +521,8 @@ if __name__ == '__main__':
     output = None
     try:
         output = Reformat(analysis).output
-        with open('bookmarks.html', 'w') as file:
+        my_logger.info(f'Creating output file: {TheConfig.output_file}')
+        with open(TheConfig.output_file, 'w') as file:
             for s in output:
                 if isinstance(s, list):
                     for s_ in s:
@@ -520,5 +531,3 @@ if __name__ == '__main__':
                     file.write(s+'\n')
     except Exception as e:
         print(f'Exception reformatting file: {e}')
-
-    pass

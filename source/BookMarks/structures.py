@@ -1,6 +1,6 @@
 """ BookMarks Structures module
 
-The BookMarks Structures module maintains bookmark structures::
+The BookMarks Structures module maintains bookmark structures:
 
  * Bookmarks
  * Headings
