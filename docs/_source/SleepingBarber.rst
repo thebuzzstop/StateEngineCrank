@@ -78,10 +78,3 @@ Common Code
     :members:
     :undoc-members:
     :show-inheritance:
-
-Exceptions
-----------
-.. automodule:: SleepingBarber.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
