@@ -11,7 +11,6 @@ BookMarks State Diagram
     :name: BookMarksUmlPng
 
 .. note::
-
     BookMarks state diagram.
 
     This image was created using PlantUML with the UML
@@ -37,13 +36,25 @@ Configuration Module
 	:members:
 	:undoc-members:
 	:show-inheritance:
-	
+
 Reformat Module
 ---------------
 .. automodule:: BookMarks.reformat
 	:members:
 	:undoc-members:
 	:show-inheritance:
+
+BookMarks Class Diagram
+-----------------------
+.. figure:: structures.png
+    :alt: Bookmarks class diagram (Structures)
+    :name: BookMarksClassUmlPng
+
+.. note::
+    BookMarks class diagram.
+
+    This image was created using PlantUML with the UML contained
+    in the structures.py docstring :ref:`BookMarksClassUml`.
 
 Structures Module
 -----------------
