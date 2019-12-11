@@ -1,15 +1,89 @@
 """ BookMarks Structures module
 
-The BookMarks Structures module maintains bookmark structures:
-
- * Bookmarks
- * Headings
- * Topics
- * Lists
+The BookMarks Structures module maintains bookmark structures.
 
 .. code-block:: rest
     :caption: **BookMarks List UML**
     :name: BookMarksListUml
+
+    @startuml
+
+    class List {
+        A generic list with custom attributes
+        ===
+        level : list level
+        label : list label
+        list [] : the actual list
+    }
+
+    class BookMark {
+        A bookmark as parsed from bookmarks.html
+        ===
+        label : bookmark label
+        heading : bookmark heading (section)
+        scanned : boolean True when bookmark has been scanned
+        attrs : url_parse attributes (href, add_date, icon, attrs)
+        href_urlparts : url_parse href parts (components)
+        scheme : html parsed scheme, e.g. http, https, ftp, etc.
+        hostname : html parsed hostname, e.g. ford.com
+        path : html parsed path, e.g. /index.html
+        ---
+        add_attr(attr, value) : add attr/value to bookmark object
+    }
+
+    class Heading {
+        Bookmark heading
+        ===
+        level : current heading level
+        label : heading label
+        attrs : bookmark attributes
+        heading_stack : current stack of headings
+    }
+
+    class HeadingLabel {
+        Bookmark heading label
+        ===
+        label : label text
+        levels [] : levels in which this label appears
+        stack [] : current stack of headings
+        count : count of occurrences of this label
+        ---
+        add_label(level, stack) : add a label to the collection
+    }
+
+    class HeadingLabels {
+        Bookmark heading label collection
+        ===
+        labels [] : dictionary of labels
+        ---
+        add_label(heading) : add a heading label to the dictionary
+    }
+    HeadingLabels o-- HeadingLabel
+
+    class BookMarks {
+        Class that implements a multi-level list of bookmarks.
+        ===
+        level : current bookmark parsing level
+        heading : heading for current level
+        headings_dict [] : dictionary of headings
+        headings_dups [] : list of duplicate headings
+        bookmarks [] : Dictionary of bookmarks
+        heading_labels : HeadingLabels object
+        ---
+        start_list() : begin a new html list
+        end_list() : end current html list
+        add_heading(label) : set bookmark heading to 'label'
+        set_bookmark_data(data) : set bookmark label to 'data'
+        new_bookmark() : create new bookmark
+        add_bookmark(label, attrs) : add new bookmark label and attributes
+        bookmarks_key(level, label) : Make a bookmarks key given a level and a heading
+        debug(text) : Print debug information with level added
+    }
+    BookMarks o-- BookMark
+    BookMarks o-- Heading
+    BookMarks o-- HeadingLabels
+    @enduml
+
 """
 
 # System imports
@@ -22,7 +96,10 @@ my_logger = logger.logger
 
 
 class List(object):
-    """ A bookmark list """
+    """ A generic list with custom attributes
+
+        :todo: Verify usage of this class
+    """
     def __init__(self, level, label):
         """ Constructor """
         self.level = level
@@ -51,6 +128,7 @@ class BookMark(object):
 
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark
+
             :param attr: Attribute designation
             :param value: Attribute value
         """
@@ -93,13 +171,23 @@ class HeadingLabel(object):
     """ Bookmark heading label """
 
     def __init__(self, label, level, stack):
-        """ Constructor """
+        """ Constructor
+
+            :param label: label text
+            :param level: current heading level
+            :param stack: current heading stack
+        """
         self.label = label
         self.levels = [level]
         self.stack = [stack]
         self.count = 1
 
     def add_label(self, level, stack):
+        """ Add a label to the collection
+
+            :param level: current heading level
+            :param stack: current heading stack
+        """
         self.count += 1
         if level not in self.levels:
             self.levels.append(level)
@@ -115,6 +203,7 @@ class HeadingLabels(object):
 
     def add_label(self, heading):
         """ Add a heading label to the dictionary
+
             :param heading:
         """
         if heading.label not in self.labels:
@@ -146,7 +235,9 @@ class BookMarks(object):
     # =================================================================
     def start_list(self):
         """ Start a new list
+
             The last header passed to us will be used as the heading
+
             :raises: DuplicateKey
         """
         if not self.heading:
@@ -195,6 +286,7 @@ class BookMarks(object):
     # =================================================================
     def add_heading(self, label):
         """ Add a new heading to the list
+
             :param label: Text for the heading
         """
         self.debug(f'HEADING: {label}')

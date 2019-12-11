@@ -156,6 +156,7 @@ class UserCode(StateMachine):
 
     def set_attrs(self, attrs):
         """ Function to set 'attrs' associated with most recent 'tag'
+
             :param attrs: Most recent attributes
         """
         self.html_attrs = attrs
@@ -165,6 +166,7 @@ class UserCode(StateMachine):
 
     def set_html_data(self, data):
         """ Function to set 'html data' associated with most recent 'tag'
+
             :param data: Most recent attributes
         """
         self.html_data = data.strip()

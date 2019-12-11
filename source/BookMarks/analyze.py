@@ -1,11 +1,11 @@
 """ BookMarks Analysis module
 
-The BookMarks Analysis module parses and categorizes bookmarks:
+The BookMarks Analysis module scans and categorizes bookmarks.
 
- * Protocols
- * Domains
- * Subdomains
- * Headings
+The various bookmark elements have already been determined during bookmark parsing.
+Dictionaries are compiled for bookmark attributes, e.g. domains, host names, paths, etc.
+A of keywords is compiled.
+Duplicate bookmarks are detected and deleted.
 
 """
 
@@ -66,17 +66,20 @@ class Analyze(object):
         self.keyword_database = Keywords()
         self.href_database = Keywords()
 
+        #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
 
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
 
-        #: populated as we parse the various sections
-        self._menubar = {section: {
+        #: bookmark menubar, populated as we parse the various sections
+        self.menubar_ = {section: {
             topic: [] for topic in TheConfig.sections[section].keys()
         } for section in TheConfig.sections}
-        self._menubar['head'] = []
-        self._menubar['tail'] = []
+        # bookmarks that appear at the head of the bookmark menubar
+        self.menubar_['head'] = []
+        # bookmarks that appear at the tail (end) of the bookmark menubar
+        self.menubar_['tail'] = []
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
@@ -90,27 +93,27 @@ class Analyze(object):
 
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
-            self.scan_bookmarks_site(site, self._menubar['head'])
+            self.scan_bookmarks_site(site, self.menubar_['head'])
         for site in TheConfig.menubar['tail']:
-            self.scan_bookmarks_site(site, self._menubar['tail'])
+            self.scan_bookmarks_site(site, self.menubar_['tail'])
 
         # scan bookmarks in the order specified in the configuration file
         for section in TheConfig.scanning_order:
-            for topic in self._menubar[section].keys():
+            for topic in self.menubar_[section].keys():
                 logger.logger.debug(f'Scanning: {section}/{topic}')
                 config_list = TheConfig.sections[section][topic]
-                scan_list = self._menubar[section][topic]
+                scan_list = self.menubar_[section][topic]
                 self.scan_bookmarks_section(config_list, scan_list)
             pass
 
         # add any unscanned bookmarks to the miscellaneous section
-        self._menubar['misc']['misc'] = []
+        self.menubar_['misc']['misc'] = []
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
             for bm in bm_value:
                 if not bm.scanned:
-                    self._menubar['misc']['misc'].append(bm)
+                    self.menubar_['misc']['misc'].append(bm)
                     bm.scanned = True
 
         self.delete_scanned_bookmarks()
@@ -119,7 +122,7 @@ class Analyze(object):
     # =========================================================================
     def menubar(self):
         """ returns menubar constructed during analysis """
-        return self._menubar
+        return self.menubar_
 
     # =========================================================================
     def scan_bookmarks_files(self):
@@ -145,7 +148,8 @@ class Analyze(object):
 
     @staticmethod
     def href_path(bookmark):
-        """ return href path for given bookmark
+        """ Returns the href path for given bookmark
+
             :param bookmark: bookmark to process
             :return: path component for given href
         """
@@ -153,7 +157,8 @@ class Analyze(object):
 
     @staticmethod
     def bookmark_key(bookmark):
-        """ return a bookmark key
+        """ Returns a bookmark key
+
             :param bookmark: bookmark for which to generate a key
             :return: bookmark key
         """
@@ -162,6 +167,7 @@ class Analyze(object):
     # =========================================================================
     def scan_bookmarks_site(self, site: str, scan_list):
         """ scan all bookmarks for section match
+
             :param site: BookMark site to scan for
             :param scan_list: Section/topic target scan list
         """
@@ -186,6 +192,7 @@ class Analyze(object):
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
         """ scan all bookmarks for section match
+
             :param config_list: Section/topic configuration list to scan for
             :param scan_list: Section/topic target scan list
         """
@@ -323,6 +330,7 @@ class Analyze(object):
     # =========================================================================
     def add_keywords(self, bookmark):
         """ Add bookmark text to dictionary
+
             :param bookmark: Bookmark associated with text
         """
         text = bookmark.label
@@ -335,6 +343,7 @@ class Analyze(object):
     # =========================================================================
     def add_href_parts(self, bookmark):
         """ Add link parts to dictionary
+
             :param bookmark: Bookmark associated with link
         """
         if not bookmark.attrs['href']:

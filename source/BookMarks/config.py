@@ -111,6 +111,7 @@ class CfgParser(configparser.ConfigParser):
         """ Return a [list] of configuration items
 
             Do not return an empty/null/'' item
+
             :param config_item: Configuration file item
         """
         items0 = config_item.replace('\\,', '&&')
@@ -126,6 +127,7 @@ class CfgParser(configparser.ConfigParser):
         """ Return a [list] of configuration items which are parsed as tuples
 
             Do not return an empty/null/'' item
+
             :param config_item: Configuration file item
         """
         items = config_item.replace('\n', '').replace(', ', ',').split(',')

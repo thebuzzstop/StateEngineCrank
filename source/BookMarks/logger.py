@@ -22,7 +22,7 @@ class Logger(Borg):
             self.ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
             self.ch.setLevel(logging.INFO)
 
-            self.fh = logging.handlers.RotatingFileHandler('logs/bookmarks.log', maxBytes=1000000, backupCount=5,
+            self.fh = logging.handlers.RotatingFileHandler('logs/bookmarks.log', maxBytes=2500000, backupCount=5,
                                                            delay=True)
             self.fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
             self.fh.setLevel(logging.DEBUG)
@@ -36,6 +36,11 @@ class Logger(Borg):
         self.logger.addHandler(self.ch)
         self.logger.addHandler(self.fh)
 
-    def clean(self, text):
+    def clean(self, text: str) -> str:
+        """ Cleans up text by cleaning up non-printable chars
+
+            :param text: Text string to be cleaned up
+            :returns: Cleaned up text with no non-printable chars
+        """
         text = text.translate(self.delchars)
         return text

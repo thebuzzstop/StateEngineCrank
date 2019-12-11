@@ -1,11 +1,6 @@
 """ BookMarks Reformat module
 
-The BookMarks reformat module reorders and reorganizes the bookmarks:
-
- * Protocols
- * Domains
- * Subdomains
- * Headings
+The BookMarks reformat module reorders and reorganizes the bookmarks.
 
 """
 
@@ -54,6 +49,7 @@ class Reformat(object):
 
     def write_section(self, section):
         """ write entire section to output string
+
             :param section: bookmarks section to output
         """
         # see if current section has a heading
@@ -86,6 +82,7 @@ class Reformat(object):
 
     def output_subsection(self, section, subsection):
         """ output bookmarks for section.subsection
+
             :param section: Active section name
             :param subsection: Active subsection name
         """
@@ -97,6 +94,7 @@ class Reformat(object):
     @staticmethod
     def has_heading(section, subsection):
         """ function to determine if subsection has a heading
+
             :param section: Active section name
             :param subsection: Active subsection name
             :return: True if section.subsection has a heading
@@ -105,6 +103,7 @@ class Reformat(object):
 
     def write_bm(self, bm: BookMark, has_label=True):
         """ write a single bookmark to output string
+
             :param bm: Bookmark to output
             :param has_label: Bookmark has a label
         """
@@ -141,12 +140,14 @@ class Reformat(object):
 
     def write_heading(self, heading: str):
         """ write heading data to output string
+
             :param heading: heading text
         """
         self.write(TheConfig.HEADING_HTML_FORMAT.format(self.datestamp, self.datestamp, self.my_title(heading)))
 
     def write_toolbar_heading(self, heading: str):
         """ write heading data to output string
+
             :param heading: heading text
         """
         self.write(TheConfig.TOOLBAR_HTML_FORMAT.format(self.datestamp, self.datestamp, self.my_title(heading)))
@@ -163,6 +164,7 @@ class Reformat(object):
 
     def write(self, html: Union[str, list]):
         """ write html to output string
+
             :param html: html string(s) to output, may be a list
         """
         if isinstance(html, list):
@@ -174,6 +176,7 @@ class Reformat(object):
 
     def my_title(self, heading):
         """ format a heading string the way we like it
+
             :param heading: Heading string to format
             :return: Heading formatted as we like it
         """
