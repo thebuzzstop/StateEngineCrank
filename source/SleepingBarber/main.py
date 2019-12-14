@@ -274,7 +274,8 @@ if __name__ == '__main__':
     sleeping_barbers.set_running()
     while sleeping_barbers.running:
         time.sleep(1)
-        
+    sleeping_barbers.thread.join()
+
     print('Sleeping Barber(s) Simulation Done')
     with sleeping_barbers.statistics as s:
         print(s.customer_stats())

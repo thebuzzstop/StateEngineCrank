@@ -101,12 +101,12 @@ class StateTables(object):
 
 
 class Config(object):
-    Eat_Min = 10                        #: minimum number of seconds to eat
-    Eat_Max = 20                        #: maximum number of seconds to eat
-    Think_Min = 10                      #: minimum number of seconds to think
-    Think_Max = 20                      #: maximum number of seconds to think
+    Eat_Min = 5                         #: minimum number of seconds to eat
+    Eat_Max = 10                        #: maximum number of seconds to eat
+    Think_Min = 5                       #: minimum number of seconds to think
+    Think_Max = 10                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
-    Dining_Loops = 500                  #: number of main loops for dining
+    Dining_Loops = 99                   #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
 
