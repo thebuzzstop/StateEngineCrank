@@ -48,7 +48,7 @@ The main module contains:
 # System imports
 from enum import Enum
 import random
-from threading import Lock
+import threading
 import time
 from typing import List
 
@@ -106,7 +106,7 @@ class Config(object):
     Think_Min = 5                       #: minimum number of seconds to think
     Think_Max = 10                      #: maximum number of seconds to think
     Philosophers = 7                    #: number of philosophers dining
-    Dining_Loops = 99                   #: number of main loops for dining
+    Dining_Loops = 100                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
 
@@ -172,11 +172,11 @@ class Waiter(mvc.Model, Borg):
         # see if we have called mvc.Model.__init__()
         if hasattr(self, 'views'):
             return
-        mvc.Model.__init__(self, name='Waiter', target=self.run)
-        self.config = ConfigData()  #: simulation configuration data
-        self.lock = Lock()          #: Lock to be acquired when accessing the *Waiter*
-        self.id_ = None             #: last philosopher ID to make a request
-        self.mvc = mvc.Event()      #: mvc Event registry
+        mvc.Model.__init__(self, name='Waiter')
+        self.config = ConfigData()      #: simulation configuration data
+        self.lock = threading.Lock()    #: Lock to be acquired when accessing the *Waiter*
+        self.id_ = None                 #: last philosopher ID to make a request
+        self.mvc = mvc.Event()          #: mvc Event registry
         self.mvc.register_class(class_name=self.name)
         self.mvc.register_actor(class_name='mvc', actor_name=self.name)
         self.mvc.register_event(self.name, mvc.Event.Events.TIMER, '*')
@@ -194,21 +194,13 @@ class Waiter(mvc.Model, Borg):
         self.forks = [ForkStatus.Free for _ in range(self.config.philosophers)]  # type: List[ForkStatus]
         self.hungry_timers = [0 for _ in range(self.config.philosophers)]
 
+    def run(self):
+        """ Dummy function to satisfy MVC.Model need for a run() function """
+        pass
+
     def update(self, event):
         """ Called by views to alert us to an update - we ignore it """
         pass
-
-    def run(self):
-        # see if we are not running yet
-        self.notify(self.mvc.events[self.name][WaiterEvents.STARTING])
-        if not self.running:
-            while not self.running:
-                time.sleep(1)
-        # run until we aren't then exit
-        self.notify(self.mvc.events[self.name][WaiterEvents.RUNNING])
-        while self.running:
-            time.sleep(1)
-        self.notify(self.mvc.events[self.name][WaiterEvents.STOPPING])
 
     def request(self, philosopher_id, left_fork, right_fork):
         """ Function called when a Philosopher wants to eat.
@@ -277,6 +269,8 @@ class Waiter(mvc.Model, Borg):
         """ Philosopher thank you to the waiter
 
             We use this opportunity to release the Waiter lock
+
+            :param philosopher_id: ID of philosopher saying thank you
         """
         self.notify(self.mvc.events[self.name][WaiterEvents.RELEASE], data=philosopher_id)
         self.lock.release()
@@ -343,6 +337,7 @@ class UserCode(StateMachine):
 
             Called when the *StartUp* state is entered.
         """
+        self.logger('Startup')
         self.event(Events.EvStart)
 
     # ===========================================================================
@@ -369,6 +364,7 @@ class UserCode(StateMachine):
 
             Called when the *Eating* state is exited.
         """
+        self.logger('Done Eating')
         self.waiter.forks[self.left_fork] = ForkStatus.Free
         self.waiter.forks[self.right_fork] = ForkStatus.Free
 
@@ -379,6 +375,7 @@ class UserCode(StateMachine):
 
             Called when the *Eating* state is entered.
         """
+        self.logger('Start Eating')
         self.event_timer = seconds(self.config.eat_min, self.config.eat_max)
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
                                                event=mvc.Event.Events.TIMER,
@@ -391,6 +388,7 @@ class UserCode(StateMachine):
 
             Called when the *Hungry* state is entered.
         """
+        self.logger('Hungry/AskPermission')
         tstart = time.time()
         self.waiter.request(self.id, self.left_fork, self.right_fork)
         tend = time.time()
@@ -405,19 +403,21 @@ class UserCode(StateMachine):
 
             Called when the state transition *PickUpForks* is taken.
         """
+        self.logger('Pickup Forks')
         self.waiter.forks[self.left_fork] = ForkStatus.InUse
         self.waiter.forks[self.right_fork] = ForkStatus.InUse
         # thanking the waiter releases the Waiter's lock
         self.waiter.thank_you(self.id)
 
     # =========================================================
-    # noinspection PyPep8Naming,PyMethodMayBeStatic
+    # noinspection PyPep8Naming
     def ThankWaiter(self):
         """ State machine state transition processing for *ThankWaiter*.
 
             Called when the state transition *ThankWaiter* is taken.
             Thanking the waiter releases the Waiter's lock.
         """
+        self.logger('Thank Waiter')
         self.waiter.thank_you(self.id)
 
     # ===========================================================================
@@ -448,6 +448,7 @@ class UserCode(StateMachine):
                                                data=[self.event_timer, self.current_state]))
         if self.event_timer == 0:
             self.event(Events.EvHungry)
+            self.logger('Hungry')
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -460,7 +461,7 @@ class UserCode(StateMachine):
         self.running = False
 
     # ===========================================================================
-    # noinspection PyPep8Naming
+    # noinspection PyPep8Naming,PyMethodMayBeStatic
     def Finish_Wait(self):
         """ *Do* function processing for the *Finish* state
 
@@ -576,7 +577,7 @@ class DiningPhilosophers(mvc.Model):
 
             :param exit_when_done: True, then exit when done. False, run until program exit requested.
         """
-        super().__init__(name='philosophers', target=self.run)
+        super().__init__(name='philosophers', thread=threading.Thread(name='philosophers', target=self.run))
 
         #: simulation configuration data
         self.config = ConfigData()
@@ -715,6 +716,18 @@ class DiningPhilosophers(mvc.Model):
         right = self.philosophers[philosopher_id].right_fork
         return left, right
 
+    def statistics(self):
+        """ Calculate philosopher statistics """
+        text = 'Statistics:'
+        for p in self.philosophers:
+            t = p.thinking_seconds
+            e = p.eating_seconds
+            h = int(p.hungry_seconds + 0.5)
+            total = t + e + h
+            text = text + \
+                   '\n   Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total)
+        return text
+
     def run(self):
         """ DiningPhilosophers Main program
 
@@ -766,14 +779,7 @@ class DiningPhilosophers(mvc.Model):
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
 
             # Generate some statistics of the simulation
-            text = 'Statistics:'
-            for p in self.philosophers:
-                t = p.thinking_seconds
-                e = p.eating_seconds
-                h = int(p.hungry_seconds + 0.5)
-                total = t + e + h
-                text = text + \
-                       '\n   Philosopher %2s thinking: %3s  eating: %3s  hungry: %3s  total: %3s' % (p.id, t, e, h, total)
+            text = self.statistics()
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.STATISTICS], text=text+'\n')
 
             # shutdown behavior
@@ -790,4 +796,6 @@ if __name__ == '__main__':
     dining_philosophers.set_running()
     while dining_philosophers.running:
         time.sleep(1)
-    print('Done')
+
+    print('Dining Philosophers Simulation Done')
+    print(dining_philosophers.statistics())

@@ -140,7 +140,7 @@ class UserCode(StateMachine):
                                                event=mvc.Event.Events.TIMER,
                                                data=[self.cut_timer, self.current_state, self.current_customer]))
         if self.cut_timer == 0:
-            self.logger('Barber[%s] Finish cutting %s' % (self.id, self.customers))
+            self.logger(f'Finish cutting {self.customers}')
             self.post_event(Events.EvFinishCutting)
             self.current_customer.post_event(CustomerEvents.EvFinishCutting)
 
@@ -155,7 +155,7 @@ class UserCode(StateMachine):
         self.customers += 1
         # start haircut timer
         self.cut_timer = Config.cutting_time()
-        self.logger('Barber[%s] StartCutting %s [%s]' % (self.id, self.customers, self.cut_timer))
+        self.logger(f'StartCutting {self.customers} [{self.cut_timer}]')
         # post event for view handling
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
                                                event=mvc.Event.Events.TIMER,
@@ -169,7 +169,7 @@ class UserCode(StateMachine):
             This function is called when the *Finish* state is entered at the
             end of the SleepingBarber simulation.
         """
-        self.logger('Barber[%s] BarberDone' % self.id)
+        self.logger('BarberDone')
         stats = Statistics()
         with stats.lock:
             stats.barbers.append(self)
@@ -198,7 +198,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Sleeping* state is entered.
         """
-        self.logger('Barber[%s] StartSleeping' % self.id)
+        self.logger('StartSleeping')
         self.sleep_timer = 0
         # post event for view handling
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
@@ -212,7 +212,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Sleeping* state is exited.
         """
-        self.logger('Barber[%s] StopSleeping' % self.id)
+        self.logger('StopSleeping')
 
     # ===========================================================================
     # noinspection PyPep8Naming
@@ -221,7 +221,7 @@ class UserCode(StateMachine):
 
             This function is called when the *StartUp* state is entered.
         """
-        self.logger('Barber[%s] Starting' % self.id)
+        self.logger('Starting')
 
     # =========================================================
     # noinspection PyPep8Naming
@@ -236,7 +236,7 @@ class UserCode(StateMachine):
         """
         with self.waiting_room.lock:
             self.current_customer = self.waiting_room.get_customer()
-        self.logger('Barber[%s] GetCustomer %s' % (self.id, self.current_customer.id))
+        self.logger(f'GetCustomer {self.current_customer.id}')
         self.current_customer.post_event(CustomerEvents.EvBarberReady)
         self.current_customer.set_barber(self)
 

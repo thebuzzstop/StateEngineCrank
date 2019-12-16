@@ -16,8 +16,6 @@ import threading
 # Project imports
 import mvc
 import exceptions
-# from exceptions import JoinFailure
-
 import Defines
 
 from SleepingBarber.Common import ConfigData as ConfigData

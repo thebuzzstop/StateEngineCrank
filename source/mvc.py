@@ -21,12 +21,15 @@ class Borg(object):
         self.__dict__ = self._shared_state
 
 
+#: global/class lock to ensure output integrity
+logger_lock = threading.Lock()
+
+
 class Logger(object):
     """ Logger class for simplified logging to console
 
         All MVC classes implement the Logger class.
     """
-
     def __init__(self, parent):
         self.logger_parent = parent
         if not hasattr(self, 'name'):
@@ -42,7 +45,7 @@ class Logger(object):
         """
         # if there are no views then just print
         if not hasattr(self.logger_parent, 'views'):
-            print('logger[%s]: %s' % (self.name, text))
+            self.print_('logger[%s]: %s' % (self.name, text))
 
         # parent has views
         elif len(self.logger_parent.views.keys()) > 0:
@@ -51,7 +54,13 @@ class Logger(object):
                     self.logger_parent.views[v].write(text)
         else:
             # parent has no views
-            print('logger[%s]: %s' % (self.name, text))
+            self.print_('logger[%s]: %s' % (self.name, text))
+
+    @staticmethod
+    def print_(text):
+        """ low level print, sequencing ensured by acquiring logger lock """
+        with logger_lock:
+            print(text)
 
 
 class Event(Borg):

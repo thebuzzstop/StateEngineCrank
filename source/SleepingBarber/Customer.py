@@ -143,7 +143,7 @@ class UserCode(StateMachine):
         self.finish_time = time.time()
         elapsed_time = self.finish_time - self.start_time
         simulation_time = self.waiting_time + self.cutting_time
-        self.logger('Customer[%s] Done (%d/%d)' % (self.id, elapsed_time, simulation_time))
+        self.logger(f'Done ({elapsed_time}/{simulation_time}')
         # record customer statistics
         stats = Statistics()
         with stats.lock:
@@ -168,7 +168,7 @@ class UserCode(StateMachine):
 
             This function is called when the *HairCut* state is entered.
         """
-        self.logger('Customer[%s] StartHairCut [%s]' % (self.id, self.my_barber.id))
+        self.logger(f'StartHairCut [{self.my_barber.id}]')
         self.cutting_time_start = time.time()
 
     # ===========================================================================
@@ -178,7 +178,7 @@ class UserCode(StateMachine):
 
             This function is called when the *HairCut* state is exited.
         """
-        self.logger('Customer[%s] StopHairCut (%s)' % (self.id, self.cutting_time))
+        self.logger(f'StopHairCut [{self.cutting_time}]')
         self.cutting_time_finish = time.time()
         self.cutting_time_elapsed = self.cutting_time_finish - self.cutting_time_start
 
@@ -189,7 +189,7 @@ class UserCode(StateMachine):
 
             This function is called whenever the state transition *NoHairCut* is taken.
         """
-        self.logger('Customer[%s] NoHairCut.' % self.id)
+        self.logger('NoHairCut')
         stats = Statistics()
         with stats.lock:
             stats.lost_customers += 1
@@ -201,7 +201,7 @@ class UserCode(StateMachine):
 
             This function is called when the *StartUp* state is entered.
         """
-        self.logger('Customer[%s] CustomerStart' % self.id)
+        self.logger('CustomerStart')
 
         # tell barbers we are here
         with self.waiting_room.lock:
@@ -225,7 +225,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Waiting* state is entered.
         """
-        self.logger('Customer[%s] StartWaiting' % self.id)
+        self.logger('StartWaiting')
         self.waiting_time_start = time.time()
         # post event for view handling
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,
@@ -239,7 +239,7 @@ class UserCode(StateMachine):
 
             This function is called when the *Waiting* state is exited.
         """
-        self.logger('Customer[%s] StopWaiting' % self.id)
+        self.logger('StopWaiting')
         self.waiting_time_finish = time.time()
         self.waiting_time_elapsed = self.waiting_time_finish - self.waiting_time_start
 
