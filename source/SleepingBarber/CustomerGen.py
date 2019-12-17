@@ -119,7 +119,7 @@ class CustomerGenerator(mvc.Model):
         while self.running:
             # generate a new customer
             self.customer_count += 1
-            self.logger('[%s] new customer' % self.customer_count)
+            self.logger(f'New customer [{self.customer_count}]')
             next_customer = Customer(id_=self.customer_count, barbers=self.barbers)
             self.pool.add_task(next_customer.run)
             for v in self.views:
@@ -133,7 +133,7 @@ class CustomerGenerator(mvc.Model):
                 self.customer_rate - self.customer_variance,
                 self.customer_rate + self.customer_variance
             )
-            self.logger('[%s] Zzzz [%s]' % (self.customer_count, sleep))
+            self.logger(f'[{self.customer_count}] Zzzz [{sleep}]')
             time.sleep(sleep)
 
             # pause if requested, keep monitoring the running flag

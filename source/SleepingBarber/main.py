@@ -43,14 +43,14 @@ class Barber(UserCode):
         UserCode.cleanup(self)
 
     def __init__(self, barber_id=None):
-        UserCode.__init__(self, user_id=barber_id, target=self.run)
+        UserCode.__init__(self, id_=barber_id, target=self.run)
 
 
 class SleepingBarber(mvc.Model):
     """ Main SleepingBarber(s) Class """
 
     def __init__(self, exit_when_done=None):
-        super().__init__('barbers', thread=threading.Thread(name='barbers', target=self.run))
+        super().__init__('Barbers', thread=threading.Thread(name='Barbers', target=self.run))
 
         #: simulation configuration data
         self.config = ConfigData()
@@ -118,7 +118,7 @@ class SleepingBarber(mvc.Model):
 
     def update(self, event):
         """ Called by Views and/or Controller to alert us to an event """
-        if event['class'] is not self.name:
+        if event['class'] != self.name:
             raise Exception('Dining: Unknown event type')
         # process event received
         if event['event'] is self.mvc_events.events[self.name][mvc.Event.Events.START]['event']:
@@ -159,6 +159,23 @@ class SleepingBarber(mvc.Model):
             self.logger('Event: %s / %s' % (event['text'], event['data']))
         else:
             raise Exception('Unhandled event')
+
+    def join(self, barber_list):
+        """ Join all threads in 'barber_list'
+
+            :param barber_list: List of barbers whose threads we join
+            :returns: List of barbers which failed to 'join'
+        """
+        num_barbers = len(barber_list)
+        for b in range(num_barbers, 0, -1):
+            try:
+                self.join_thread(barber_list[b-1].thread)
+                del barber_list[b-1]
+            except exceptions.JoinFailure:
+                self.logger(f'JoinFailure: Barber{b-1}')
+        if len(barber_list) == 0:
+            self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
+        return barber_list
 
     def run(self):
         """ SleepingBarber Main Program
@@ -232,18 +249,22 @@ class SleepingBarber(mvc.Model):
             for c in self.cg.customer_list:
                 c.post_event(CustomerEvents.EvStop)
 
+            # Wait for barber(s) to stop
+            for barber in self.barbers:
+                if barber.running:
+                    self.logger(f'Waiting for {barber.name}')
+                    while barber.running:
+                        time.sleep(1)
+
             # Joining threads
-            join_list_b = []
             self.notify(self.mvc_events.events[self.name][mvc.Event.Events.JOINING])
-            for b in self.barbers:
-                try:
-                    self.join_thread(b.thread)
-                    del b
-                except exceptions.JoinFailure:
-                    self.logger(f'JoinFailure: Barber={b}')
-                    join_list_b.append(b)
-            if len(join_list_b) == 0:
-                self.notify(self.mvc_events.events[self.name][mvc.Event.Events.ALLSTOPPED])
+            self.logger('Joining barber threads')
+            barbers = self.join(self.barbers)
+            if len(barbers):
+                self.logger('Joining barber threads #2')
+                barbers = self.join(barbers)
+            if barbers:
+                self.logger('Failure joining barber threads')
 
             # Cleanup and Join customer generator
             self.join_thread(self.cg.thread)

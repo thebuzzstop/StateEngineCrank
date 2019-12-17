@@ -33,11 +33,11 @@ class Config(object):
     WaitingChairsMax = 5                #: maximum number of waiters for animation
     CustomerRate = 5                    #: rate for new customers
     CustomerVariance = 2                #: variance in the customer rate
-    SimulationLoops = 25                #: total number of loops (seconds) to run
-    Class_Name = 'barbers'              #: class name for Event registration
-    Actor_Base_Name = 'barber'          #: used when identifying actors
-    Customer_Class_Name = 'customers'   #: class name for Event registration
-    Customer_Base_Name = 'customer'     #: used when identifying actors
+    SimulationLoops = 100               #: total number of loops (seconds) to run
+    Class_Name = 'Barbers'              #: class name for Event registration
+    Actor_Base_Name = 'Barber'          #: used when identifying actors
+    Customer_Class_Name = 'Customers'   #: class name for Event registration
+    Customer_Base_Name = 'Customer'     #: used when identifying actors
 
     @staticmethod
     def seconds(minimum, maximum):

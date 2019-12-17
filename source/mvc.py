@@ -113,11 +113,12 @@ class Event(Borg):
             :param class_name: Name of event class
             :raises: ClassAlreadyRegistered
         """
-        if class_name in self.events.keys():
+        class_name_ = class_name.title()
+        if class_name_ in self.events.keys():
             raise exceptions.ClassAlreadyRegistered
 
         # create a dictionary entry for the new class
-        self.events[class_name] = {}
+        self.events[class_name_] = {}
 
     def register_event(self, class_name, event, event_type, **kwargs):
         """ Register a class event
@@ -131,6 +132,7 @@ class Event(Borg):
                 ['data'] Optional data associated with this event
             :raises: ClassNotRegistered, EventAlreadyRegistered
         """
+        class_name_ = class_name.title()
         # Set UserId to user ID if present
         user_id = None
         if 'user_id' in kwargs.keys():
@@ -149,19 +151,19 @@ class Event(Borg):
             data = kwargs['data']
 
         # verify registrations
-        if class_name not in self.events.keys():
+        if class_name_ not in self.events.keys():
             raise exceptions.ClassNotRegistered
-        if event in self.events[class_name].keys():
+        if event in self.events[class_name_].keys():
             raise exceptions.EventAlreadyRegistered
 
         # register the event in our classes database
         self.event_counter += 1
-        self.events[class_name][event] = \
-            {'class': class_name, 'event': event, 'event.id': self.event_counter, 'type': event_type,
+        self.events[class_name_][event] = \
+            {'class': class_name_, 'event': event, 'event.id': self.event_counter, 'type': event_type,
              'user.id': user_id, 'text': text, 'data': data}
 
         # append the event to our 'event_by_id' lookup table
-        self.event_by_id.append(self.events[class_name][event])
+        self.event_by_id.append(self.events[class_name_][event])
 
     def register_actor(self, class_name, actor_name):
         """ Register an actor for the events database
@@ -173,17 +175,18 @@ class Event(Borg):
             :param actor_name: Name of this actor
             :raises: ClassNotRegistered, ActorAlreadyRegistered
         """
-        if class_name not in self.events.keys():
+        class_name_ = class_name.title()
+        if class_name_ not in self.events.keys():
             raise exceptions.ClassNotRegistered
         if actor_name in self.actors.keys():
-            if class_name in self.actors[actor_name]:
+            if class_name_ in self.actors[actor_name]:
                 raise exceptions.ActorAlreadyRegistered
             else:
                 # append class to actor class list
-                self.actors[actor_name].append(class_name)
+                self.actors[actor_name].append(class_name_)
         else:
             # create a dictionary entry for the new actor
-            self.actors[actor_name] = [class_name]
+            self.actors[actor_name] = [class_name_]
 
     def lookup_event(self, class_name, event):
         """ Lookup an event object
@@ -192,10 +195,11 @@ class Event(Borg):
             :param event: Event enum
             :returns: Requested event or None
         """
-        if class_name not in self.events.keys():
+        class_name_ = class_name.title()
+        if class_name_ not in self.events.keys():
             return None
-        if event in self.events[class_name].keys():
-            return self.events[class_name][event]
+        if event in self.events[class_name_].keys():
+            return self.events[class_name_][event]
         return None
 
     def lookup_by_id(self, event_id):
@@ -215,9 +219,10 @@ class Event(Borg):
             :param class_name: Class to unregister
             :raises: ClassNotRegistered
         """
+        class_name_ = class_name.title()
         # delete the class, it is an error if it is not registered
-        if class_name in self.events.keys():
-            del self.events[class_name]
+        if class_name_ in self.events.keys():
+            del self.events[class_name_]
         else:
             raise exceptions.ClassNotRegistered
 
@@ -238,7 +243,7 @@ class Event(Borg):
     def post(self, class_name, event, actor_name, user_id=None, text=None, data=None):
         """ Prepare an event for posting
 
-            :param class_name: Class name for this event, must be registered
+            :param class_name_: Class name for this event, must be registered
             :param event: Event class name for this event, must be registered
             :param actor_name: Actor name for this event, must be registered
             :param user_id: Optional ID for the poster of this event
@@ -246,19 +251,20 @@ class Event(Borg):
             :param data: Optional data for this event
             :raises: ClassNotRegistered, EventNotRegistered, ActorNotRegistered
         """
-        if class_name not in self.events.keys():
+        class_name_ = class_name.title()
+        if class_name_ not in self.events.keys():
             raise exceptions.ClassNotRegistered
-        if event not in self.events[class_name].keys():
+        if event not in self.events[class_name_].keys():
             raise exceptions.EventNotRegistered
         if actor_name not in self.actors.keys():
             raise exceptions.ActorNotRegistered
 
         # verify actor is registered for this event class
-        if class_name not in self.actors[actor_name]:
+        if class_name_ not in self.actors[actor_name]:
             raise exceptions.ActorNotRegistered
 
         # create a copy of the event
-        event_ = copy.copy(self.events[class_name][event])
+        event_ = copy.copy(self.events[class_name_][event])
         event_['actor'] = actor_name
 
         # add event timestamp information

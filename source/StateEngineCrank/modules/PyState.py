@@ -127,7 +127,7 @@ class StateMachine(mvc.Model):
         self.current_state = startup_state
         self.enter_func = function_table[startup_state]['enter']
         self.do_func = function_table[startup_state]['do']
-        self.logger('%s StateMachine thread start' % self.name)
+        self.logger('StateMachine thread start')
 
         # optional start if there is a thread to start
         if self.thread is not None:
@@ -140,18 +140,18 @@ class StateMachine(mvc.Model):
             * Stops running when the **running** boolean is False
         """
         # wait until our state machine has been activated
-        self.logger('%s StateMachine activating [%s]' % (self.name, self.current_state))
+        self.logger(f'StateMachine activating [{self.current_state}]')
         while not self.running:
             time.sleep(Defines.Times.Starting)
-        self.logger('%s StateMachine activated [%s]' % (self.name, self.current_state))
+        self.logger(f'StateMachine activated [{self.current_state}]')
 
         # check for an enter function
         if self.enter_func is not None:
-            self.logger('%s StateMachine Enter Function [%s]' % (self.name, self.current_state))
+            self.logger(f'StateMachine Enter Function [{self.current_state}]')
             self.enter_func(self)
-            # self.logger('%s StateMachine Enter+ Function [%s]' % (self.name, self.current_state))
+            # self.logger(f'StateMachine Enter+ Function [{self.current_state}]')
 
-        self.logger('%s StateMachine running [%s]' % (self.name, self.current_state))
+        self.logger(f'StateMachine running [{self.current_state}]')
         while self.running:
             if self.pause:
                 time.sleep(Defines.Times.Pausing)
@@ -161,7 +161,7 @@ class StateMachine(mvc.Model):
                 self.event(self.event_queue.get_nowait())
             else:
                 self.do()
-        self.logger('%s StateMachine exiting [%s]' % (self.name, self.current_state))
+        self.logger(f'StateMachine exiting [{self.current_state}]')
 
     def do(self):
         """ Execute current state **do** function if it exists """

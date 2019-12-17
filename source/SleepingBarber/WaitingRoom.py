@@ -83,7 +83,7 @@ class WaitingRoom(Borg, Model):
             chair = True
             with self.stats.lock:
                 self.stats.max_waiters = max(self.stats.max_waiters, len(self.deque))
-        self.logger('WR: get_chair [%s][%s][%s]' % (chair, self.customers_waiting, self.get_waiting_list_ids()))
+        self.logger(f'get_chair [{chair}[{self.customers_waiting}][{self.get_waiting_list_ids()}]')
         return chair
 
     def get_customer(self):
@@ -99,8 +99,7 @@ class WaitingRoom(Borg, Model):
         else:
             customer = self.deque.popleft()
             self.customers_waiting -= 1
-        self.logger('WR: get_customer [%s][%s][%s]' %
-                    (customer.id, self.customers_waiting, self.get_waiting_list_ids()))
+        self.logger(f'get_customer [{customer.id}[{self.customers_waiting}][{self.get_waiting_list_ids()}]')
         return customer
 
     def get_waiting_list_ids(self):
@@ -131,10 +130,10 @@ class WaitingRoom(Borg, Model):
             :returns: False : No customer is waiting
         """
         if len(self.deque) > 0:
-            self.logger('WR: customer_waiting [TRUE]')
+            self.logger('customer_waiting [TRUE]')
             return True
         else:
-            self.logger('WR: customer_waiting [FALSE]')
+            self.logger('customer_waiting [FALSE]')
             return False
 
     def full(self):

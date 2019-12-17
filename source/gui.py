@@ -571,7 +571,7 @@ class DiningPhilosophers(Animation):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
             self.draw_chair(event['user.id'], self.config['thinking.color'][0])
             self.draw_philosopher(event['user.id'], self.config['thinking.color'][1], text='T')
-            left, right = self.models['philosophers'].forks(event['user.id'])
+            left, right = self.models['Philosophers'].forks(event['user.id'])
             self.draw_fork(left)
             self.draw_fork(right)
         else:
@@ -595,7 +595,7 @@ class DiningPhilosophers(Animation):
         if event['event'] == smEvent.SmEvents.STATE_TRANSITION:
             self.draw_chair(event['user.id'], self.common['stop.color'][0])
             self.draw_philosopher(event['user.id'], self.common['stop.color'][1])
-            left, right = self.models['philosophers'].forks(event['user.id'])
+            left, right = self.models['Philosophers'].forks(event['user.id'])
             self.draw_fork(left)
             self.draw_fork(right)
         else:
@@ -998,11 +998,11 @@ class GuiView(mvc.View):
 
     philosophers_config = {
         'title': 'Dining Philosophers Simulation',
-        'model': 'philosophers',
+        'model': 'Philosophers',
         'column': 0,
         'animation.text': 'The Dining Room',
         'console.text': 'Hello, Dining Philosophers',
-        'event.class': 'philosophers',
+        'event.class': 'Philosophers',
         'philosophers': None,
 
         'hungry.color': ['red', 'yellow'],
@@ -1024,7 +1024,7 @@ class GuiView(mvc.View):
         'column': 1,
         'animation.text': 'The Barber Shop',
         'console.text': 'Hello, Sleeping Barber(s)',
-        'event.class': 'barbers',
+        'event.class': 'Barbers',
         'barbers': None,
         'waiters': None,
         'barber.chair.radius': 20,
@@ -1086,7 +1086,7 @@ class GuiView(mvc.View):
 
     def update_philosophers(self, event):
         if event['type'] == 'view' or event['type'] == '*':
-            self.models['philosophers'].update(event)
+            self.models['Philosophers'].update(event)
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
                 self.ani_dining.draw_counter(event['data'])
@@ -1101,7 +1101,7 @@ class GuiView(mvc.View):
 
     def update_barbers(self, event):
         if event['type'] == 'view' or event['type'] == '*':
-            self.models['barbers'].update(event)
+            self.models['Barbers'].update(event)
         if event['type'] == 'model' or event['type'] == '*':
             if event['event'] == mvc.Event.Events.LOOPS:
                 self.ani_barbers.draw_counter(event['data'])
@@ -1167,8 +1167,8 @@ class GuiView(mvc.View):
 
         # fill in some model configuration items
         self.model_config = {
-            'philosophers': self.models['philosophers'].config,
-            'barbers': self.models['barbers'].config
+            'philosophers': self.models['Philosophers'].config,
+            'barbers': self.models['Barbers'].config
         }
         self.philosophers_config['philosophers'] = self.model_config['philosophers'].get_philosophers()
         self.barbers_config['barbers'] = self.model_config['barbers'].get_barbers()

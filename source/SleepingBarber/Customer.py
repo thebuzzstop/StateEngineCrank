@@ -45,6 +45,7 @@ from enum import Enum
 # Project imports
 import mvc
 from StateEngineCrank.modules.PyState import StateMachine
+from SleepingBarber.Common import Config
 from SleepingBarber.Common import ConfigData as ConfigData
 from SleepingBarber.Common import Statistics as Statistics
 import SleepingBarber.Barber
@@ -96,7 +97,7 @@ class UserCode(StateMachine):
             :param barbers[]: list of barbers in the simulation
         """
         self.config = ConfigData()  #: simulation configuration data
-        name_ = 'Customer%03d' % id_
+        name_ = f'{Config.Customer_Base_Name.title()}{id_:03d}'
         StateMachine.__init__(self, sm_id=id_, name=name_,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
@@ -141,9 +142,9 @@ class UserCode(StateMachine):
             This function is called when the *Finish* state is entered.
         """
         self.finish_time = time.time()
-        elapsed_time = self.finish_time - self.start_time
+        elapsed_time = int(self.finish_time - self.start_time)
         simulation_time = self.waiting_time + self.cutting_time
-        self.logger(f'Done ({elapsed_time}/{simulation_time}')
+        self.logger(f'Done [{elapsed_time}/{simulation_time}]')
         # record customer statistics
         stats = Statistics()
         with stats.lock:

@@ -577,7 +577,7 @@ class DiningPhilosophers(mvc.Model):
 
             :param exit_when_done: True, then exit when done. False, run until program exit requested.
         """
-        super().__init__(name='philosophers', thread=threading.Thread(name='philosophers', target=self.run))
+        super().__init__(name='Philosophers', thread=threading.Thread(name='Philosophers', target=self.run))
 
         #: simulation configuration data
         self.config = ConfigData()
@@ -664,7 +664,7 @@ class DiningPhilosophers(mvc.Model):
             :param event: Event to process
             :raises: Unknown event type, Unhandled event
         """
-        if event['class'] is not self.name:
+        if event['class'] != self.name:
             raise Exception('Dining: Unknown event type')
 
         # process event received
