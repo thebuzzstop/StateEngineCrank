@@ -39,9 +39,6 @@ class Borg(object):
 class Barber(UserCode):
     """ Extends the UserCode base class """
 
-    def cleanup(self):
-        UserCode.cleanup(self)
-
     def __init__(self, barber_id=None):
         UserCode.__init__(self, id_=barber_id, target=self.run)
 
@@ -170,6 +167,7 @@ class SleepingBarber(mvc.Model):
         for b in range(num_barbers, 0, -1):
             try:
                 self.join_thread(barber_list[b-1].thread)
+                barber_list[b-1].cleanup()
                 del barber_list[b-1]
             except exceptions.JoinFailure:
                 self.logger(f'JoinFailure: Barber{b-1}')
@@ -268,6 +266,7 @@ class SleepingBarber(mvc.Model):
 
             # Cleanup and Join customer generator
             self.join_thread(self.cg.thread)
+            self.cg.cleanup()
             del self.cg
             self.cg = None
 

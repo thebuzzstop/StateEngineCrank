@@ -115,7 +115,7 @@ class Event(Borg):
         """
         class_name_ = class_name.title()
         if class_name_ in self.events.keys():
-            raise exceptions.ClassAlreadyRegistered
+            raise exceptions.ClassAlreadyRegistered(class_name_)
 
         # create a dictionary entry for the new class
         self.events[class_name_] = {}
@@ -152,9 +152,9 @@ class Event(Borg):
 
         # verify registrations
         if class_name_ not in self.events.keys():
-            raise exceptions.ClassNotRegistered
+            raise exceptions.ClassNotRegistered(class_name_)
         if event in self.events[class_name_].keys():
-            raise exceptions.EventAlreadyRegistered
+            raise exceptions.EventAlreadyRegistered(event)
 
         # register the event in our classes database
         self.event_counter += 1
@@ -177,10 +177,10 @@ class Event(Borg):
         """
         class_name_ = class_name.title()
         if class_name_ not in self.events.keys():
-            raise exceptions.ClassNotRegistered
+            raise exceptions.ClassNotRegistered(class_name_)
         if actor_name in self.actors.keys():
             if class_name_ in self.actors[actor_name]:
-                raise exceptions.ActorAlreadyRegistered
+                raise exceptions.ActorAlreadyRegistered(actor_name)
             else:
                 # append class to actor class list
                 self.actors[actor_name].append(class_name_)
@@ -224,7 +224,7 @@ class Event(Borg):
         if class_name_ in self.events.keys():
             del self.events[class_name_]
         else:
-            raise exceptions.ClassNotRegistered
+            raise exceptions.ClassNotRegistered(class_name_)
 
         # delete all actors who were registered for the just deleted class events
         actors = list(self.actors.keys())
@@ -253,15 +253,15 @@ class Event(Borg):
         """
         class_name_ = class_name.title()
         if class_name_ not in self.events.keys():
-            raise exceptions.ClassNotRegistered
+            raise exceptions.ClassNotRegistered(class_name_)
         if event not in self.events[class_name_].keys():
-            raise exceptions.EventNotRegistered
+            raise exceptions.EventNotRegistered(event)
         if actor_name not in self.actors.keys():
-            raise exceptions.ActorNotRegistered
+            raise exceptions.ActorNotRegistered(actor_name)
 
         # verify actor is registered for this event class
         if class_name_ not in self.actors[actor_name]:
-            raise exceptions.ActorNotRegistered
+            raise exceptions.ActorNotRegistered(actor_name)
 
         # create a copy of the event
         event_ = copy.copy(self.events[class_name_][event])

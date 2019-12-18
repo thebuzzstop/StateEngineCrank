@@ -1020,7 +1020,7 @@ class GuiView(mvc.View):
 
     barbers_config = {
         'title': 'Sleeping Barber(s) Simulation',
-        'model': 'barbers',
+        'model': 'Barbers',
         'column': 1,
         'animation.text': 'The Barber Shop',
         'console.text': 'Hello, Sleeping Barber(s)',

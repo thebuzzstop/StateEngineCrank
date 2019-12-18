@@ -311,8 +311,8 @@ class UserCode(StateMachine):
             :param user_id: unique identifier for this User
         """
         self.config = ConfigData()  #: simulation configuration data
-        name = '{}{}'.format(self.config.actor_base_name, user_id)
-        StateMachine.__init__(self, sm_id=user_id, name=name,
+        name_ = f'{self.config.actor_base_name.title()}{user_id:02d}'
+        StateMachine.__init__(self, sm_id=user_id, name=name_,
                               startup_state=States.StartUp,
                               function_table=StateTables.state_function_table,
                               transition_table=StateTables.state_transition_table,
@@ -590,10 +590,7 @@ class DiningPhilosophers(mvc.Model):
 
         #: event processing
         self.mvc_events = mvc.Event()
-        try:
-            self.mvc_events.register_class(self.name)
-        except exceptions.ClassAlreadyRegistered:
-            pass
+        self.mvc_events.register_class(self.name)
 
         #: register mvc model events
         self.mvc_model_events = [
