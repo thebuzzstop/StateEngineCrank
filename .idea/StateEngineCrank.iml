@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/source" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/source/StateEngineCrank" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/source/BookMarks" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
     <content url="file://$MODULE_DIR$/source" />
     <orderEntry type="jdk" jdkName="Python 3.7 (StateEngineCrank)" jdkType="Python SDK" />

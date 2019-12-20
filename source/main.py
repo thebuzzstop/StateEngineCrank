@@ -11,6 +11,7 @@ Provides control for:
 """
 
 # System imports
+import argparse
 import time
 
 # Project imports
@@ -24,15 +25,15 @@ from gui import GuiView
 from mvc import Controller
 
 
-class Unimplemented(Exception):
-    pass
-
-
 class Main(Controller):
     """ Main code """
 
     def __init__(self):
         super().__init__(name='State Engine Main', target=self.run)
+
+        # parse command line arguments
+        self.parser = argparse.ArgumentParser()
+        self.args = self.parser.parse_args()
 
         # dictionary of models
         self.models = {

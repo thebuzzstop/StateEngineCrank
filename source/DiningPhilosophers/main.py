@@ -101,6 +101,8 @@ class StateTables(object):
 
 
 class Config(object):
+    """ Dining Philosophers configuration items """
+
     Eat_Min = 5                         #: minimum number of seconds to eat
     Eat_Max = 10                        #: maximum number of seconds to eat
     Think_Min = 5                       #: minimum number of seconds to think

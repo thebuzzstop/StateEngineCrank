@@ -3,11 +3,11 @@
 """
 
 # System imports
+import argparse
 import random
 from threading import Lock as Lock
 import time
-from pip._internal import self_outdated_check
-from contextlib import contextmanager
+import logging
 
 # Project imports
 
@@ -38,6 +38,7 @@ class Config(object):
     Actor_Base_Name = 'Barber'          #: used when identifying actors
     Customer_Class_Name = 'Customers'   #: class name for Event registration
     Customer_Base_Name = 'Customer'     #: used when identifying actors
+    verbosity = logging.INFO            #: default level for logging
 
     @staticmethod
     def seconds(minimum, maximum):
@@ -81,6 +82,35 @@ class ConfigData(Borg):
         self.actor_base_name = Config.Actor_Base_Name
         self.customer_class_name = Config.Customer_Class_Name
         self.customer_actor_base_name = Config.Customer_Base_Name
+        self.verbosity = logging.INFO
+
+        # parse command line arguments
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
+        self.parser.add_argument('-b', '--barbers', type=int, help='Number of barbers in simulation')
+        self.parser.add_argument('-min', '--haircut_min', type=int, help='Minimum haircut time (seconds)')
+        self.parser.add_argument('-max', '--haircut_max', type=int, help='Maximum haircut time (seconds)')
+        self.parser.add_argument('-c', '--waiting_chairs', type=int, help='Number of chairs in waiting room')
+        self.parser.add_argument('-r', '--customer_rate', type=int, help='Customer generator rate (seconds)')
+        self.parser.add_argument('-var', '--customer_variance', type=int, help='Customer generation variance (seconds)')
+        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
+
+        self.args = self.parser.parse_args()
+        if self.args.barbers:
+            self.barbers = self.args.barbers
+        if self.args.haircut_min:
+            self.haircut_min = self.args.haircut_min
+        if self.args.haircut_max:
+            self.haircut_max = self.args.haircut_max
+        if self.args.waiting_chairs:
+            self.waiting_chairs = self.args.waiting_chairs
+        if self.args.customer_rate:
+            self.customer_rate = self.args.customer_rate
+        if self.args.customer_variance:
+            self.customer_variance = self.args.customre_variance
+        if self.args.simulation_loops:
+            self.simulation_loops = self.args.simulation_loops
+        pass
 
     def get_barbers(self):
         return self.barbers
