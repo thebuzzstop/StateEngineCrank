@@ -46,16 +46,17 @@ The main module contains:
 """
 
 # System imports
+import argparse
 from enum import Enum
 import random
 import threading
 import time
 from typing import List
+import logging
 
 # Project imports
 from StateEngineCrank.modules.PyState import StateMachine
 import mvc
-import exceptions
 import Defines
 
 
@@ -111,6 +112,7 @@ class Config(object):
     Dining_Loops = 100                  #: number of main loops for dining
     Class_Name = 'philosophers'         #: class name for Event registration
     Actor_Base_Name = 'philosopher'     #: used when identifying actors
+    verbosity = logging.INFO            #: default level for logging
 
 
 class ConfigData(Borg):
@@ -119,6 +121,7 @@ class ConfigData(Borg):
         Borg.__init__(self)
         if self._shared_state:
             return
+        self.logger = logging.getLogger(__name__)
         self.eat_max = Config.Eat_Max
         self.eat_min = Config.Eat_Min
         self.think_min = Config.Think_Min
@@ -127,6 +130,32 @@ class ConfigData(Borg):
         self.dining_loops = Config.Dining_Loops
         self.class_name = Config.Class_Name
         self.actor_base_name = Config.Actor_Base_Name
+
+        # parse command line arguments
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
+        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
+        self.parser.add_argument('-p', '--philosophers', type=int, help='Number of dining philosophers')
+        self.parser.add_argument('--eat_min', type=int, help='Minimum seconds to eat')
+        self.parser.add_argument('--eat_max', type=int, help='Maximum seconds to eat')
+        self.parser.add_argument('--think_min', type=int, help='Minimum seconds to think')
+        self.parser.add_argument('--think_max', type=int, help='Maximum seconds to think')
+
+        self.args = self.parser.parse_args()
+        if self.args.verbosity:
+            raise Exception('Verbosity switch not presently supported')
+        if self.args.simulation_loops:
+            self.simulation_loops = self.args.simulation_loops
+        if self.args.philosophers:
+            self.philosophers = self.args.philosophers
+        if self.args.eat_min:
+            self.eat_min = self.args.eat_min
+        if self.args.eat_max:
+            self.eat_max = self.args.eat_max
+        if self.args.think_min:
+            self.think_min = self.args.think_min
+        if self.args.think_max:
+            self.think_max = self.args.think_max
 
     def set_eat_max(self, value):
         self.eat_max = value

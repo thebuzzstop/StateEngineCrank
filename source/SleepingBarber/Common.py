@@ -87,15 +87,19 @@ class ConfigData(Borg):
         # parse command line arguments
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
+        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
         self.parser.add_argument('-b', '--barbers', type=int, help='Number of barbers in simulation')
         self.parser.add_argument('-min', '--haircut_min', type=int, help='Minimum haircut time (seconds)')
         self.parser.add_argument('-max', '--haircut_max', type=int, help='Maximum haircut time (seconds)')
         self.parser.add_argument('-c', '--waiting_chairs', type=int, help='Number of chairs in waiting room')
         self.parser.add_argument('-r', '--customer_rate', type=int, help='Customer generator rate (seconds)')
         self.parser.add_argument('-var', '--customer_variance', type=int, help='Customer generation variance (seconds)')
-        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
 
         self.args = self.parser.parse_args()
+        if self.args.verbosity:
+            raise Exception('Verbosity switch not presently supported')
+        if self.args.simulation_loops:
+            self.simulation_loops = self.args.simulation_loops
         if self.args.barbers:
             self.barbers = self.args.barbers
         if self.args.haircut_min:
@@ -108,8 +112,6 @@ class ConfigData(Borg):
             self.customer_rate = self.args.customer_rate
         if self.args.customer_variance:
             self.customer_variance = self.args.customre_variance
-        if self.args.simulation_loops:
-            self.simulation_loops = self.args.simulation_loops
         pass
 
     def get_barbers(self):
