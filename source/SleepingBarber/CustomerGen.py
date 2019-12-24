@@ -18,8 +18,8 @@ from threading import Thread
 # Project imports
 import mvc
 import Defines
-from SleepingBarber.Common import Config as Config
-from SleepingBarber.Common import ConfigData as ConfigData
+from SleepingBarber.config import Config as Config
+from SleepingBarber.config import ConfigData as ConfigData
 from SleepingBarber.Customer import UserCode as Customer
 
 
@@ -129,7 +129,7 @@ class CustomerGenerator(mvc.Model):
             self.customer_list.append(next_customer)
 
             # delay between generating new customers
-            sleep = Config.seconds(
+            sleep = ConfigData.seconds(
                 self.customer_rate - self.customer_variance,
                 self.customer_rate + self.customer_variance
             )

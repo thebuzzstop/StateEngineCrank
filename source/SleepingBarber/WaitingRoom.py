@@ -7,7 +7,8 @@ room for barber(s) and customer(s).
 The waiting room lock must be obtained by anyone wanting access to the waiting room.
 
 * The waiting room has a fixed number of chairs.
-* If there is an empty chair, a customer arriving at the waiting room is assigned a chair and entered into a waiting queue.
+* If there is an empty chair,
+a customer arriving at the waiting room is assigned a chair and entered into a waiting queue.
 * If there are no empty chairs the customer leaves the barber shop without a haircut.
 * A barber that finishes cutting a customers hair checks the waiting room for a waiting customer.
 """
@@ -17,7 +18,8 @@ from threading import Lock as Lock
 from collections import deque
 
 # Project imports
-from SleepingBarber import Common
+from SleepingBarber.config import ConfigData
+from SleepingBarber.statistics import Statistics
 from mvc import Model
 
 
@@ -55,13 +57,13 @@ class WaitingRoom(Borg, Model):
             return
         Model.__init__(self, name='WaitingRoom')
         self.lock = Lock()  #: waitingroom lock, needs to be obtained before calling WaitingRoom methods
-        self.chairs = Common.ConfigData().waiting_chairs
-        self.stats = Common.Statistics()        #: statistics module, used to gather simulation statistics
+        self.chairs = ConfigData().waiting_chairs
+        self.stats = Statistics()        #: statistics module, used to gather simulation statistics
         self.deque = deque(maxlen=self.chairs)  #: a queue of waiting room chairs
         self.customers_waiting = 0              #: number of customers waiting
 
     def reset(self):
-        self.chairs = Common.ConfigData().waiting_chairs
+        self.chairs = ConfigData().waiting_chairs
         self.deque = deque(maxlen=self.chairs)
         self.customers_waiting = 0
         self.stats.reset()

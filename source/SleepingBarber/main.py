@@ -18,8 +18,8 @@ import mvc
 import exceptions
 import Defines
 
-from SleepingBarber.Common import ConfigData as ConfigData
-from SleepingBarber.Common import Statistics as Statistics
+from SleepingBarber.config import ConfigData as ConfigData
+from SleepingBarber.statistics import Statistics as Statistics
 from SleepingBarber.Barber import UserCode as UserCode
 from SleepingBarber.Barber import Events as BarberEvents
 from SleepingBarber.Customer import Events as CustomerEvents

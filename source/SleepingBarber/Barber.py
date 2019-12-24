@@ -47,9 +47,9 @@ from enum import Enum
 import mvc
 
 from StateEngineCrank.modules.PyState import StateMachine
-from SleepingBarber.Common import Config as Config
-from SleepingBarber.Common import ConfigData as ConfigData
-from SleepingBarber.Common import Statistics as Statistics
+from SleepingBarber.config import Config as Config
+from SleepingBarber.config import ConfigData as ConfigData
+from SleepingBarber.statistics import Statistics as Statistics
 from SleepingBarber.Customer import Events as CustomerEvents
 from SleepingBarber.WaitingRoom import WaitingRoom as WaitingRoom
 
@@ -154,7 +154,7 @@ class UserCode(StateMachine):
         # track total customers
         self.customers += 1
         # start haircut timer
-        self.cut_timer = Config.cutting_time()
+        self.cut_timer = ConfigData.cutting_time()
         self.logger(f'StartCutting {self.customers} [{self.cut_timer}]')
         # post event for view handling
         self.notify(self.sm_events.events.post(class_name='mvc', actor_name=self.name, user_id=self.id,

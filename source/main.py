@@ -18,6 +18,7 @@ import time
 import Defines
 import DiningPhilosophers.main as philosophers
 import SleepingBarber.main as barbers
+import SleepingBarber.config as barbersConfig
 
 # import view
 from console import ConsoleView
@@ -33,6 +34,16 @@ class Main(Controller):
 
         # parse command line arguments
         self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity level')
+        self.args = None
+
+        # dictionary of configuration data
+        self.configs = {
+            'philosophers': philosophers.ConfigData(self.parser, self.args),
+            'barbers': barbersConfig.ConfigData(self.parser, self.args)
+        }
+        for parse in self.configs.keys():
+            self.configs[parse].add_args(self.parser)
         self.args = self.parser.parse_args()
 
         # dictionary of models
@@ -47,24 +58,18 @@ class Main(Controller):
             'gui': GuiView()
         }
 
-        # register models and views
-        self._register_models()
-        self._register_views()
+        # register models with views
+        for v in self.views.keys():
+            for m in self.models.values():
+                self.views[v].register(m)
 
-        # start our thread of execution
-        self.start()
-
-    def _register_views(self):
-        """ register views with models """
+        # register views with models
         for m in self.models.keys():
             for v in self.views.values():
                 self.models[m].register(v)
 
-    def _register_models(self):
-        """ register models with views """
-        for v in self.views.keys():
-            for m in self.models.values():
-                self.views[v].register(m)
+        # start our thread of execution
+        self.start()
 
     def update(self, event):
         """ Called to initiate an update of all views

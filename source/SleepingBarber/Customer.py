@@ -45,9 +45,9 @@ from enum import Enum
 # Project imports
 import mvc
 from StateEngineCrank.modules.PyState import StateMachine
-from SleepingBarber.Common import Config
-from SleepingBarber.Common import ConfigData as ConfigData
-from SleepingBarber.Common import Statistics as Statistics
+from SleepingBarber.config import Config
+from SleepingBarber.config import ConfigData as ConfigData
+from SleepingBarber.statistics import Statistics as Statistics
 import SleepingBarber.Barber
 from SleepingBarber.WaitingRoom import WaitingRoom as WaitingRoom
 

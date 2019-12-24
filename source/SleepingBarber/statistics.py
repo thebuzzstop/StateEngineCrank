@@ -1,13 +1,8 @@
-"""
-* Shared code and configuration definitions
-"""
+""" Sleeping Barber(s) Configuration """
 
 # System imports
-import argparse
-import random
 from threading import Lock as Lock
 import time
-import logging
 
 # Project imports
 
@@ -21,110 +16,6 @@ class Borg(object):
         if myclass not in self._shared_state.keys():
             self._shared_state[myclass] = {}
         self.__dict__ = self._shared_state[myclass]
-
-
-class Config(object):
-    """ SleepingBarber configuration items """
-    HairCut_Min = 20                    #: minimum number of seconds to cut hair
-    HairCut_Max = 30                    #: maximum number of seconds to cut hair
-    Barbers = 4                         #: number of barbers cutting hair
-    BarbersMax = 5                      #: maximum number of barbers for animation
-    WaitingChairs = 4                   #: number of chairs in the waiting room
-    WaitingChairsMax = 5                #: maximum number of waiters for animation
-    CustomerRate = 5                    #: rate for new customers
-    CustomerVariance = 2                #: variance in the customer rate
-    SimulationLoops = 100               #: total number of loops (seconds) to run
-    Class_Name = 'Barbers'              #: class name for Event registration
-    Actor_Base_Name = 'Barber'          #: used when identifying actors
-    Customer_Class_Name = 'Customers'   #: class name for Event registration
-    Customer_Base_Name = 'Customer'     #: used when identifying actors
-    verbosity = logging.INFO            #: default level for logging
-
-    @staticmethod
-    def seconds(minimum, maximum):
-        """ Function to return a random integer between 'minimum' and 'maximum'.
-
-            * Used as the number of seconds for a haircut.
-            * Used as the number of seconds between new customers.
-
-            :param minimum: range minimum value
-            :param maximum: range maximum value
-            :returns: Random number between minimum and maximum
-        """
-        return random.randint(minimum, maximum)
-
-    @staticmethod
-    def cutting_time():
-        """ Utility function to return a random time between minimum and maximum
-            time specified in the configuration class
-
-            :returns: Random cutting time
-        """
-        return Config.seconds(Config.HairCut_Min, Config.HairCut_Max)
-
-
-class ConfigData(Borg):
-
-    def __init__(self):
-        Borg.__init__(self, 'config')
-        if self._shared_state['config']:
-            return
-        self.haircut_min = Config.HairCut_Min
-        self.haircut_max = Config.HairCut_Max
-        self.barbers = Config.Barbers
-        self.barbers_max = Config.BarbersMax
-        self.waiting_chairs = Config.WaitingChairs
-        self.waiting_chairs_max = Config.WaitingChairsMax
-        self.customer_rate = Config.CustomerRate
-        self.customer_variance = Config.CustomerVariance
-        self.simulation_loops = Config.SimulationLoops
-        self.class_name = Config.Class_Name
-        self.actor_base_name = Config.Actor_Base_Name
-        self.customer_class_name = Config.Customer_Class_Name
-        self.customer_actor_base_name = Config.Customer_Base_Name
-        self.verbosity = logging.INFO
-
-        # parse command line arguments
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
-        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
-        self.parser.add_argument('-b', '--barbers', type=int, help='Number of barbers in simulation')
-        self.parser.add_argument('-min', '--haircut_min', type=int, help='Minimum haircut time (seconds)')
-        self.parser.add_argument('-max', '--haircut_max', type=int, help='Maximum haircut time (seconds)')
-        self.parser.add_argument('-c', '--waiting_chairs', type=int, help='Number of chairs in waiting room')
-        self.parser.add_argument('-r', '--customer_rate', type=int, help='Customer generator rate (seconds)')
-        self.parser.add_argument('-var', '--customer_variance', type=int, help='Customer generation variance (seconds)')
-
-        self.args = self.parser.parse_args()
-        if self.args.verbosity:
-            raise Exception('Verbosity switch not presently supported')
-        if self.args.simulation_loops:
-            self.simulation_loops = self.args.simulation_loops
-        if self.args.barbers:
-            self.barbers = self.args.barbers
-        if self.args.haircut_min:
-            self.haircut_min = self.args.haircut_min
-        if self.args.haircut_max:
-            self.haircut_max = self.args.haircut_max
-        if self.args.waiting_chairs:
-            self.waiting_chairs = self.args.waiting_chairs
-        if self.args.customer_rate:
-            self.customer_rate = self.args.customer_rate
-        if self.args.customer_variance:
-            self.customer_variance = self.args.customre_variance
-        pass
-
-    def get_barbers(self):
-        return self.barbers
-
-    def get_barbers_max(self):
-        return self.barbers_max
-
-    def get_waiters(self):
-        return self.waiting_chairs
-
-    def get_waiters_max(self):
-        return self.waiting_chairs_max
 
 
 class Statistics(Borg):
@@ -199,7 +90,7 @@ class Statistics(Borg):
         """
 
         # sort customers by ID
-        customers = sorted(self.customers, key=lambda customer: customer.id)
+        customers = sorted(self.customers, key=lambda customer_: customer_.id)
 
         # Compile customer statistics for the simulation
         self._customer_stats = 'Customer Statistics:'
@@ -239,7 +130,7 @@ class Statistics(Borg):
         """
 
         # Sort barber array by ID
-        barbers = sorted(self.barbers, key=lambda barber: barber.id)
+        barbers = sorted(self.barbers, key=lambda barber_: barber_.id)
 
         # Compile barber statistics for the simulation
         self._barber_stats = 'Barber Statistics:'
@@ -269,6 +160,6 @@ class Statistics(Borg):
         self._summary_stats = 'Summary Statistics:' + \
             '\nCustomers: %d  Sleeping: %d  Cutting: %d  Waiting: %d  Lost Customers: %d  Max Waiting: %d' % \
             (self.barber_total_customers, self.barber_sleeping_time, self.barber_cutting_time,
-            self.customers_waiting_time, self.lost_customers, self.max_waiters)
+             self.customers_waiting_time, self.lost_customers, self.max_waiters)
 
         return self._summary_stats + '\n'
