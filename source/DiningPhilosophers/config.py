@@ -1,7 +1,11 @@
 """ Dining Philosophers Configuration """
 
 # System imports
+import argparse
 import logging
+
+# Project imports
+import source.config as cfg
 
 
 class Borg(object):
@@ -27,12 +31,13 @@ class Config(object):
     verbosity = logging.INFO            #: default level for logging
 
 
-class ConfigData(Borg):
+class ConfigData(cfg.ConfigData, Borg):
 
     def __init__(self, parser=None, args=None):
         Borg.__init__(self)
         if self._shared_state:
             return
+        cfg.ConfigData.__init__(self, parser=parser)
         self.logger = logging.getLogger(__name__)
         self.eat_max = Config.Eat_Max
         self.eat_min = Config.Eat_Min
@@ -50,13 +55,39 @@ class ConfigData(Borg):
         else:
             self.parser = argparse.ArgumentParser()
             self.add_args(self.parser)
+            self.parse_args(self.parser)
+        pass
 
-        # parse command line arguments
-        self.args = self.parser.parse_args(self.args)
+    def add_args(self, parser=None):
+        """ Add parser arguments
+
+            :param parser: Parser to add arguments to [optional]
+        """
+        if parser:
+            self.parser = parser
+        try:
+            self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='store_true')
+        except argparse.ArgumentError:
+            pass
+        self.parser.add_argument('-dl', '--dining_loops', type=int, help='Number of dining simulation loops')
+        self.parser.add_argument('-p', '--philosophers', type=int, help='Number of dining philosophers')
+        self.parser.add_argument('--eat_min', type=int, help='Minimum seconds to eat')
+        self.parser.add_argument('--eat_max', type=int, help='Maximum seconds to eat')
+        self.parser.add_argument('--think_min', type=int, help='Minimum seconds to think')
+        self.parser.add_argument('--think_max', type=int, help='Maximum seconds to think')
+
+    def parse_args(self, parser=None):
+        """ Parse command line arguments
+
+            :param parser: Parser to use for parsing
+        """
+        if parser:
+            self.parser = parser
+        self.args = self.parser.parse_args()
         if self.args.verbosity:
             raise Exception('Verbosity switch not presently supported')
-        if self.args.simulation_loops:
-            self.simulation_loops = self.args.simulation_loops
+        if self.args.dining_loops:
+            self.dining_loops = self.args.dining_loops
         if self.args.philosophers:
             self.philosophers = self.args.philosophers
         if self.args.eat_min:
@@ -67,19 +98,6 @@ class ConfigData(Borg):
             self.think_min = self.args.think_min
         if self.args.think_max:
             self.think_max = self.args.think_max
-
-    def add_args(self, parser):
-        """ Add parser arguments
-
-            :param parser: Parser to add arguments to
-        """
-        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
-        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
-        self.parser.add_argument('-p', '--philosophers', type=int, help='Number of dining philosophers')
-        self.parser.add_argument('--eat_min', type=int, help='Minimum seconds to eat')
-        self.parser.add_argument('--eat_max', type=int, help='Maximum seconds to eat')
-        self.parser.add_argument('--think_min', type=int, help='Minimum seconds to think')
-        self.parser.add_argument('--think_max', type=int, help='Maximum seconds to think')
 
     def set_eat_max(self, value):
         self.eat_max = value

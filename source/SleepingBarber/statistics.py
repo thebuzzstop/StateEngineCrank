@@ -55,6 +55,7 @@ class Statistics(Borg):
         self._summary_stats = ''
 
     def reset(self):
+        """ Reset all statistics variables to initial values """
         self.customers = []
         self.barbers = []
         self.max_waiters = 0

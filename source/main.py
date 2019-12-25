@@ -17,8 +17,10 @@ import time
 # Project imports
 import Defines
 import DiningPhilosophers.main as philosophers
+import DiningPhilosophers.config as dining_config
+
 import SleepingBarber.main as barbers
-import SleepingBarber.config as barbersConfig
+import SleepingBarber.config as barber_config
 
 # import view
 from console import ConsoleView
@@ -34,13 +36,13 @@ class Main(Controller):
 
         # parse command line arguments
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity level')
+        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity level', action='store_true')
         self.args = None
 
         # dictionary of configuration data
         self.configs = {
-            'philosophers': philosophers.ConfigData(self.parser, self.args),
-            'barbers': barbersConfig.ConfigData(self.parser, self.args)
+            'philosophers': dining_config.ConfigData(self.parser, self.args),
+            'barbers': barber_config.ConfigData(self.parser, self.args)
         }
         for parse in self.configs.keys():
             self.configs[parse].add_args(self.parser)

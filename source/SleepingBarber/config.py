@@ -53,7 +53,7 @@ class ConfigData(cfg.ConfigData, Borg):
         self.waiting_chairs_max = Config.WaitingChairsMax
         self.customer_rate = Config.CustomerRate
         self.customer_variance = Config.CustomerVariance
-        self.simulation_loops = Config.SimulationLoops
+        self.sleeping_loops = Config.SimulationLoops
         self.class_name = Config.Class_Name
         self.actor_base_name = Config.Actor_Base_Name
         self.customer_class_name = Config.Customer_Class_Name
@@ -77,8 +77,11 @@ class ConfigData(cfg.ConfigData, Borg):
         """
         if parser:
             self.parser = parser
-        self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='count')
-        self.parser.add_argument('-l', '--simulation_loops', type=int, help='Number of simulation loops')
+        try:
+            self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='store_true')
+        except argparse.ArgumentError:
+            pass
+        self.parser.add_argument('-sl', '--sleeping_loops', type=int, help='Number of barber simulation loops')
         self.parser.add_argument('-b', '--barbers', type=int, help='Number of barbers in simulation')
         self.parser.add_argument('-min', '--haircut_min', type=int, help='Minimum haircut time (seconds)')
         self.parser.add_argument('-max', '--haircut_max', type=int, help='Maximum haircut time (seconds)')
@@ -98,7 +101,7 @@ class ConfigData(cfg.ConfigData, Borg):
         if self.args.verbosity:
             raise Exception('Verbosity switch not presently supported')
         if self.args.simulation_loops:
-            self.simulation_loops = self.args.simulation_loops
+            self.sleeping_loops = self.args.simulation_loops
         if self.args.barbers:
             self.barbers = self.args.barbers
         if self.args.haircut_min:

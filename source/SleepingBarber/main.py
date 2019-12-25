@@ -223,7 +223,7 @@ class SleepingBarber(mvc.Model):
             self.cg.running = True
 
             # Wait for the simulation to complete
-            for loop in range(self.config.simulation_loops):
+            for loop in range(self.config.sleeping_loops):
                 # Sleep for 1 loop iteration time slot
                 time.sleep(Defines.Times.LoopTime)
                 # Bump loop count and notify
@@ -296,6 +296,6 @@ if __name__ == '__main__':
 
     print('Sleeping Barber(s) Simulation Done')
     with sleeping_barbers.statistics as s:
-        print(s.customer_stats())
+        print('\n'+s.customer_stats())
         print(s.barber_stats())
         print(s.summary_stats())
