@@ -46,7 +46,9 @@ class Main(Controller):
         }
         for parse in self.configs.keys():
             self.configs[parse].add_args(self.parser)
-        self.args = self.parser.parse_args()
+
+        for parse in self.configs.keys():
+            self.configs[parse].parse_args(self.parser)
 
         # dictionary of models
         self.models = {

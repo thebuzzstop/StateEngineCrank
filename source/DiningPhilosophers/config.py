@@ -69,8 +69,8 @@ class ConfigData(cfg.ConfigData, Borg):
             self.parser.add_argument('-v', '--verbosity', help='Increase logging verbosity', action='store_true')
         except argparse.ArgumentError:
             pass
-        self.parser.add_argument('-dl', '--dining_loops', type=int, help='Number of dining simulation loops')
-        self.parser.add_argument('-p', '--philosophers', type=int, help='Number of dining philosophers')
+        self.parser.add_argument('--dining_loops', type=int, help='Number of dining simulation loops')
+        self.parser.add_argument('--philosophers', type=int, help='Number of dining philosophers')
         self.parser.add_argument('--eat_min', type=int, help='Minimum seconds to eat')
         self.parser.add_argument('--eat_max', type=int, help='Maximum seconds to eat')
         self.parser.add_argument('--think_min', type=int, help='Minimum seconds to think')
