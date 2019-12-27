@@ -18,7 +18,7 @@ This documentation is divided into the following sections:
 
 * State Engine Crank - our *raison d'etre*
 * Dining Philosophers - a simulation demonstrating use of *"The Crank"* (see `WikiDiners <https://en.wikipedia.org/wiki/Dining_philosophers_problem>`_)
-* Sleeping Barber(s) - a simulation demonstrating use of *"The Crank"* (see`WikiBarbers <https://en.wikipedia.org/wiki/Sleeping_barber_problem>`_)
+* Sleeping Barber(s) - a simulation demonstrating use of *"The Crank"* (see `WikiBarbers <https://en.wikipedia.org/wiki/Sleeping_barber_problem>`_)
 * GUI Animation - an exercise in Tkinter to provide some life to the simulations
 * Model-View-Controller - a package of routines used to bring together the various simulation components utilizing an MVC architecture.
 * BookMarks - a package using *"The Crank"* to parse html

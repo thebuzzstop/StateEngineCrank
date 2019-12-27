@@ -34,7 +34,6 @@ version = '0.00.02'
 # The full version, including alpha/beta/rc tags
 release = '20191226'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Configure Sphinx to include class constructor docstrings.
@@ -85,7 +84,6 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -102,7 +100,7 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

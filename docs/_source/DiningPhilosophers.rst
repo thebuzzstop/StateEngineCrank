@@ -17,19 +17,26 @@ first acquiring the lock and then asking the Waiter for permission.
 Dining Philosophers State Diagram
 ---------------------------------
 .. figure:: DiningPhilosophers.png
-	:alt: DiningPhilosophers state diagram
-	:name: DiningPhilosophersUmlPng
+    :alt: DiningPhilosophers state diagram
+    :name: DiningPhilosophersUmlPng
 
 .. note::
 
-	DiningPhilosophers simulation state diagram.
+    DiningPhilosophers simulation state diagram.
 
-	This image was created using PlantUML with the UML
-	contained in the DiningPhilosophers.py docstring  :ref:`DiningPhilosophersUml`.
+    This image was created using PlantUML with the UML
+    contained in the DiningPhilosophers.py docstring  :ref:`DiningPhilosophersUml`.
 
-Dining Philosophers Source
---------------------------
+Dining Philosophers Main Module
+-------------------------------
 .. automodule:: DiningPhilosophers.main
-	:members:
-	:undoc-members:
-	:show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Configuration Module
+--------------------
+.. automodule:: DiningPhilosophers.config
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -72,9 +72,16 @@ Customer Generator Module
     :undoc-members:
     :show-inheritance:
 
-Common Code
------------
-.. automodule:: SleepingBarber.Common
+Configuration Module
+--------------------
+.. automodule:: SleepingBarber.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Statistics Code
+---------------
+.. automodule:: SleepingBarber.statistics
     :members:
     :undoc-members:
     :show-inheritance:

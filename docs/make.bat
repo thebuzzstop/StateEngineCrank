@@ -35,8 +35,9 @@ goto end
 goto end
 
 :clean
-cd %BUILDDIR%
-rm -rfd * .[a-zA-Z]*
+if "%BUILDDIR%" == "" goto end
+if not exist %BUILDDIR% goto end
+rm -rfd %BUILDDIR%/.[a-zA-Z]* %BUILDDIR%/* %BUILDDIR%/[a-zA-Z]*
 
 :end
 popd
