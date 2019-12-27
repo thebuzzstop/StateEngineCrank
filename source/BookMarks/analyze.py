@@ -12,7 +12,7 @@ Duplicate bookmarks are detected and deleted.
 # System imports
 
 # Project imports
-from config import TheConfig
+from BookMarks.config import TheConfig
 import logger
 logger = logger.Logger(__name__)
 my_logger = logger.logger

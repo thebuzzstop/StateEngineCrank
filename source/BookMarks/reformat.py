@@ -9,9 +9,9 @@ import datetime
 from typing import Union
 
 # Project imports
-from analyze import Analyze
-from config import TheConfig
-from structures import BookMark
+from BookMarks.analyze import Analyze
+from BookMarks.config import TheConfig
+from BookMarks.structures import BookMark
 
 import logger
 logger = logger.Logger(__name__)

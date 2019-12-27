@@ -69,11 +69,11 @@ from enum import Enum
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
-from config import CfgParser
-from config import TheConfig
-from structures import BookMarks
-from analyze import Analyze
-from reformat import Reformat
+from BookMarks.config import CfgParser
+from BookMarks.config import TheConfig
+from BookMarks.structures import BookMarks
+from BookMarks.analyze import Analyze
+from BookMarks.reformat import Reformat
 
 import logger
 logger = logger.Logger(__name__)

@@ -4,6 +4,13 @@ BookMarks
 =========
 The BookMarks module processes bookmarks exported from Google Chrome.
 
+BookMarks Module
+----------------
+.. automodule:: BookMarks.bookmarks
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 BookMarks State Diagram
 -----------------------
 .. figure:: bookmarks.png
@@ -15,13 +22,6 @@ BookMarks State Diagram
 
     This image was created using PlantUML with the UML
     contained in the bookmarks.py docstring :ref:`BookMarksUml`.
-
-BookMarks Module
-----------------
-.. automodule:: BookMarks.bookmarks
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Analysis Module
 ---------------

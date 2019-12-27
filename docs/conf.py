@@ -30,9 +30,9 @@ copyright = '2019, Mark Sawyer under the terms of GPLv3'
 author = 'Mark Sawyer'
 
 # The short X.Y version
-version = '0.00.01'
+version = '0.00.02'
 # The full version, including alpha/beta/rc tags
-release = '20190618'
+release = '20191226'
 
 
 # -- General configuration ---------------------------------------------------
