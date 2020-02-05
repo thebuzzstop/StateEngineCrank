@@ -64,6 +64,7 @@ Application processing:
 from abc import ABC
 from html.parser import HTMLParser
 from enum import Enum
+import string
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
@@ -494,6 +495,10 @@ class MyHTMLParser(HTMLParser, ABC):
         pass
 
 
+def make_printable(o_string: str):
+    return "".join(filter(lambda x: x in string.printable, o_string))
+
+
 if __name__ == '__main__':
     """ Main application processing for BookMarks """
 
@@ -528,8 +533,8 @@ if __name__ == '__main__':
             for s in output:
                 if isinstance(s, list):
                     for s_ in s:
-                        file.write(s_+'\n')
+                        file.write(make_printable(s_)+'\n')
                 else:
-                    file.write(s+'\n')
+                    file.write(make_printable(s)+'\n')
     except Exception as e:
         print(f'Exception reformatting file: {e}')

@@ -42,17 +42,18 @@ class TheConfig:
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
     # configuration items initialized by config parser
-    config = None           #: configuration items
-    headings = None         #: headings declared in config.ini
-    noheadings = None       #: section.subsection combinations not to have a heading
-    menubar = None          #: menubar constructed by config parser
-    scanning_order = None   #: order in which scanning processing will occur
-    sections = None         #: menutab sections (topic groups)
-    head = None             #: menutab 'head' section
-    tail = None             #: menutab 'tail' section
-    capitalized = None      #: menubar capitalized label words
-    input_file = None       #: bookmarks input file to be processed
-    output_file = None      #: bookmarks output file (after processing)
+    config = None               #: configuration items
+    headings = None             #: headings declared in config.ini
+    noheadings = None           #: section.subsection combinations not to have a heading
+    menubar = None              #: menubar constructed by config parser
+    scanning_order = None       #: order in which scanning processing will occur
+    sections = None             #: menutab sections (topic groups)
+    head = None                 #: menutab 'head' section
+    tail = None                 #: menutab 'tail' section
+    capitalized = None          #: menubar capitalized label words
+    restricted_sites = None     #: restricted bookmark sites (restricted to specific section/topic)
+    input_file = None           #: bookmarks input file to be processed
+    output_file = None          #: bookmarks output file (after processing)
 
 
 class CfgParser(configparser.ConfigParser):
@@ -104,6 +105,10 @@ class CfgParser(configparser.ConfigParser):
             TheConfig.sections[menubar] = {}
             for section in config.options(menubar):
                 TheConfig.sections[menubar][section] = self.get_list(config[menubar][section])
+        # determine restricted sections/topics
+        TheConfig.restricted_sites = {}
+        for restricted in config['restricted']:
+            TheConfig.restricted_sites[restricted] = config['restricted'][restricted]
         pass
 
     @staticmethod

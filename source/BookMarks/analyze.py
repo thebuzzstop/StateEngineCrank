@@ -10,9 +10,12 @@ Duplicate bookmarks are detected and deleted.
 """
 
 # System imports
+import re
 
 # Project imports
 from BookMarks.config import TheConfig
+from BookMarks.structures import BookMark
+
 import logger
 logger = logger.Logger(__name__)
 my_logger = logger.logger
@@ -65,6 +68,8 @@ class Analyze(object):
         self.file_bookmarks = {}
         self.keyword_database = Keywords()
         self.href_database = Keywords()
+        #: restricted section.topic values
+        self.restricted_sites = TheConfig.restricted_sites
 
         #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
@@ -103,7 +108,8 @@ class Analyze(object):
                 logger.logger.debug(f'Scanning: {section}/{topic}')
                 config_list = TheConfig.sections[section][topic]
                 scan_list = self.menubar_[section][topic]
-                self.scan_bookmarks_section(config_list, scan_list)
+                section_topic = f'{section}.{topic}'
+                self.scan_bookmarks_section(config_list, scan_list, section_topic)
             pass
 
         # add any unscanned bookmarks to the miscellaneous section
@@ -181,65 +187,109 @@ class Analyze(object):
                 hostname = bm.href_urlparts.hostname
                 if hostname is not None:
                     hostname = hostname.lower()
-                path = bm.href_urlparts.path
+                path = bm.href_urlparts.path.lower()
                 if not bm.scanned:
                     if hostname is not None and len(hostname):
-                        if hostname.endswith(site_) and path == '/' or site_ in bm.label.lower():
+                        # if hostname.endswith(site_) and path == '/':
+                        if self.re_str_check(site_, hostname+path):
                             scan_list.append(bm)
                             bm.scanned = True
                 pass
 
     # =========================================================================
-    def scan_bookmarks_section(self, config_list, scan_list):
+    def scan_bookmarks_section(self, config_list, scan_list, section_topic):
         """ scan all bookmarks for section match
 
             :param config_list: Section/topic configuration list to scan for
             :param scan_list: Section/topic target scan list
+            :param section_topic: Section/topic string
         """
+        # scan all book marks - check for hostname match
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
-            # scan all book marks for current value
             for bm in bm_value:
                 if bm.scanned:
                     continue
-                # check for hostname match
                 hostname = bm.href_urlparts.hostname.lower()
                 if hostname is not None and len(hostname):
                     for item in config_list:
                         if item in hostname and hostname not in scan_list:
+                            if self.is_restricted(hostname, section_topic):
+                                continue
                             scan_list.append(bm)
                             bm.scanned = True
                             break
-                # check for label match
+
+        # scan all book marks - check for label match
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            for bm in bm_value:
+                if bm.scanned:
+                    continue
+                if self.is_restricted(bm.href_urlparts.hostname, section_topic):
+                    continue
                 label = bm.label.lower()
                 if not bm.scanned and label is not None and len(label):
                     for item in config_list:
-                        if item in label and label not in scan_list:
+                        if self.re_str_check(item, label) and not self.re_str_check(label, scan_list):
+                            scan_list.append(bm)
+                            bm.scanned = True
+                            break
+
+        # scan all book marks - check for path match
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            for bm in bm_value:
+                if bm.scanned:
+                    continue
+                if self.is_restricted(bm.href_urlparts.hostname, section_topic):
+                    continue
+                path = bm.href_urlparts.path.lower()
+                if not bm.scanned and path is not None and len(path):
+                    for item in config_list:
+                        if item in path and path not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = True
                             break
         pass
 
+    def is_restricted(self, hostname, section_topic):
+        """ See if hostname is in restricted list
+
+            :param hostname: Hostname to scan for
+            :param section_topic: Section/Topic being processed
+            :return: Boolean True if hostname is in restricted list
+        """
+        if section_topic == 'soa.soa':
+            print('hey')
+        for restricted in self.restricted_sites:
+            restrict_re = re.compile(restricted, re.IGNORECASE)
+            if restrict_re.search(hostname):
+                if self.restricted_sites[restricted] != section_topic:
+                    return True
+        return False
+
     # =========================================================================
-    def delete_scanned_bookmarks(self):
-        """ rescan bookmarks and delete any that were identified (e.g. projects, personal) """
+    def scan_bookmark_hosts(self):
+        """ scan all bookmarks for known previously identified hostnames """
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
-            # scan all book marks for current value
-            bm_values = len(bm_value)
-            for i in range(bm_values, 0, -1):
-                bm = bm_value[i-1]
-                if bm.scanned:
-                    del bm_value[i-1]
-            # see if any bookmarks remain for this key
-            if not len(bm_value):
-                self.processed_bookmarks.append(bm_key)
-        # delete all bookmarks marked 'scanned'
-        for bm_key in self.processed_bookmarks:
-            if bm_key in self.bookmarks:
-                del self.bookmarks[bm_key]
+            for bm in bm_value:
+                hostname = bm.href_urlparts.hostname
+                if not hostname:
+                    continue
+                hostname = hostname.lower()
+                # loop through all menubar sections
+                for section in TheConfig.sections:
+                    for key in TheConfig.sections[section].keys():
+                        for host in TheConfig.sections[section][key]:
+                            if host in hostname and hostname not in self.host_sites[section]:
+                                self.host_sites[section].append(hostname)
+                                logger.logger.debug(f'{section}: {host}/{hostname}')
         pass
 
     # =========================================================================
@@ -292,20 +342,43 @@ class Analyze(object):
                 # ============================================
                 if not (bm.href_urlparts.hostname and bm.href_urlparts.path):
                     continue
+                # strip any trailing slash from path before processing
+                path = bm.href_urlparts.path.rstrip('/')
                 if bm.href_urlparts.hostname not in self.pathnames.keys():
-                    self.pathnames[bm.href_urlparts.hostname] = [bm.href_urlparts.path]
-                elif bm.href_urlparts.path not in self.pathnames[bm.href_urlparts.hostname]:
-                    self.pathnames[bm.href_urlparts.hostname].append(bm.href_urlparts.path)
+                    self.pathnames[bm.href_urlparts.hostname] = [path]
+                elif path not in self.pathnames[bm.href_urlparts.hostname]:
+                    self.pathnames[bm.href_urlparts.hostname].append(path)
                 elif bm.href_urlparts.hostname not in self.duplicates:
-                    self.duplicates[bm.href_urlparts.hostname] = [(bm.href_urlparts.path, bm)]
+                    self.duplicates[bm.href_urlparts.hostname] = [(path, bm)]
                     del bm_value[i-1]
                 else:
-                    self.duplicates[bm.href_urlparts.hostname].append((bm.href_urlparts.path, bm))
+                    self.duplicates[bm.href_urlparts.hostname].append((path, bm))
                     del bm_value[i-1]
 
             # see if all bookmarks for this list were deleted
             if not len(self.bookmarks[bm_key]):
                 self.empty_bookmarks.append(bm_key)
+        pass
+
+    # =========================================================================
+    def delete_scanned_bookmarks(self):
+        """ rescan bookmarks and delete any that were identified (e.g. projects, personal) """
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all book marks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
+                if bm.scanned:
+                    del bm_value[i-1]
+            # see if any bookmarks remain for this key
+            if not len(bm_value):
+                self.processed_bookmarks.append(bm_key)
+        # delete all bookmarks marked 'scanned'
+        for bm_key in self.processed_bookmarks:
+            if bm_key in self.bookmarks:
+                del self.bookmarks[bm_key]
         pass
 
     # =========================================================================
@@ -372,22 +445,32 @@ class Analyze(object):
                 if len(part):
                     self.href_database.add_word(part, bookmark)
 
-    # =========================================================================
-    def scan_bookmark_hosts(self):
-        """ scan all bookmarks for known previously identified hostnames """
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            for bm in bm_value:
-                hostname = bm.href_urlparts.hostname
-                if not hostname:
-                    continue
-                hostname = hostname.lower()
-                # loop through all menubar sections
-                for section in TheConfig.sections:
-                    for key in TheConfig.sections[section].keys():
-                        for host in TheConfig.sections[section][key]:
-                            if host in hostname and hostname not in self.host_sites[section]:
-                                self.host_sites[section].append(hostname)
-                                logger.logger.debug(f'{section}: {host}/{hostname}')
-        pass
+    def re_str_check(self, pattern: str, strings: [list, str, BookMark]):
+        """ Perform regular expression scan of a list
+
+            :param pattern: string pattern to search for
+            :param strings: BookMark, string or list of strings to scan
+            :return: boolean True if 'pattern' is in 'strings'
+        """
+        try:
+            if isinstance(strings, str):
+                return re.compile(pattern, re.IGNORECASE).search(strings)
+            elif isinstance(strings, list):
+                if not strings:
+                    return False
+                if isinstance(strings[0], BookMark):
+                    bm_list_strings = []
+                    for bm in strings:
+                        bm_list_strings.extend(bm.strings())
+                    return self.re_str_check(pattern, bm_list_strings)
+            elif isinstance(strings, BookMark):
+                return self.re_str_check(pattern, strings.strings())
+
+            pattern_re = re.compile(pattern, re.IGNORECASE)
+            for s in strings:
+                if pattern_re.search(s):
+                    return True
+            return False
+        except Exception as e:
+            print(f'Oops: {e}')
+            return False

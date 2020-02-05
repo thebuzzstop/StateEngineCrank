@@ -142,6 +142,13 @@ class BookMark(object):
         else:
             self.attrs['attrs'].append({attr: value})
 
+    def strings(self):
+        return [
+            self.label,
+            self.hostname,
+            self.path,
+        ]
+
 
 class Heading(object):
     """ A bookmark heading """
@@ -257,7 +264,10 @@ class BookMarks(object):
             self.headings_dups.append(key)
             key = f'{key} (DUP)'
             if key in self.headings_dict:
-                raise Exception(f'DUPLICATE KEY: {key}')
+                self.headings_dups.append(key)
+                key = f'{key} (DUP)'
+                if key in self.headings_dict:
+                    raise Exception(f'DUPLICATE KEY: {key}')
 
         # create a new list, add it to our dictionary and push it onto the stack
         self.heading.list = List(self.level, self.heading.label)
