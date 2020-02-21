@@ -69,7 +69,8 @@ class Analyze(object):
         self.keyword_database = Keywords()
         self.href_database = Keywords()
         #: restricted section.topic values
-        self.restricted_sites = TheConfig.restricted_sites
+        self.restricted_hosts = TheConfig.restricted_hosts
+        self.restricted_text = TheConfig.restricted_text
 
         #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
@@ -121,7 +122,10 @@ class Analyze(object):
                 if not bm.scanned:
                     self.menubar_['misc']['misc'].append(bm)
                     bm.scanned = True
+                    bm.match = BookMark.BookMarkMatch.eMISC
 
+        self.delete_empty_icons()
+        self.delete_empty_attrs()
         self.delete_scanned_bookmarks()
         pass
 
@@ -150,6 +154,8 @@ class Analyze(object):
                             if self.href_path(bm_) != bm_path:
                                 self.file_bookmarks[bm_key].append(bm)
                     bm.scanned = True
+                    bm.match = BookMark.BookMarkMatch.eFILE
+
         pass
 
     @staticmethod
@@ -194,6 +200,7 @@ class Analyze(object):
                         if self.re_str_check(site_, hostname+path):
                             scan_list.append(bm)
                             bm.scanned = True
+                            bm.match = BookMark.BookMarkMatch.eSITE
                 pass
 
     # =========================================================================
@@ -208,69 +215,86 @@ class Analyze(object):
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
+            # scan all book marks
             for bm in bm_value:
+                # continue if already scanned
                 if bm.scanned:
                     continue
+
+                # check for restrictions
                 hostname = bm.href_urlparts.hostname.lower()
-                if hostname is not None and len(hostname):
+                label = bm.label.lower()
+                if self.is_restricted(hostname, label, section_topic):
+                    continue
+
+                if label.startswith('protocol buffer') and section_topic == 'soa.soa':
+                    print('hello, sailor')
+
+                # check for a hostname match
+                if not bm.scanned and hostname is not None and len(hostname):
                     for item in config_list:
                         if item in hostname and hostname not in scan_list:
-                            if self.is_restricted(hostname, section_topic):
-                                continue
                             scan_list.append(bm)
                             bm.scanned = True
+                            bm.match = BookMark.BookMarkMatch.eHOSTNAME
                             break
 
-        # scan all book marks - check for label match
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            for bm in bm_value:
-                if bm.scanned:
-                    continue
-                if self.is_restricted(bm.href_urlparts.hostname, section_topic):
-                    continue
-                label = bm.label.lower()
+                # check for a label match
                 if not bm.scanned and label is not None and len(label):
                     for item in config_list:
-                        if self.re_str_check(item, label) and not self.re_str_check(label, scan_list):
+                        check = self.re_str_check(item, label)
+                        scanlist = self.re_str_check(label, scan_list)
+                        if self.re_str_check(item, label) and label not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = True
+                            bm.match = BookMark.BookMarkMatch.eLABEL
                             break
 
-        # scan all book marks - check for path match
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            for bm in bm_value:
-                if bm.scanned:
-                    continue
-                if self.is_restricted(bm.href_urlparts.hostname, section_topic):
-                    continue
+                # check for a path match
                 path = bm.href_urlparts.path.lower()
                 if not bm.scanned and path is not None and len(path):
                     for item in config_list:
                         if item in path and path not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = True
+                            bm.match = BookMark.BookMarkMatch.ePATH
                             break
         pass
 
-    def is_restricted(self, hostname, section_topic):
-        """ See if hostname is in restricted list
+    def is_restricted(self, bm_hostname, bm_label, section_topic):
+        """ See if bookmark hostname is restricted
 
-            :param hostname: Hostname to scan for
+            :param bm_hostname: Bookmark hostname
+            :param bm_label: Bookmark label
             :param section_topic: Section/Topic being processed
-            :return: Boolean True if hostname is in restricted list
+            :return: Boolean True if hostname matches a section/topic restriction
         """
-        if section_topic == 'soa.soa':
-            print('hey')
-        for restricted in self.restricted_sites:
-            restrict_re = re.compile(restricted, re.IGNORECASE)
-            if restrict_re.search(hostname):
-                if self.restricted_sites[restricted] != section_topic:
-                    return True
-        return False
+        # check for a match with a restricted host
+        restricted_host = None
+        for host in self.restricted_hosts:
+            if re.search(bm_hostname, host, re.IGNORECASE):
+                restricted_host = host
+                break
+        # check for a match with restricted text
+        restricted_text = None
+        bm_text = ''.join(c for c in bm_label if c.isalnum() or c == '.')
+        if bm_text:
+            for text in self.restricted_text:
+                if re.search(text, bm_text, re.IGNORECASE):
+                    restricted_text = text
+                    break
+
+        if not restricted_host and not restricted_text:
+            return False
+        if restricted_host and self.restricted_hosts[restricted_host] == section_topic:
+            return False
+        if restricted_text and self.restricted_text[restricted_text] == section_topic:
+            return False
+        if restricted_host and self.restricted_hosts[restricted_host] != section_topic:
+            return True
+        if restricted_text and self.restricted_text[restricted_text] != section_topic:
+            return True
+        raise Exception(f'Unhandled logic condition: HOST[{restricted_host}] TEXT[{restricted_text}] TOPIC[{section_topic}]')
 
     # =========================================================================
     def scan_bookmark_hosts(self):
@@ -389,6 +413,24 @@ class Analyze(object):
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]
+        pass
+
+    # =========================================================================
+    def delete_empty_icons(self):
+        """ delete any icons that are 'None' """
+        for bm_key, bm_value in self.bookmarks.items():
+            for bm in bm_value:
+                if not bm.attrs['icon']:
+                    del bm.attrs['icon']
+        pass
+
+    # =========================================================================
+    def delete_empty_attrs(self):
+        """ delete any attrs[] that are empty """
+        for bm_key, bm_value in self.bookmarks.items():
+            for bm in bm_value:
+                if not bm.attrs['attrs']:
+                    del bm.attrs['attrs']
         pass
 
     # =========================================================================

@@ -26,6 +26,7 @@ class TheConfig:
     TOOLBAR_HTML_FORMAT = '<DT><H2 ADD_DATE="{0}" LAST_MODIFIED="{1}" PERSONAL_TOOLBAR_FOLDER="true">{2}</H2>'
     HEADING_HTML_FORMAT = '<DT><H3 ADD_DATE="{0}" LAST_MODIFIED="{1}">{2}</H3>'
     BOOKMARK_HTML_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}">{2}</A>'
+    BOOKMARK_HTML_FORMAT_NO_DATE = '<DT><A HREF="{0}">{1}</A>'
     BOOKMARK_HTML_ICON_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}">{3}</A>'
     BOOKMARK_HTML_ICON_FORMAT_NO_LABEL = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}"></A>'
 
@@ -51,7 +52,8 @@ class TheConfig:
     head = None                 #: menutab 'head' section
     tail = None                 #: menutab 'tail' section
     capitalized = None          #: menubar capitalized label words
-    restricted_sites = None     #: restricted bookmark sites (restricted to specific section/topic)
+    restricted_hosts = None     #: restricted bookmark sites (restricted to specific section/topic)
+    restricted_text = None      #: restricted bookmark text (restricted to specific section/topic)
     input_file = None           #: bookmarks input file to be processed
     output_file = None          #: bookmarks output file (after processing)
 
@@ -105,10 +107,14 @@ class CfgParser(configparser.ConfigParser):
             TheConfig.sections[menubar] = {}
             for section in config.options(menubar):
                 TheConfig.sections[menubar][section] = self.get_list(config[menubar][section])
-        # determine restricted sections/topics
-        TheConfig.restricted_sites = {}
-        for restricted in config['restricted']:
-            TheConfig.restricted_sites[restricted] = config['restricted'][restricted]
+        # determine restricted sections/topics - specific hosts
+        TheConfig.restricted_hosts = {}
+        for restricted in config['restricted.hosts']:
+            TheConfig.restricted_hosts[restricted] = config['restricted.hosts'][restricted]
+        # determine restricted sections/topics - label text
+        TheConfig.restricted_text = {}
+        for restricted in config['restricted.text']:
+            TheConfig.restricted_text[restricted] = config['restricted.text'][restricted]
         pass
 
     @staticmethod

@@ -24,7 +24,7 @@ class Reformat(object):
     def __init__(self, analysis: Analyze):
         """ Analyze constructor
 
-            :param analysis: Analize object after processing
+            :param analysis: Analyze object after processing
         """
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
@@ -43,6 +43,7 @@ class Reformat(object):
         self.write_section('head')
         for section in self.headings:
             self.write_section(section)
+        self.write_section('hosts')
         self.write_section('tail')
         self.end_list()
         pass
@@ -72,13 +73,26 @@ class Reformat(object):
             for subsection in deferred:
                 self.output_subsection(section, subsection)
             self.end_list()
-        else:
+        elif section == 'head' or section == 'tail':
             # process section without a heading
             sorted_section = \
                 sorted(self.menubar_data[section],
                        key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
             for bm in sorted_section:
                 self.write_bm(bm, has_label=False)
+        elif section == 'hosts':
+            # process special menu section listing hosts
+            self.write_heading(section)
+            self.begin_list()
+            hosts = []
+            for host in self.analysis.hostnames:
+                host = '.'.join(host.split('.')[-2:])
+                if host not in hosts:
+                    hosts.append(host)
+            for host in sorted(hosts):
+                self.write(TheConfig.BOOKMARK_HTML_FORMAT_NO_DATE.format('http://'+host, host))
+            self.end_list()
+            pass
 
     def output_subsection(self, section, subsection):
         """ output bookmarks for section.subsection
@@ -174,7 +188,8 @@ class Reformat(object):
         self.output.append('    '*self.indent + html.strip())
         pass
 
-    def my_title(self, heading):
+    @staticmethod
+    def my_title(heading):
         """ format a heading string the way we like it
 
             :param heading: Heading string to format

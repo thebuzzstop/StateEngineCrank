@@ -88,6 +88,7 @@ The BookMarks Structures module maintains bookmark structures.
 
 # System imports
 from urllib.parse import urlparse
+from enum import Enum
 
 # Project imports
 import logger
@@ -109,6 +110,16 @@ class List(object):
 
 class BookMark(object):
     """ A bookmark """
+
+    class BookMarkMatch(Enum):
+        """ Enumerations for types of BookMark Matches """
+        eHOSTNAME = 0
+        eLABEL = 1
+        ePATH = 2
+        eMISC = 3
+        eFILE = 4
+        eSITE = 5
+
     def __init__(self, label, heading, href, add_date, icon=None):
         self.label = label
         self.heading = heading
@@ -125,6 +136,7 @@ class BookMark(object):
         self.scheme = None
         self.hostname = None
         self.path = None
+        self.match = None
 
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark
