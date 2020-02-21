@@ -227,8 +227,11 @@ class Analyze(object):
                 if self.is_restricted(hostname, label, section_topic):
                     continue
 
-                if label.startswith('protocol buffer') and section_topic == 'soa.soa':
-                    print('hello, sailor')
+                # =============================================================
+                # Debug code, enable when debugging specific scenarios
+                # if label.startswith('protocol buffer') and section_topic == 'soa.soa':
+                #    print('hello, sailor')
+                # =============================================================
 
                 # check for a hostname match
                 if not bm.scanned and hostname is not None and len(hostname):
