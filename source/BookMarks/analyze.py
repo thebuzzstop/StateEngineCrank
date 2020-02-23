@@ -11,6 +11,7 @@ Duplicate bookmarks are detected and deleted.
 
 # System imports
 import re
+import copy
 
 # Project imports
 from BookMarks.config import TheConfig
@@ -97,11 +98,19 @@ class Analyze(object):
         # build a list of bookmarks that reference a file
         self.scan_bookmarks_files()
 
+        #: dictionary of bookmarks discovered for head/tail to be added back
+        self.add_back = {}
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
             self.scan_bookmarks_site(site, self.menubar_['head'])
         for site in TheConfig.menubar['tail']:
             self.scan_bookmarks_site(site, self.menubar_['tail'])
+
+        # add head/tail bookmarks back to main dictionary
+        for bm_key, bm_value in self.add_back.items():
+            for bm in bm_value:
+                bm.scanned = False
+                self.bookmarks[bm_key].append(bm)
 
         # scan bookmarks in the order specified in the configuration file
         for section in TheConfig.scanning_order:
@@ -199,9 +208,14 @@ class Analyze(object):
                         # if hostname.endswith(site_) and path == '/':
                         if self.re_str_check(site_, hostname+path):
                             scan_list.append(bm)
+                            if bm_key not in self.add_back:
+                                self.add_back[bm_key] = [copy.deepcopy(bm)]
+                            else:
+                                self.add_back[bm_key].append(copy.deepcopy(bm))
                             bm.scanned = True
                             bm.match = BookMark.BookMarkMatch.eSITE
                 pass
+        pass
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list, section_topic):
