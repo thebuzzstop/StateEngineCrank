@@ -174,7 +174,8 @@ class Reformat(object):
         self.output.append('    '*self.indent + html.strip())
         pass
 
-    def my_title(self, heading):
+    @staticmethod
+    def my_title(heading):
         """ format a heading string the way we like it
 
             :param heading: Heading string to format

@@ -4,7 +4,7 @@ The BookMarks Analysis module scans and categorizes bookmarks.
 
 The various bookmark elements have already been determined during bookmark parsing.
 Dictionaries are compiled for bookmark attributes, e.g. domains, host names, paths, etc.
-A of keywords is compiled.
+A dictionary of keywords is compiled.
 Duplicate bookmarks are detected and deleted.
 
 """
