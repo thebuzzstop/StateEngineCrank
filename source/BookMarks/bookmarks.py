@@ -4,7 +4,8 @@ The BookMarks module processes bookmarks exported from Google Chrome.
 
 Application processing:
 
-    #. Initialization and startup. Instantiate Configuration parser and the HTML parser (State Engine)
+    #. Initialization and startup.
+    #. Instantiate Configuration parser and the HTML parser (State Engine)
     #. Open the bookmarks file and feed it to the parser.
     #. Analyze the bookmarks. Categorize and Scan for duplicates.
     #. Create the output bookmarks file for importing into a browser.
@@ -76,8 +77,9 @@ from analyze import Analyze
 from reformat import Reformat
 
 import logger
-logger = logger.Logger(__name__)
+logger = logger.Logger(name=__name__, log_level=logger.INFO)
 my_logger = logger.logger
+my_logger.info('INIT')
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -161,7 +163,7 @@ class UserCode(StateMachine):
         """
         self.html_attrs = attrs
         if self.html_attrs:
-            my_logger.info(f'attrs: {self.html_attrs}')
+            my_logger.debug(f'attrs: {self.html_attrs}')
             # self.event(Events.EvAttr)
 
     def set_html_data(self, data):
@@ -171,7 +173,7 @@ class UserCode(StateMachine):
         """
         self.html_data = data.strip()
         if self.html_data:
-            my_logger.info(f'data: {self.html_data}')
+            my_logger.debug(f'data: {self.html_data}')
             self.event(Events.EvData)
 
     # ===========================================================================
@@ -185,7 +187,7 @@ class UserCode(StateMachine):
         if self.meta_attrs:
             raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
         self.meta_attrs = self.html_attrs
-        my_logger.info(f'META: {self.meta_attrs}')
+        my_logger.debug(f'META: {self.meta_attrs}')
         self.event(Events.EvTick)
 
     # ===========================================================================
@@ -497,6 +499,8 @@ class MyHTMLParser(HTMLParser, ABC):
 if __name__ == '__main__':
     """ Main application processing for BookMarks """
 
+    my_logger.debug('INIT')
+
     # initialization and setup
     config = CfgParser()
     parser = MyHTMLParser()
@@ -510,14 +514,14 @@ if __name__ == '__main__':
         parser.feed(bookmarks_html)
         bookmarks = parser.parser.bookmarks
     except Exception as e:
-        print(f'Exception parsing file: {e}')
+        my_logger.exception(f'Exception parsing file: {e}', exc_info=e)
 
     # analyze bookmarks just parsed
     analysis = None
     try:
         analysis = Analyze(bookmarks.bookmarks)
     except Exception as e:
-        print(f'Exception analyzing file: {e}')
+        my_logger.exception(f'Exception analyzing file: {e}', exc_info=e)
 
     # create bookmark output structure
     output = None
@@ -532,4 +536,4 @@ if __name__ == '__main__':
                 else:
                     file.write(s+'\n')
     except Exception as e:
-        print(f'Exception reformatting file: {e}')
+        my_logger.exception(f'Exception reformatting file: {e}', exc_info=e)

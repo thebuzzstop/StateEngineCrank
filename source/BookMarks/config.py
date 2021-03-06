@@ -73,8 +73,8 @@ class CfgParser(configparser.ConfigParser):
 
         # establish menubar structure
         menubar = {
-            'head': self.get_list(config['menubar']['head']),
-            'tail': self.get_list(config['menubar']['tail'])
+            'head': self.get_list_tuples(config['menubar']['head'], tuple_size=3),
+            'tail': self.get_list_tuples(config['menubar']['tail'], tuple_size=3)
         }
         # enumerate menubar heading topics
         headings = self.get_list(config['menubar']['headings'])
@@ -98,7 +98,7 @@ class CfgParser(configparser.ConfigParser):
         TheConfig.headings = headings
         TheConfig.noheadings = self.get_list(config['menubar']['noheadings'])
         TheConfig.menubar = menubar
-        TheConfig.capitalized = self.get_list_tuples(config['menubar']['capitalized'])
+        TheConfig.capitalized = self.get_list_tuples(config['menubar']['capitalized'], tuple_size=2)
         TheConfig.sections = {}
         for menubar in self.get_list(config['menubar']['headings']):
             TheConfig.sections[menubar] = {}
@@ -123,18 +123,22 @@ class CfgParser(configparser.ConfigParser):
         return items1
 
     @staticmethod
-    def get_list_tuples(config_item: str):
+    def get_list_tuples(config_item: str, tuple_size: int):
         """ Return a [list] of configuration items which are parsed as tuples
 
             Do not return an empty/null/'' item
 
             :param config_item: Configuration file item
+            :param tuple_size: Number of items in a tuple
         """
         items = config_item.replace('\n', '').replace(', ', ',').split(',')
         tuples = []
-        for i in range(0, len(items), 2):
+        for i in range(0, len(items), tuple_size):
             if items[i]:
-                tuples.append((items[i], items[i+1]))
+                if tuple_size == 2:
+                    tuples.append((items[i], items[i + 1]))
+                elif tuple_size == 3:
+                    tuples.append((items[i], items[i + 1], items[i + 2]))
             else:
                 del items[i]
         return tuples

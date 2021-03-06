@@ -10,12 +10,11 @@ Duplicate bookmarks are detected and deleted.
 """
 
 # System imports
+from typing import Tuple
 
 # Project imports
 from config import TheConfig
 import logger
-logger = logger.Logger(__name__)
-my_logger = logger.logger
 
 
 class Keywords(object):
@@ -51,6 +50,11 @@ class Analyze(object):
 
     def __init__(self, bookmarks):
         """ Analyze constructor """
+
+        self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
+        self.my_logger = self.logger.logger
+        self.my_logger.info('INIT')
+
         self.bookmarks = bookmarks
         self.schemes = []
         self.hostnames = []
@@ -100,7 +104,7 @@ class Analyze(object):
         # scan bookmarks in the order specified in the configuration file
         for section in TheConfig.scanning_order:
             for topic in self.menubar_[section].keys():
-                logger.logger.debug(f'Scanning: {section}/{topic}')
+                self.my_logger.debug(f'Scanning: {section}/{topic}')
                 config_list = TheConfig.sections[section][topic]
                 scan_list = self.menubar_[section][topic]
                 self.scan_bookmarks_section(config_list, scan_list)
@@ -144,7 +148,6 @@ class Analyze(object):
                             if self.href_path(bm_) != bm_path:
                                 self.file_bookmarks[bm_key].append(bm)
                     bm.scanned = True
-        pass
 
     @staticmethod
     def href_path(bookmark):
@@ -165,13 +168,16 @@ class Analyze(object):
         return f'{bookmark.heading.label}'
 
     # =========================================================================
-    def scan_bookmarks_site(self, site: str, scan_list):
+    def scan_bookmarks_site(self, site: Tuple[str, str], scan_list):
         """ scan all bookmarks for section match
 
-            :param site: BookMark site to scan for
+            :param site: BookMark site to scan for [hostname, path]
             :param scan_list: Section/topic target scan list
         """
-        site_ = site.lower()
+        site_host = site[0].lower()
+        site_path = site[1].lower()
+        site_label = site[2]
+
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
@@ -182,12 +188,14 @@ class Analyze(object):
                 if hostname is not None:
                     hostname = hostname.lower()
                 path = bm.href_urlparts.path
+                if path is not None:
+                    path = path.lower()
                 if not bm.scanned:
                     if hostname is not None and len(hostname):
-                        if hostname.endswith(site_) and path == '/' or site_ in bm.label.lower():
+                        if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
+                            bm.label = site_label
                             scan_list.append(bm)
                             bm.scanned = True
-                pass
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
@@ -219,7 +227,6 @@ class Analyze(object):
                             scan_list.append(bm)
                             bm.scanned = True
                             break
-        pass
 
     # =========================================================================
     def delete_scanned_bookmarks(self):
@@ -240,7 +247,6 @@ class Analyze(object):
         for bm_key in self.processed_bookmarks:
             if bm_key in self.bookmarks:
                 del self.bookmarks[bm_key]
-        pass
 
     # =========================================================================
     def scan_bookmarks(self):
@@ -306,17 +312,15 @@ class Analyze(object):
             # see if all bookmarks for this list were deleted
             if not len(self.bookmarks[bm_key]):
                 self.empty_bookmarks.append(bm_key)
-        pass
 
     # =========================================================================
     def delete_empty_bookmarks(self):
         """ delete any empty bookmarks """
         for bm_key in self.empty_bookmarks:
-            logger.logger.info(f'Deleting {logger.clean(bm_key)}')
+            self.my_logger.info(f'Deleting {self.logger.clean(bm_key)}')
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]
-        pass
 
     # =========================================================================
     def build_keyword_dictionary(self):
@@ -325,7 +329,6 @@ class Analyze(object):
             for bm in bm_value:
                 self.add_keywords(bm)
                 self.add_href_parts(bm)
-        pass
 
     # =========================================================================
     def add_keywords(self, bookmark):
@@ -389,5 +392,4 @@ class Analyze(object):
                         for host in TheConfig.sections[section][key]:
                             if host in hostname and hostname not in self.host_sites[section]:
                                 self.host_sites[section].append(hostname)
-                                logger.logger.debug(f'{section}: {host}/{hostname}')
-        pass
+                                self.my_logger.debug(f'{section}: {host}/{hostname}')

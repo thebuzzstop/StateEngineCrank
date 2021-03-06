@@ -91,8 +91,6 @@ from urllib.parse import urlparse
 
 # Project imports
 import logger
-logger = logger.Logger(__name__)
-my_logger = logger.logger
 
 
 class List(object):
@@ -109,6 +107,7 @@ class List(object):
 
 class BookMark(object):
     """ A bookmark """
+
     def __init__(self, label, heading, href, add_date, icon=None):
         self.label = label
         self.heading = heading
@@ -217,7 +216,9 @@ class BookMarks(object):
 
     # =================================================================
     def __init__(self):
-        my_logger.debug('INIT')
+        self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
+        self.my_logger = self.logger.logger
+        self.my_logger.info('INIT')
 
         self.level = 0              #: Current level
         self.heading = None         #: Heading for current level
@@ -353,4 +354,4 @@ class BookMarks(object):
             :param text: debug text to display
         """
         level_plus = '+'*self.level
-        my_logger.debug(f'{self.level:02d}{level_plus} {logger.clean(text)}')
+        self.my_logger.debug(f'{self.level:02d}{level_plus} {self.logger.clean(text)}')

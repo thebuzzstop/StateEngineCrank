@@ -14,8 +14,6 @@ from config import TheConfig
 from structures import BookMark
 
 import logger
-logger = logger.Logger(__name__)
-my_logger = logger.logger
 
 
 class Reformat(object):
@@ -26,6 +24,10 @@ class Reformat(object):
 
             :param analysis: Analize object after processing
         """
+        self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
+        self.my_logger = self.logger.logger
+        self.my_logger.info('INIT')
+
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
         self.menubar_spec = TheConfig.menubar   #: user menubar configuration
