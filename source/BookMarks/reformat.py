@@ -85,13 +85,35 @@ class Reformat(object):
     def output_subsection(self, section, subsection):
         """ output bookmarks for section.subsection
 
+            Special case processing for *www* section.
+
             :param section: Active section name
             :param subsection: Active subsection name
         """
-        sorted_bm = sorted(self.menubar_data[section][subsection],
-                           key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
-        for bm in sorted_bm:
-            self.write_bm(bm)
+        # special case of 'www' section
+        if section == 'www':
+            if subsection == 'hosts':
+                # create a list of all hosts (domains)
+                sorted_list = sorted(self.analysis.domains)
+            elif subsection == 'types':
+                # create a list of all host sites
+                sorted_list = sorted(self.analysis.domain_types)
+            elif subsection == 'protocols':
+                # create a list of protocols
+                sorted_list = sorted(self.analysis.schemes)
+            else:
+                raise ValueError('Unknown subsection: %s', subsection)
+            # write out sorted list
+            for item in sorted_list:
+                text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
+                self.output.append('    ' * self.indent + text)
+        else:
+            # create sorted list of section/sub-section bookmarks
+            sorted_bm = sorted(self.menubar_data[section][subsection],
+                               key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
+            # write sorted bookmarks
+            for bm in sorted_bm:
+                self.write_bm(bm)
 
     @staticmethod
     def has_heading(section, subsection):
