@@ -487,10 +487,10 @@ class Controller(MVC, Logger):
         """
         event_ = self.prepare(event, **kwargs)
         event_type = event_['type'].lower()
-        if event_type is 'model' or event_type is '*':
+        if event_type == 'model' or event_type == '*':
             for v in self.views:
                 v.update(event_)
-        if event_type is 'view' or event_type is '*':
+        if event_type == 'view' or event_type == '*':
             for m in self.models:
                 m.update(event_)
 

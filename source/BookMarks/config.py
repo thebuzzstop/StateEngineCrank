@@ -45,7 +45,7 @@ class TheConfig:
 
     # configuration items initialized by config parser
     config = None           #: configuration items
-    headings = None         #: headings declared in config.ini
+    headings = None         #: headings declared in config_ford.ini
     noheadings = None       #: section.subsection combinations not to have a heading
     menubar = None          #: menubar constructed by config parser
     scanning_order = None   #: order in which scanning processing will occur
@@ -64,7 +64,7 @@ class CfgParser(configparser.ConfigParser):
         super().__init__()
 
         cur_dir = os.path.dirname(os.path.abspath(__file__))
-        cfg_file = f"{cur_dir}/config.ini"
+        cfg_file = f"{cur_dir}/config_mbs.ini"
 
         # see if the configuration file exists before attempting to parse
         if not os.path.isfile(cfg_file):
@@ -81,7 +81,10 @@ class CfgParser(configparser.ConfigParser):
         # enumerate menubar heading topics
         headings = self.get_list(config['menubar']['headings'])
         for heading in headings:
-            menubar[heading] = {topic: None for topic in config.options(heading)}
+            try:
+                menubar[heading] = {topic: None for topic in config.options(heading)}
+            except Exception as e:
+                print(e)
 
         # get files to be processed
         TheConfig.input_file = config['files']['input']
