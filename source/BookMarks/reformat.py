@@ -76,11 +76,13 @@ class Reformat(object):
             self.end_list()
         else:
             # process section without a heading
-            sorted_section = \
-                sorted(self.menubar_data[section],
-                       key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
-            for bm in sorted_section:
-                self.write_bm(bm, has_label=False)
+            # sorted_section = \
+            #     sorted(self.menubar_data[section],
+            #            key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
+            # for bm in sorted_section:
+            #     self.write_bm(bm, has_label=False)
+            for bm in self.menubar_data[section]:
+                self.write_bm(bm)
 
     def output_subsection(self, section, subsection):
         """ output bookmarks for section.subsection

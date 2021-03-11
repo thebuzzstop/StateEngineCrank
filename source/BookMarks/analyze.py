@@ -190,6 +190,8 @@ class Analyze(object):
                 path = bm.href_urlparts.path
                 if path is not None:
                     path = path.lower()
+                if len(path) > 1 and path.endswith('/'):
+                    path = path[:-1]
                 if not bm.scanned:
                     if hostname is not None and len(hostname):
                         if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
