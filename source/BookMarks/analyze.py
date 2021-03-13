@@ -65,6 +65,7 @@ class Analyze(object):
         self.duplicates = {}
         self.deleted_bookmarks = []
         self.empty_bookmarks = []
+        self.mobile_bookmarks = []
         self.processed_bookmarks = []
         self.file_bookmarks = {}
         self.keyword_database = Keywords()
@@ -109,6 +110,33 @@ class Analyze(object):
                 scan_list = self.menubar_[section][topic]
                 self.scan_bookmarks_section(config_list, scan_list)
             pass
+
+        # remove any mobile bookmarks if a desktop site exists
+        mobile_bookmark_values = len(self.mobile_bookmarks)
+        for mobile_index in range(mobile_bookmark_values, 0, -1):
+            bm_mobile = self.mobile_bookmarks[mobile_index - 1]
+            # break bookmark url into parts and remove any 'm'
+            bm_mobile_parts = bm_mobile.href_urlparts.hostname.split('.')
+            bm_desktop = '.'.join([bm_part for bm_part in bm_mobile_parts if bm_part != 'm'])
+            # scan all bookmarks and check for a 'desktop' equivalent of the 'mobile' site
+            for bm_desktop_key, bm_desktop_value in self.bookmarks.items():
+                if not bm_desktop_value:
+                    continue
+                if mobile_index > len(self.mobile_bookmarks):
+                    break
+                # scan all bookmarks for bookmark desktop site
+                bm_desktop_values = len(bm_desktop_value)
+                for desktop_index in range(bm_desktop_values, 0, -1):
+                    bm = bm_desktop_value[desktop_index - 1]
+                    if bm.hostname == bm_desktop:
+                        if bm.href_urlparts.hostname not in self.duplicates:
+                            self.duplicates[bm.href_urlparts.hostname] = [(bm.href_urlparts.path, bm)]
+                            del self.mobile_bookmarks[mobile_index - 1]
+                            break
+                        else:
+                            self.duplicates[bm.href_urlparts.hostname].append((bm.href_urlparts.path, bm))
+                            del self.mobile_bookmarks[mobile_index - 1]
+                            break
 
         # add any unscanned bookmarks to the miscellaneous section
         self.menubar_['misc']['misc'] = []
@@ -278,6 +306,10 @@ class Analyze(object):
                             self.domain_types[dom] = 1
                         else:
                             self.domain_types[dom] += 1
+                        # see if this is a site optimized for mobile
+                        if 'm' in parts:
+                            if bm not in self.mobile_bookmarks:
+                                self.mobile_bookmarks.append(bm)
 
                     # sub-domains (primary)
                     if len(parts) >= 2:
