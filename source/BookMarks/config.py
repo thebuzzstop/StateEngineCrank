@@ -1,6 +1,7 @@
 """ Configuration File Processing """
 
 # System imports
+import argparse
 import configparser
 import os
 
@@ -44,17 +45,60 @@ class TheConfig:
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
     # configuration items initialized by config parser
-    config = None           #: configuration items
-    headings = None         #: headings declared in config_ford.ini
-    noheadings = None       #: section.subsection combinations not to have a heading
-    menubar = None          #: menubar constructed by config parser
-    scanning_order = None   #: order in which scanning processing will occur
-    sections = None         #: menutab sections (topic groups)
-    head = None             #: menutab 'head' section
-    tail = None             #: menutab 'tail' section
-    capitalized = None      #: menubar capitalized label words
-    input_file = None       #: bookmarks input file to be processed
-    output_file = None      #: bookmarks output file (after processing)
+    # :todo: add type hints
+    config = None               #: configuration items
+    headings = None             #: headings declared in config_ford.ini
+    noheadings = None           #: section.subsection combinations not to have a heading
+    menubar = None              #: menubar constructed by config parser
+    scanning_order = None       #: order in which scanning processing will occur
+    sections = None             #: menutab sections (topic groups)
+    head = None                 #: menutab 'head' section
+    tail = None                 #: menutab 'tail' section
+    capitalized = None          #: menubar capitalized label words
+
+    config_file = None          #: configuration file to be read
+    input_file = None           #: bookmarks input file to be processed
+    output_file = None          #: bookmarks output file (after processing)
+    debug: bool = False         #: True/False - debug output enabled
+    verbosity: bool = False     #: True/False - verbose output enabled
+    verbosity_level: int = 0    #: verbosity level
+
+
+class ArgParser(argparse.ArgumentParser):
+    """Command line argument parsing"""
+
+    def __init__(self):
+        super().__init__()
+
+        # establish parser
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-d", "--debug", help="enable debug output", action="store_true")
+        parser.add_argument("-v", "--verbosity", help="increase output verbosity", action="count")
+        parser.add_argument("-c", "--config", type=str, help="configuration file")
+        parser.add_argument("-i", "--input", type=str, help="bookmarks input html file")
+        parser.add_argument("-o", "--output", type=str, help="bookmarks output html file")
+
+        # parse command line arguments
+        args = parser.parse_args()
+        if args.debug:
+            TheConfig.debug = True
+        if args.verbosity:
+            TheConfig.verbosity = True
+            TheConfig.verbosity_level = args.verbosity
+        if args.config:
+            TheConfig.config_file = self.substitute_tilde(args.config)
+        if args.input:
+            TheConfig.input_file = self.substitute_tilde(args.input)
+        if args.output:
+            TheConfig.output_file = self.substitute_tilde(args.output)
+
+    @staticmethod
+    def substitute_tilde(path: str):
+        """Substitute $HOME for leading tilde '~'"""
+        if path.startswith('~'):
+            home = os.environ.get('HOME')
+            return home + path[1:]
+        return path
 
 
 class CfgParser(configparser.ConfigParser):
@@ -63,12 +107,18 @@ class CfgParser(configparser.ConfigParser):
     def __init__(self):
         super().__init__()
 
-        cur_dir = os.path.dirname(os.path.abspath(__file__))
-        cfg_file = f"{cur_dir}/config_mbs.ini"
+        the_config = TheConfig
+
+        # see if user provided a configuration file on command line
+        if TheConfig.config_file is not None:
+            cfg_file = TheConfig.config_file
+        else:
+            cur_dir = os.path.dirname(os.path.abspath(__file__))
+            cfg_file = f"{cur_dir}/config_mbs.ini"
 
         # see if the configuration file exists before attempting to parse
         if not os.path.isfile(cfg_file):
-            raise Exception(f'Configuration file {cfg_file} not found.')
+            raise Exception('Configuration file not found: %s' % cfg_file)
 
         config = configparser.ConfigParser()
         config.read(cfg_file)
@@ -86,9 +136,15 @@ class CfgParser(configparser.ConfigParser):
             except Exception as e:
                 print(e)
 
-        # get files to be processed
-        TheConfig.input_file = config['files']['input']
-        TheConfig.output_file = config['files']['output']
+        # get files to be processed - check for command line overrides
+        if TheConfig.input_file is None:
+            TheConfig.input_file = config['files']['input']
+        if TheConfig.output_file is None:
+            TheConfig.output_file = config['files']['output']
+
+        # verify input file exists
+        if not os.path.isfile(TheConfig.input_file):
+            raise Exception('Input file not found: %s' % TheConfig.input_file)
 
         # enumerate menubar heading sub-topics
         for heading in headings:

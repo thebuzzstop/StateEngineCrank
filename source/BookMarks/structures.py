@@ -255,7 +255,7 @@ class BookMarks(object):
 
         # create a key for this heading
         key = self.bookmarks_key(self.level, self.heading.label)
-        for try_count in range(10):
+        for try_count in range(50):
             if key not in self.headings_dict:
                 # create a new list, add it to our dictionary and push it onto the stack
                 self.heading.list = List(self.level, self.heading.label)
