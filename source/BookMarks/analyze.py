@@ -59,6 +59,7 @@ class Analyze(object):
         self.schemes = []
         self.hostnames = []
         self.pathnames = {}
+        self.host_protocols = {}
         self.domains = {}
         self.subdomains = {}
         self.domain_types = {}
@@ -297,7 +298,7 @@ class Analyze(object):
                 # ============================================
                 if bm.href_urlparts.hostname and bm.href_urlparts.hostname not in self.hostnames:
                     self.hostnames.append(bm.href_urlparts.hostname)
-
+                    self.host_protocols[bm.href_urlparts.hostname] = bm.href_urlparts.scheme
                     # primary domains
                     parts = bm.href_urlparts.hostname.split('.')
                     if len(parts) >= 1:
