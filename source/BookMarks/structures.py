@@ -98,6 +98,7 @@ class List(object):
 
         :todo: Verify usage of this class
     """
+
     def __init__(self, level, label):
         """ Constructor """
         self.level = level
@@ -220,16 +221,16 @@ class BookMarks(object):
         self.my_logger = self.logger.logger
         self.my_logger.info('INIT')
 
-        self.level = 0              #: Current level
-        self.heading = None         #: Heading for current level
+        self.level = 0  #: Current level
+        self.heading = None  #: Heading for current level
 
         #: Heading labels, used in post-processing
         self.heading_labels = HeadingLabels()
 
-        self.headings_dict = {}     #: Headings: Dict
-        self.headings_stack = []    #: Headings: Stack (first-in, last-out)
-        self.headings_dups = []     #: Headings: Duplicates
-        self.bookmarks = {}         #: Dictionary of bookmarks
+        self.headings_dict = {}  #: Headings: Dict
+        self.headings_stack = []  #: Headings: Stack (first-in, last-out)
+        self.headings_dups = []  #: Headings: Duplicates
+        self.bookmarks = {}  #: Dictionary of bookmarks
 
         self.bookmark = None
 
@@ -254,16 +255,18 @@ class BookMarks(object):
 
         # create a key for this heading
         key = self.bookmarks_key(self.level, self.heading.label)
-        if key in self.headings_dict:
-            self.headings_dups.append(key)
-            key = f'{key} (DUP)'
-            if key in self.headings_dict:
-                raise Exception(f'DUPLICATE KEY: {key}')
-
-        # create a new list, add it to our dictionary and push it onto the stack
-        self.heading.list = List(self.level, self.heading.label)
-        self.headings_dict[key] = self.heading.list
-        self.headings_stack.append(self.heading)
+        for try_count in range(50):
+            if key not in self.headings_dict:
+                # create a new list, add it to our dictionary and push it onto the stack
+                self.heading.list = List(self.level, self.heading.label)
+                self.headings_dict[key] = self.heading.list
+                self.headings_stack.append(self.heading)
+                return
+            else:
+                # add the key to our DUPs list, append 'DUP' to the key and try again
+                self.headings_dups.append(key)
+                key = f'{key}' + '+' * try_count
+        raise Exception('DUPLICATE KEY: %s' % key)
 
     # =================================================================
     def end_list(self):
@@ -353,5 +356,5 @@ class BookMarks(object):
 
             :param text: debug text to display
         """
-        level_plus = '+'*self.level
+        level_plus = '+' * self.level
         self.my_logger.debug(f'{self.level:02d}{level_plus} {self.logger.clean(text)}')

@@ -70,6 +70,7 @@ from enum import Enum
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
+from config import ArgParser
 from config import CfgParser
 from config import TheConfig
 from structures import BookMarks
@@ -502,8 +503,9 @@ if __name__ == '__main__':
     my_logger.debug('INIT')
 
     # initialization and setup
+    arg_parser = ArgParser()
     config = CfgParser()
-    parser = MyHTMLParser()
+    html_parser = MyHTMLParser()
 
     # open bookmarks file and feed to the parser
     bookmarks = None
@@ -511,8 +513,8 @@ if __name__ == '__main__':
         my_logger.info(f'Processing input file: {TheConfig.input_file}')
         with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
-        parser.feed(bookmarks_html)
-        bookmarks = parser.parser.bookmarks
+        html_parser.feed(bookmarks_html)
+        bookmarks = html_parser.parser.bookmarks
     except Exception as e:
         my_logger.exception(f'Exception parsing file: {e}', exc_info=e)
 

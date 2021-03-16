@@ -104,13 +104,16 @@ class Analyze(object):
             self.scan_bookmarks_site(site, self.menubar_['tail'])
 
         # scan bookmarks in the order specified in the configuration file
-        for section in TheConfig.scanning_order:
-            for topic in self.menubar_[section].keys():
-                self.my_logger.debug(f'Scanning: {section}/{topic}')
-                config_list = TheConfig.sections[section][topic]
-                scan_list = self.menubar_[section][topic]
-                self.scan_bookmarks_section(config_list, scan_list)
-            pass
+        try:
+            for section in TheConfig.scanning_order:
+                for topic in self.menubar_[section].keys():
+                    self.my_logger.debug(f'Scanning: {section}/{topic}')
+                    config_list = TheConfig.sections[section][topic]
+                    scan_list = self.menubar_[section][topic]
+                    self.scan_bookmarks_section(config_list, scan_list)
+                pass
+        except Exception as e:
+            print(e)
 
         # remove any mobile bookmarks if a desktop site exists
         mobile_bookmark_values = len(self.mobile_bookmarks)
