@@ -4,6 +4,7 @@
 import argparse
 import configparser
 import os
+from typing import Dict
 
 # 3rd party imports
 
@@ -63,6 +64,25 @@ class TheConfig:
     verbosity: bool = False     #: True/False - verbose output enabled
     verbosity_level: int = 0    #: verbosity level
 
+    #: specific local hosts (private network)
+    local_hosts: Dict[str, str] = {}
+
+    @staticmethod
+    def get_hostname_from_ip(host_ip: str) -> str:
+        """Returns hostname from local-hosts
+
+            :param host_ip: Local host IP to lookup
+            :returns: Local host name (empty string if not found)
+        """
+        ip_list = list(TheConfig.local_hosts.values())
+        try:
+            ip_index = ip_list.index(host_ip)
+        except ValueError:
+            return ''
+        hostname_list = list(TheConfig.local_hosts.keys())
+        hostname = hostname_list[ip_index]
+        return hostname
+
 
 class ArgParser(argparse.ArgumentParser):
     """Command line argument parsing"""
@@ -118,7 +138,7 @@ class CfgParser(configparser.ConfigParser):
 
         # see if the configuration file exists before attempting to parse
         if not os.path.isfile(cfg_file):
-            raise Exception('Configuration file not found: %s' % cfg_file)
+            raise Exception(f'Configuration file not found: {cfg_file}')
 
         config = configparser.ConfigParser()
         config.read(cfg_file)
@@ -152,6 +172,12 @@ class CfgParser(configparser.ConfigParser):
                 menubar[heading][topic] = {
                     topic: None for topic in self.get_list(config[heading][topic])
                 }
+
+        # check for private hosts
+        if 'hosts' in config:
+            hosts = config['hosts']
+            for host in hosts:
+                TheConfig.local_hosts[host] = config['hosts'][host].strip(',')
 
         # get scanning order
         TheConfig.scanning_order = self.get_list(config['scanning']['order'])

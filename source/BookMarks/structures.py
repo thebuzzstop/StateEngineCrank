@@ -125,6 +125,7 @@ class BookMark(object):
         self.scheme = None
         self.hostname = None
         self.path = None
+        self.friendly_host_name = None
 
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark

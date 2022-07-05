@@ -59,7 +59,6 @@ class Analyze(object):
         self.schemes = []
         self.hostnames = []
         self.pathnames = {}
-        self.host_protocols = {}
         self.domains = {}
         self.subdomains = {}
         self.domain_types = {}
@@ -71,6 +70,7 @@ class Analyze(object):
         self.file_bookmarks = {}
         self.keyword_database = Keywords()
         self.href_database = Keywords()
+        self.localhost_bookmarks = {}
 
         #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
@@ -91,8 +91,11 @@ class Analyze(object):
         self.delete_empty_bookmarks()
         self.build_keyword_dictionary()
 
-        # build a list of bookmark hosts for all of the sections
+        # build a list of bookmark hosts for all sections
         self.scan_bookmark_hosts()
+
+        # build a list of bookmarks that reference a localhost
+        self.scan_bookmarks_localhosts()
 
         # build a list of bookmarks that reference a file
         self.scan_bookmarks_files()
@@ -159,6 +162,31 @@ class Analyze(object):
     def menubar(self):
         """ returns menubar constructed during analysis """
         return self.menubar_
+
+    # =========================================================================
+    def scan_bookmarks_localhosts(self):
+        """scan bookmarks for any with a local host identified in the config"""
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all bookmarks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm = bm_value[i-1]
+                if bm.hostname in TheConfig.local_hosts.values():
+                    host_friendly_name = TheConfig.get_hostname_from_ip(bm.hostname)
+                    bm.friendly_host_name = host_friendly_name
+                    if host_friendly_name not in self.localhost_bookmarks.keys():
+                        self.localhost_bookmarks[host_friendly_name] = {}
+                    bm_key = self.bookmark_key(bm)
+                    if bm_key not in self.localhost_bookmarks[host_friendly_name]:
+                        self.localhost_bookmarks[host_friendly_name][bm_key] = [bm]
+                    else:
+                        bm_path = self.href_path(bm)
+                        for bm_ in self.localhost_bookmarks[host_friendly_name][bm_key]:
+                            if self.href_path(bm_) != bm_path:
+                                self.localhost_bookmarks[host_friendly_name][bm_key].append(bm)
+                    bm.scanned = True
 
     # =========================================================================
     def scan_bookmarks_files(self):
@@ -301,7 +329,7 @@ class Analyze(object):
                 # ============================================
                 if bm.href_urlparts.hostname and bm.href_urlparts.hostname not in self.hostnames:
                     self.hostnames.append(bm.href_urlparts.hostname)
-                    self.host_protocols[bm.href_urlparts.hostname] = bm.href_urlparts.scheme
+
                     # primary domains
                     parts = bm.href_urlparts.hostname.split('.')
                     if len(parts) >= 1:

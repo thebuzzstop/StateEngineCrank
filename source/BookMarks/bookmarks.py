@@ -164,7 +164,7 @@ class UserCode(StateMachine):
         """
         self.html_attrs = attrs
         if self.html_attrs:
-            my_logger.debug(f'attrs: {self.html_attrs}')
+            my_logger.debug('attrs: %s', self.html_attrs)
             # self.event(Events.EvAttr)
 
     def set_html_data(self, data):
@@ -174,7 +174,7 @@ class UserCode(StateMachine):
         """
         self.html_data = data.strip()
         if self.html_data:
-            my_logger.debug(f'data: {self.html_data}')
+            my_logger.debug('data: %s', self.html_data)
             self.event(Events.EvData)
 
     # ===========================================================================
@@ -188,7 +188,7 @@ class UserCode(StateMachine):
         if self.meta_attrs:
             raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
         self.meta_attrs = self.html_attrs
-        my_logger.debug(f'META: {self.meta_attrs}')
+        my_logger.debug('META: %s', self.meta_attrs)
         self.event(Events.EvTick)
 
     # ===========================================================================
@@ -215,7 +215,7 @@ class UserCode(StateMachine):
         if self.header:
             raise Exception(f'H1_DATA already defined: {self.header}/{self.html_data}')
         self.header = self.html_data
-        my_logger.debug(f'HEADER: {self.header}')
+        my_logger.debug('HEADER: %s', self.header)
         self.bookmarks.add_heading(self.header)
 
     # =========================================================
@@ -229,7 +229,7 @@ class UserCode(StateMachine):
         if self.title:
             raise Exception(f'TITLE already defined: {self.title}/{self.html_data}')
         self.title = self.html_data
-        my_logger.info(f'TITLE: {self.title}')
+        my_logger.info('TITLE: %s', self.title)
 
     # =========================================================
     # noinspection PyPep8Naming
@@ -241,7 +241,7 @@ class UserCode(StateMachine):
 
         The HTML *H3* tag handler calls this function.
         """
-        my_logger.info(f'HEADING: {self.html_data}')
+        my_logger.info('HEADING: %s',  self.html_data)
         self.bookmarks.add_heading(self.html_data)
 
     # ===========================================================================
@@ -470,7 +470,7 @@ class MyHTMLParser(HTMLParser, ABC):
             :param tag: html tag being processed
             :param attrs: html attributes associated with tag
         """
-        my_logger.debug(f'start tag: {tag}')
+        my_logger.debug('start tag: %s', tag)
         if tag in self.open_tag_events:
             self.parser.event(self.open_tag_events[tag])
             self.parser.set_attrs(attrs)
@@ -482,7 +482,7 @@ class MyHTMLParser(HTMLParser, ABC):
 
     def handle_endtag(self, tag):
         """ ABC: Handle end tags """
-        my_logger.debug(f'end tag: {tag}')
+        my_logger.debug('end tag: %s', tag)
         if tag in self.close_tag_events:
             self.parser.event(self.close_tag_events[tag])
             pass
@@ -510,26 +510,26 @@ if __name__ == '__main__':
     # open bookmarks file and feed to the parser
     bookmarks = None
     try:
-        my_logger.info(f'Processing input file: {TheConfig.input_file}')
+        my_logger.info('Processing input file: %s', TheConfig.input_file)
         with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         html_parser.feed(bookmarks_html)
         bookmarks = html_parser.parser.bookmarks
     except Exception as e:
-        my_logger.exception(f'Exception parsing file: {e}', exc_info=e)
+        my_logger.exception('UNHANDLED EXCEPTION: Parse', exc_info=e)
 
     # analyze bookmarks just parsed
     analysis = None
     try:
         analysis = Analyze(bookmarks.bookmarks)
     except Exception as e:
-        my_logger.exception(f'Exception analyzing file: {e}', exc_info=e)
+        my_logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
 
     # create bookmark output structure
     output = None
     try:
         output = Reformat(analysis).output
-        my_logger.info(f'Creating output file: {TheConfig.output_file}')
+        my_logger.info('Creating output file: %s', TheConfig.output_file)
         with open(TheConfig.output_file, 'w') as file:
             for s in output:
                 if isinstance(s, list):
@@ -538,4 +538,4 @@ if __name__ == '__main__':
                 else:
                     file.write(s+'\n')
     except Exception as e:
-        my_logger.exception(f'Exception reformatting file: {e}', exc_info=e)
+        my_logger.exception('UNHANDLED EXCEPTION: Reformat', exc_info=e)

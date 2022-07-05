@@ -91,16 +91,18 @@ class Reformat(object):
             if subsection == 'hosts':
                 # create a list of all hosts (domains)
                 sorted_list = sorted(self.analysis.domains)
+            elif subsection == 'types':
+                # create a list of all host sites
+                sorted_list = sorted(self.analysis.domain_types)
+            elif subsection == 'protocols':
+                # create a list of protocols
+                sorted_list = sorted(self.analysis.schemes)
             else:
                 raise ValueError('Unknown subsection: %s', subsection)
             # write out sorted list
             for item in sorted_list:
-                if item not in self.analysis.host_protocols:
-                    self.my_logger.debug(f'host_protocol not found: {item}')
-                    continue
-                href = f'{self.analysis.host_protocols[item]}://{item}'
-                bm = BookMark(label=str(item), heading=None, href=href, add_date="0", icon=None)
-                self.write_bm(bm)
+                text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
+                self.output.append('    ' * self.indent + text)
         else:
             # create sorted list of section/sub-section bookmarks
             sorted_bm = sorted(self.menubar_data[section][subsection],
