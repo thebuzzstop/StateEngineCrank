@@ -102,7 +102,7 @@ class Analyze(object):
 
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
-            self.scan_bookmarks_site(site, self.menubar_['head'])
+            self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
             self.scan_bookmarks_site(site, self.menubar_['tail'])
 
@@ -110,7 +110,7 @@ class Analyze(object):
         try:
             for section in TheConfig.scanning_order:
                 for topic in self.menubar_[section].keys():
-                    self.my_logger.debug(f'Scanning: {section}/{topic}')
+                    self.my_logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
                     scan_list = self.menubar_[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
@@ -186,7 +186,8 @@ class Analyze(object):
                         for bm_ in self.localhost_bookmarks[host_friendly_name][bm_key]:
                             if self.href_path(bm_) != bm_path:
                                 self.localhost_bookmarks[host_friendly_name][bm_key].append(bm)
-                    bm.scanned = True
+                    # bookmark has not been scanned, just noted as belonging to a local host
+                    # bm.scanned = True
 
     # =========================================================================
     def scan_bookmarks_files(self):
@@ -228,12 +229,16 @@ class Analyze(object):
         return f'{bookmark.heading.label}'
 
     # =========================================================================
-    def scan_bookmarks_site(self, site: Tuple[str, str], scan_list):
-        """ scan all bookmarks for section match
+    def scan_bookmarks_site(self, site: Tuple[str, str, str], scan_list, head: bool = False):
+        """Scan all bookmarks for site/section match
 
-            :param site: BookMark site to scan for [hostname, path]
+            Used when parsing the "head" and "tail" sections.
+
+            :param site: Tuple[BookMark site to scan for [hostname, path, label]
             :param scan_list: Section/topic target scan list
+            :param head: Boolean indicating we are parsing the BookMark's "head"
         """
+        # get site parts
         site_host = site[0].lower()
         site_path = site[1].lower()
         site_label = site[2]
@@ -241,7 +246,7 @@ class Analyze(object):
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
-            # scan all book marks for current value
+            # scan all bookmarks for current value
             for bm in bm_value:
                 # check for hostname match
                 hostname = bm.href_urlparts.hostname
@@ -250,6 +255,10 @@ class Analyze(object):
                 path = bm.href_urlparts.path
                 if path is not None:
                     path = path.lower()
+                # check if a match for a localhost
+                if TheConfig.is_local_host(bm=bm):
+                    # substitute the local hostname
+                    site_host = hostname
                 if len(path) > 1 and path.endswith('/'):
                     path = path[:-1]
                 if not bm.scanned:
@@ -257,11 +266,12 @@ class Analyze(object):
                         if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
                             bm.label = site_label
                             scan_list.append(bm)
-                            bm.scanned = True
+                            # always mark scanned when not parsing the "head" section
+                            bm.scanned = not head
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
-        """ scan all bookmarks for section match
+        """Scan all bookmarks for section match
 
             :param config_list: Section/topic configuration list to scan for
             :param scan_list: Section/topic target scan list
@@ -269,7 +279,7 @@ class Analyze(object):
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
-            # scan all book marks for current value
+            # scan all bookmarks for current value
             for bm in bm_value:
                 if bm.scanned:
                     continue
