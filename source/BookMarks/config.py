@@ -9,6 +9,7 @@ from typing import Dict
 # 3rd party imports
 
 # Project imports
+from structures import BookMark
 
 
 class TheConfig:
@@ -82,6 +83,14 @@ class TheConfig:
         hostname_list = list(TheConfig.local_hosts.keys())
         hostname = hostname_list[ip_index]
         return hostname
+
+    @staticmethod
+    def is_local_host(bm: BookMark) -> bool:
+        """Return boolean True if bookmark belongs to a local host
+
+            :param bm: Bookmark to process
+        """
+        return bm.hostname in TheConfig.local_hosts.values()
 
 
 class ArgParser(argparse.ArgumentParser):
