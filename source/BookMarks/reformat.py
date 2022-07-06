@@ -22,7 +22,7 @@ class Reformat(object):
     def __init__(self, analysis: Analyze):
         """ Analyze constructor
 
-            :param analysis: Analize object after processing
+            :param analysis: Analyze object after processing
         """
         self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
         self.my_logger = self.logger.logger
