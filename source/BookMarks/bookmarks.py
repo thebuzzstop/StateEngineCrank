@@ -521,7 +521,7 @@ if __name__ == '__main__':
     # analyze bookmarks just parsed
     analysis = None
     try:
-        analysis = Analyze(bookmarks.bookmarks)
+        analysis = Analyze(bookmarks=bookmarks)
     except Exception as e:
         my_logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
 
