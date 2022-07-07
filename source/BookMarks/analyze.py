@@ -10,10 +10,11 @@ Duplicate bookmarks are detected and deleted.
 """
 
 # System imports
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 # Project imports
 from config import TheConfig
+from structures import BookMark, BookMarks
 import logger
 
 
@@ -48,29 +49,34 @@ class Analyze(object):
     #: characters to strip from strings when parsing
     strip_chars = '~!@#$%^&*()_+-=`:;<>,.?/[]{}|"\"\\'
 
-    def __init__(self, bookmarks):
+    def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
 
         self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
         self.my_logger = self.logger.logger
         self.my_logger.info('INIT')
 
-        self.bookmarks = bookmarks
-        self.schemes = []
-        self.hostnames = []
-        self.pathnames = {}
-        self.domains = {}
-        self.subdomains = {}
-        self.domain_types = {}
-        self.duplicates = {}
-        self.deleted_bookmarks = []
-        self.empty_bookmarks = []
-        self.mobile_bookmarks = []
-        self.processed_bookmarks = []
-        self.file_bookmarks = {}
-        self.keyword_database = Keywords()
-        self.href_database = Keywords()
-        self.localhost_bookmarks = {}
+        self._bookmarks: BookMarks = bookmarks
+        self.bookmarks: Dict[str, List] = bookmarks.bookmarks
+        self.headings: Dict[str] = bookmarks.headings_dict
+        self.schemes: List[str] = []
+        self.hostnames: List[str] = []
+        self.pathnames: Dict[str, List[str]] = {}
+        self.domains: Dict[str, int] = {}
+        self.subdomains: Dict[str, int] = {}
+        self.domain_types: Dict[str, int] = {}
+        self.duplicates: Dict[str, List[Tuple]] = {}
+        self.deleted_bookmarks: List[str] = []
+        self.empty_bookmarks: List[str] = []
+        self.mobile_bookmarks: List[BookMark] = []
+        self.processed_bookmarks: List = []
+        self.file_bookmarks: Dict = {}
+        self.keyword_database: Keywords = Keywords()
+        self.href_database: Keywords = Keywords()
+        self.localhost_bookmarks: Dict[str, Dict[str, List[BookMark]]] = {}
+        self.pinboard: Dict = {}
+        self.speed_dial_list: List[BookMark] = []
+        self.speed_dials: Dict[str, Dict[str, List[BookMark]]] = {}
 
         #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
@@ -83,9 +89,9 @@ class Analyze(object):
             topic: [] for topic in TheConfig.sections[section].keys()
         } for section in TheConfig.sections}
         # bookmarks that appear at the head of the bookmark menubar
-        self.menubar_['head'] = []
+        self.menubar_['head']: List[BookMark] = []
         # bookmarks that appear at the tail (end) of the bookmark menubar
-        self.menubar_['tail'] = []
+        self.menubar_['tail']: List[BookMark] = []
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
@@ -100,11 +106,25 @@ class Analyze(object):
         # build a list of bookmarks that reference a file
         self.scan_bookmarks_files()
 
+        # build a list of speed-dials
+        self.scan_bookmarks_speed_dials()
+
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
             self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
             self.scan_bookmarks_site(site, self.menubar_['tail'])
+
+        # scan speed-dials in the order specified in the configuration file
+        try:
+            for section in TheConfig.speed_dial_order:
+                for topic in self.menubar_[section].keys():
+                    self.my_logger.debug('Scanning: %s/%s', section, topic)
+                    config_list = TheConfig.sections[section][topic]
+                    scan_list = self.menubar_[section][topic]
+                    self.scan_bookmarks_section(config_list, scan_list)
+        except Exception as e:
+            print(e)
 
         # scan bookmarks in the order specified in the configuration file
         try:
@@ -162,6 +182,22 @@ class Analyze(object):
     def menubar(self):
         """ returns menubar constructed during analysis """
         return self.menubar_
+
+    # =========================================================================
+    def scan_bookmarks_speed_dials(self):
+        """scan bookmarks for those designated as speed-dials"""
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all bookmarks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm: BookMark = bm_value[i-1]
+                if TheConfig.OPERA_SPEED_DIAL not in bm.heading.heading_stack_text:
+                    continue
+                self.speed_dial_list.append(bm)
+                pass
+        pass
 
     # =========================================================================
     def scan_bookmarks_localhosts(self):
