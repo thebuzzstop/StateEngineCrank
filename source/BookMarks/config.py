@@ -46,6 +46,9 @@ class TheConfig:
     # global configuration variables initialized to default values
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
+    #: Text used to search for Opera SpeedDial bookmarks
+    OPERA_SPEED_DIAL: str = 'Speed Dials'
+
     # configuration items initialized by config parser
     # :todo: add type hints
     config = None               #: configuration items
@@ -53,6 +56,7 @@ class TheConfig:
     noheadings = None           #: section.subsection combinations not to have a heading
     menubar = None              #: menubar constructed by config parser
     scanning_order = None       #: order in which scanning processing will occur
+    speed_dial_order = None     #: order to scan speed-dials
     sections = None             #: menutab sections (topic groups)
     head = None                 #: menutab 'head' section
     tail = None                 #: menutab 'tail' section
@@ -190,6 +194,7 @@ class CfgParser(configparser.ConfigParser):
 
         # get scanning order
         TheConfig.scanning_order = self.get_list(config['scanning']['order'])
+        TheConfig.speed_dial_order = self.get_list(config['scanning']['speed-dial-order'])
         TheConfig.config = config
         TheConfig.headings = headings
         TheConfig.noheadings = self.get_list(config['menubar']['noheadings'])
