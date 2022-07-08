@@ -117,7 +117,7 @@ class Analyze(object):
 
         # scan speed-dials in the order specified in the configuration file
         try:
-            for section in TheConfig.speed_dial_order:
+            for section in TheConfig.speed_dial_scan_order:
                 if section not in self.menubar_.keys():
                     self.my_logger.info('Skipping empty section: %s', section)
                     continue

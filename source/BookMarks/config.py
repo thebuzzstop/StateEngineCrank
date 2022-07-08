@@ -223,6 +223,8 @@ class CfgParser(configparser.ConfigParser):
             TheConfig.sections[menubar] = {}
             for section in config.options(menubar):
                 TheConfig.sections[menubar][section] = self.get_list(config[menubar][section])
+        # determine speed-dial scan order
+        TheConfig.speed_dial_scan_order = self.get_list(config['scanning']['speed-dial-order'])
         # determine speed-dial output order
         TheConfig.speed_dial_output_order = self.get_list(config['speed-dial-output']['order'])
         pass
