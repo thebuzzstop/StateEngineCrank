@@ -118,17 +118,23 @@ class Analyze(object):
         # scan speed-dials in the order specified in the configuration file
         try:
             for section in TheConfig.speed_dial_order:
+                if section not in self.menubar_.keys():
+                    self.my_logger.info('Skipping empty section: %s', section)
+                    continue
                 for topic in self.menubar_[section].keys():
                     self.my_logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
                     scan_list = self.menubar_[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
         except Exception as e:
-            print(e)
+            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
 
         # scan bookmarks in the order specified in the configuration file
         try:
             for section in TheConfig.scanning_order:
+                if section not in self.menubar_.keys():
+                    self.my_logger.info('Skipping empty section: %s', section)
+                    continue
                 for topic in self.menubar_[section].keys():
                     self.my_logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
@@ -136,7 +142,7 @@ class Analyze(object):
                     self.scan_bookmarks_section(config_list, scan_list)
                 pass
         except Exception as e:
-            print(e)
+            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
 
         # remove any mobile bookmarks if a desktop site exists
         mobile_bookmark_values = len(self.mobile_bookmarks)
@@ -244,7 +250,7 @@ class Analyze(object):
                         for bm_ in self.file_bookmarks[bm_key]:
                             if self.href_path(bm_) != bm_path:
                                 self.file_bookmarks[bm_key].append(bm)
-                    bm.scanned = True
+                    bm.scanned = not TheConfig.allow_multiple(bm)
 
     @staticmethod
     def href_path(bookmark):
@@ -303,7 +309,7 @@ class Analyze(object):
                             bm.label = site_label
                             scan_list.append(bm)
                             # always mark scanned when not parsing the "head" section
-                            bm.scanned = not head
+                            bm.scanned = not head and not TheConfig.allow_multiple(bm)
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
@@ -325,7 +331,7 @@ class Analyze(object):
                     for item in config_list:
                         if item in hostname and hostname not in scan_list:
                             scan_list.append(bm)
-                            bm.scanned = True
+                            bm.scanned = not TheConfig.allow_multiple(bm)
                             break
                 # check for label match
                 label = bm.label.lower()
@@ -333,7 +339,7 @@ class Analyze(object):
                     for item in config_list:
                         if item in label and label not in scan_list:
                             scan_list.append(bm)
-                            bm.scanned = True
+                            bm.scanned = not TheConfig.allow_multiple(bm)
                             break
 
     # =========================================================================
