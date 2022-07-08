@@ -4,7 +4,7 @@
 import argparse
 import configparser
 import os
-from typing import Dict
+from typing import Dict, List, Tuple
 
 # 3rd party imports
 
@@ -51,26 +51,29 @@ class TheConfig:
 
     # configuration items initialized by config parser
     # :todo: add type hints
-    config = None               #: configuration items
-    headings = None             #: headings declared in config_ford.ini
-    noheadings = None           #: section.subsection combinations not to have a heading
-    menubar = None              #: menubar constructed by config parser
-    scanning_order = None       #: order in which scanning processing will occur
-    speed_dial_order = None     #: order to scan speed-dials
-    sections = None             #: menutab sections (topic groups)
-    head = None                 #: menutab 'head' section
-    tail = None                 #: menutab 'tail' section
-    capitalized = None          #: menubar capitalized label words
-
-    config_file = None          #: configuration file to be read
-    input_file = None           #: bookmarks input file to be processed
-    output_file = None          #: bookmarks output file (after processing)
-    debug: bool = False         #: True/False - debug output enabled
-    verbosity: bool = False     #: True/False - verbose output enabled
-    verbosity_level: int = 0    #: verbosity level
+    config = None                   #: configuration items
+    headings = None                 #: headings declared in config_ford.ini
+    noheadings = None               #: section.subsection combinations not to have a heading
+    menubar = None                  #: menubar constructed by config parser
+    scanning_order = None           #: order in which scanning processing will occur
+    speed_dial_scan_order = None    #: order to scan speed-dials
+    speed_dial_output_order = None  #: order to output speed-dials
+    sections = None                 #: menutab sections (topic groups)
+    head = None                     #: menutab 'head' section
+    tail = None                     #: menutab 'tail' section
+    capitalized = None              #: menubar capitalized label words
+    config_file = None              #: configuration file to be read
+    input_file = None               #: bookmarks input file to be processed
+    output_file = None              #: bookmarks output file (after processing)
+    debug: bool = False             #: True/False - debug output enabled
+    verbosity: bool = False         #: True/False - verbose output enabled
+    verbosity_level: int = 0        #: verbosity level
 
     #: specific local hosts (private network)
     local_hosts: Dict[str, str] = {}
+
+    #: host bookmarks for which multiple entries are allowed
+    allow_multiple_bookmarks: List[Tuple[str, str]] = []
 
     @staticmethod
     def get_hostname_from_ip(host_ip: str) -> str:
@@ -87,6 +90,15 @@ class TheConfig:
         hostname_list = list(TheConfig.local_hosts.keys())
         hostname = hostname_list[ip_index]
         return hostname
+
+    @staticmethod
+    def allow_multiple(bm: BookMark) -> bool:
+        """Return boolean True/False if multiple entries allowed
+
+            :param bm: Bookmark being processed
+            :returns: True/False if multiple entries allowed
+        """
+        return False
 
     @staticmethod
     def is_local_host(bm: BookMark) -> bool:
@@ -192,6 +204,12 @@ class CfgParser(configparser.ConfigParser):
             for host in hosts:
                 TheConfig.local_hosts[host] = config['hosts'][host].strip(',')
 
+        # check for allowing multiple host/bookmarks
+        if 'allow-multiple' in config:
+            for host in config['allow-multiple']:
+                hostname, bookmark = config['allow-multiple'][host].replace(' ', '').split(',')
+                TheConfig.allow_multiple_bookmarks.append((hostname, bookmark))
+
         # get scanning order
         TheConfig.scanning_order = self.get_list(config['scanning']['order'])
         TheConfig.speed_dial_order = self.get_list(config['scanning']['speed-dial-order'])
@@ -205,6 +223,8 @@ class CfgParser(configparser.ConfigParser):
             TheConfig.sections[menubar] = {}
             for section in config.options(menubar):
                 TheConfig.sections[menubar][section] = self.get_list(config[menubar][section])
+        # determine speed-dial output order
+        TheConfig.speed_dial_output_order = self.get_list(config['speed-dial-output']['order'])
         pass
 
     @staticmethod
