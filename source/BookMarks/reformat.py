@@ -60,7 +60,12 @@ class Reformat(object):
             self.begin_list()
             deferred = []
             # process each subsection in the current menubar section
-            for subsection in sorted(self.menubar_spec[section]):
+            if section == 'speed-dials':
+                subsection_list = TheConfig.speed_dial_output_order
+            else:
+                subsection_list = sorted(self.menubar_spec[section])
+
+            for subsection in subsection_list:
                 # add to deferred list if subsection does not have a heading
                 if not self.has_heading(section, subsection):
                     deferred.append(subsection)
