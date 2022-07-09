@@ -47,7 +47,7 @@ class TheConfig:
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
     #: Text used to search for Opera SpeedDial bookmarks
-    OPERA_SPEED_DIAL: str = 'Speed Dials'
+    OPERA_SPEED_DIAL: str = 'speeddial'
 
     # configuration items initialized by config parser
     # :todo: add type hints

@@ -6,7 +6,7 @@ The BookMarks reformat module reorders and reorganizes the bookmarks.
 
 # System imports
 import datetime
-from typing import Union
+from typing import List, Union
 
 # Project imports
 from analyze import Analyze
@@ -32,8 +32,8 @@ class Reformat(object):
         self.headings = TheConfig.headings      #: users headings configuration
         self.menubar_spec = TheConfig.menubar   #: user menubar configuration
         self.menubar_data = analysis.menubar()  #: menubar scanned data
-        self.output = [TheConfig.HEADER_HTML]   #: start with bookmarks file header
         self.indent = 0                         #: level to indent
+        self._output = [TheConfig.HEADER_HTML]  #: start with bookmarks file header
 
         #: date stamp for all html entities we create
         self.datestamp = int(datetime.datetime.now().timestamp())
@@ -48,6 +48,11 @@ class Reformat(object):
         self.write_section('tail')
         self.end_list()
         pass
+
+    @property
+    def output(self) -> List:
+        """HTML output"""
+        return self._output
 
     def write_section(self, section):
         """ write entire section to output string
@@ -107,7 +112,7 @@ class Reformat(object):
             # write out sorted list
             for item in sorted_list:
                 text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
-                self.output.append('    ' * self.indent + text)
+                self._output.append('    ' * self.indent + text)
         else:
             # create sorted list of section/sub-section bookmarks
             sorted_bm = sorted(self.menubar_data[section][subsection],
@@ -196,7 +201,7 @@ class Reformat(object):
             for h in html:
                 self.write(h)
             return
-        self.output.append('    '*self.indent + html.strip())
+        self._output.append('    '*self.indent + html.strip())
         pass
 
     @staticmethod

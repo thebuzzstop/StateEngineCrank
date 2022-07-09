@@ -75,15 +75,16 @@ class Analyze(object):
         self.href_database: Keywords = Keywords()
         self.localhost_bookmarks: Dict[str, Dict[str, List[BookMark]]] = {}
         self.pinboard: Dict = {}
-        self.speed_dial_list: List[BookMark] = []
+        #: bookmarks that are speed dials in current input bookmarks file
+        self.speed_dial_list_current: List[BookMark] = []
+        #: bookmarks that are speed dials by current configuration
+        self.speed_dial_list_config: List[BookMark] = []
+        #: final dictionary of speed dials after all speed dial processing
         self.speed_dials: Dict[str, Dict[str, List[BookMark]]] = {}
-
         #: a local copy of 'TheConfig' for ease of debugging
         self.the_config = TheConfig
-
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
-
         #: bookmark menubar, populated as we parse the various sections
         self.menubar_ = {section: {
             topic: [] for topic in TheConfig.sections[section].keys()
@@ -106,8 +107,11 @@ class Analyze(object):
         # build a list of bookmarks that reference a file
         self.scan_bookmarks_files()
 
-        # build a list of speed-dials
-        self.scan_bookmarks_speed_dials()
+        # build a list of speed-dials from current speed-dials
+        self.scan_bookmarks_speed_dials_current()
+
+        # build a list of speed-dials from all bookmarks
+        self.scan_bookmarks_speed_dials_config()
 
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
@@ -190,8 +194,8 @@ class Analyze(object):
         return self.menubar_
 
     # =========================================================================
-    def scan_bookmarks_speed_dials(self):
-        """scan bookmarks for those designated as speed-dials"""
+    def scan_bookmarks_speed_dials_config(self):
+        """scan bookmarks for config designated speed-dials"""
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
@@ -201,7 +205,23 @@ class Analyze(object):
                 bm: BookMark = bm_value[i-1]
                 if TheConfig.OPERA_SPEED_DIAL not in bm.heading.heading_stack_text:
                     continue
-                self.speed_dial_list.append(bm)
+                self.speed_dial_list_current.append(bm)
+                pass
+        pass
+
+    # =========================================================================
+    def scan_bookmarks_speed_dials_current(self):
+        """scan bookmarks for current speed-dials"""
+        for bm_key, bm_value in self.bookmarks.items():
+            if not bm_value:
+                continue
+            # scan all bookmarks for current value
+            bm_values = len(bm_value)
+            for i in range(bm_values, 0, -1):
+                bm: BookMark = bm_value[i-1]
+                if TheConfig.OPERA_SPEED_DIAL not in bm.heading.label.lower():
+                    continue
+                self.speed_dial_list_current.append(bm)
                 pass
         pass
 
