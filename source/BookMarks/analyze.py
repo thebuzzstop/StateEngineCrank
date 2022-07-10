@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 
 # Project imports
 from config import TheConfig
-from structures import BookMark, BookMarks
+from structures import BookMark, BookMarks, List as StructuresList
 import logger
 
 
@@ -110,7 +110,7 @@ class Analyze(object):
         # build a list of speed-dials from current speed-dials
         self.scan_bookmarks_speed_dials_current()
 
-        # build a list of speed-dials from all bookmarks
+        # build a list of speed-dials from all bookmarks based on config file
         self.scan_bookmarks_speed_dials_config()
 
         # scan bookmarks - head/tail items
@@ -118,20 +118,6 @@ class Analyze(object):
             self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
             self.scan_bookmarks_site(site, self.menubar_['tail'])
-
-        # scan speed-dials in the order specified in the configuration file
-        try:
-            for section in TheConfig.speed_dial_scan_order:
-                if section not in self.menubar_.keys():
-                    self.my_logger.info('Skipping empty section: %s', section)
-                    continue
-                for topic in self.menubar_[section].keys():
-                    self.my_logger.debug('Scanning: %s/%s', section, topic)
-                    config_list = TheConfig.sections[section][topic]
-                    scan_list = self.menubar_[section][topic]
-                    self.scan_bookmarks_section(config_list, scan_list)
-        except Exception as e:
-            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
 
         # scan bookmarks in the order specified in the configuration file
         try:
@@ -196,17 +182,20 @@ class Analyze(object):
     # =========================================================================
     def scan_bookmarks_speed_dials_config(self):
         """scan bookmarks for config designated speed-dials"""
-        for bm_key, bm_value in self.bookmarks.items():
-            if not bm_value:
-                continue
-            # scan all bookmarks for current value
-            bm_values = len(bm_value)
-            for i in range(bm_values, 0, -1):
-                bm: BookMark = bm_value[i-1]
-                if TheConfig.OPERA_SPEED_DIAL not in bm.heading.heading_stack_text:
+
+        # scan speed-dials in the order specified in the configuration file
+        try:
+            for section in TheConfig.speed_dial_scan_order:
+                if section not in self.menubar_.keys():
+                    self.my_logger.info('Skipping empty section: %s', section)
                     continue
-                self.speed_dial_list_current.append(bm)
-                pass
+                for topic in self.menubar_[section].keys():
+                    self.my_logger.debug('Scanning: %s/%s', section, topic)
+                    config_list = TheConfig.sections[section][topic]
+                    scan_list = self.menubar_[section][topic]
+                    self.scan_bookmarks_section(config_list, scan_list)
+        except Exception as e:
+            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
         pass
 
     # =========================================================================
@@ -219,9 +208,10 @@ class Analyze(object):
             bm_values = len(bm_value)
             for i in range(bm_values, 0, -1):
                 bm: BookMark = bm_value[i-1]
-                if TheConfig.OPERA_SPEED_DIAL not in bm.heading.label.lower():
-                    continue
-                self.speed_dial_list_current.append(bm)
+                if TheConfig.OPERA_SPEED_DIAL in bm.heading.label.lower():
+                    if not isinstance(bm.heading.list, StructuresList):
+                        continue
+                    self.speed_dial_list_current.extend(bm.heading.list.list)
                 pass
         pass
 
@@ -235,8 +225,8 @@ class Analyze(object):
             bm_values = len(bm_value)
             for i in range(bm_values, 0, -1):
                 bm = bm_value[i-1]
-                if bm.hostname in TheConfig.local_hosts.values():
-                    host_friendly_name = TheConfig.get_hostname_from_ip(bm.hostname)
+                if bm.hostname in TheConfig.local_hosts_by_ip.keys():
+                    host_friendly_name = TheConfig.hostname_from_ip(bm.hostname)
                     bm.friendly_host_name = host_friendly_name
                     if host_friendly_name not in self.localhost_bookmarks.keys():
                         self.localhost_bookmarks[host_friendly_name] = {}
@@ -349,7 +339,14 @@ class Analyze(object):
                 hostname = bm.href_urlparts.hostname.lower()
                 if hostname is not None and len(hostname):
                     for item in config_list:
-                        if item in hostname and hostname not in scan_list:
+                        item_url_parts = item.split('/')
+                        config_item_hostname = item_url_parts[0]
+                        config_item_path = '/'
+                        if len(item_url_parts) > 1:
+                            config_item_path += '/'.join(item_url_parts[1:])
+                        if config_item_hostname in hostname and \
+                                bm.href_urlparts.path.lower().startswith(config_item_path) and \
+                                hostname not in scan_list:
                             scan_list.append(bm)
                             bm.scanned = not TheConfig.allow_multiple(bm)
                             break

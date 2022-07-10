@@ -3,6 +3,7 @@
 # System imports
 import argparse
 import configparser
+import logging
 import os
 from typing import Dict, List, Tuple
 
@@ -47,6 +48,7 @@ class TheConfig:
     LOG_LEVEL_STRINGS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
 
     #: Text used to search for Opera SpeedDial bookmarks
+    #: Text being searched must be forced to lowercase
     OPERA_SPEED_DIAL: str = 'speeddial'
 
     # configuration items initialized by config parser
@@ -69,27 +71,40 @@ class TheConfig:
     verbosity: bool = False         #: True/False - verbose output enabled
     verbosity_level: int = 0        #: verbosity level
 
-    #: specific local hosts (private network)
-    local_hosts: Dict[str, str] = {}
+    #: specific local hosts (private network) - key == name
+    local_hosts_by_name: Dict[str, str] = {}
+
+    #: specific local hosts (private network) - key == ip
+    local_hosts_by_ip: Dict[str, str] = {}
 
     #: host bookmarks for which multiple entries are allowed
     allow_multiple_bookmarks: List[Tuple[str, str]] = []
 
-    @staticmethod
-    def get_hostname_from_ip(host_ip: str) -> str:
-        """Returns hostname from local-hosts
+    @classmethod
+    def hostname_from_ip(cls, host_ip: str) -> str:
+        """Returns host name from local-hosts
 
             :param host_ip: Local host IP to lookup
             :returns: Local host name (empty string if not found)
         """
-        ip_list = list(TheConfig.local_hosts.values())
         try:
-            ip_index = ip_list.index(host_ip)
-        except ValueError:
+            return cls.local_hosts_by_ip[host_ip]
+        except KeyError as e:
+            logging.getLogger().exception('BAD HOST IP', exc_info=e)
             return ''
-        hostname_list = list(TheConfig.local_hosts.keys())
-        hostname = hostname_list[ip_index]
-        return hostname
+
+    @classmethod
+    def hostip_from_name(cls, host_name: str) -> str:
+        """Returns host ip from local-hosts
+
+            :param host_name: Local host name to lookup
+            :returns: Local host ip (empty string if not found)
+        """
+        try:
+            return cls.local_hosts_by_name[host_name]
+        except KeyError as e:
+            logging.getLogger().exception('BAD HOST NAME', exc_info=e)
+            return ''
 
     @staticmethod
     def allow_multiple(bm: BookMark) -> bool:
@@ -106,7 +121,7 @@ class TheConfig:
 
             :param bm: Bookmark to process
         """
-        return bm.hostname in TheConfig.local_hosts.values()
+        return bm.hostname in TheConfig.local_hosts_by_name.values()
 
 
 class ArgParser(argparse.ArgumentParser):
@@ -202,7 +217,9 @@ class CfgParser(configparser.ConfigParser):
         if 'hosts' in config:
             hosts = config['hosts']
             for host in hosts:
-                TheConfig.local_hosts[host] = config['hosts'][host].strip(',')
+                ip = config['hosts'][host].strip(',')
+                TheConfig.local_hosts_by_name[host] = ip
+                TheConfig.local_hosts_by_ip[ip] = host
 
         # check for allowing multiple host/bookmarks
         if 'allow-multiple' in config:
