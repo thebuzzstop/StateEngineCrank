@@ -294,7 +294,8 @@ class Analyze(object):
         site_host = site[0].lower()
         site_path = site[1].lower()
         site_label = site[2]
-
+        if TheConfig.is_local_host(host=site_host):
+            site_host = TheConfig.local_hosts_by_name[site_host]
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue

@@ -3,7 +3,6 @@
 # System imports
 import argparse
 import configparser
-import logging
 import os
 from typing import Dict, List, Tuple
 
@@ -87,11 +86,9 @@ class TheConfig:
             :param host_ip: Local host IP to lookup
             :returns: Local host name (empty string if not found)
         """
-        try:
+        if host_ip in cls.local_hosts_by_ip.keys():
             return cls.local_hosts_by_ip[host_ip]
-        except KeyError as e:
-            logging.getLogger().exception('BAD HOST IP', exc_info=e)
-            return ''
+        return ''
 
     @classmethod
     def hostip_from_name(cls, host_name: str) -> str:
@@ -100,11 +97,9 @@ class TheConfig:
             :param host_name: Local host name to lookup
             :returns: Local host ip (empty string if not found)
         """
-        try:
+        if host_name in cls.local_hosts_by_name.keys():
             return cls.local_hosts_by_name[host_name]
-        except KeyError as e:
-            logging.getLogger().exception('BAD HOST NAME', exc_info=e)
-            return ''
+        return ''
 
     @staticmethod
     def allow_multiple(bm: BookMark) -> bool:
@@ -113,15 +108,28 @@ class TheConfig:
             :param bm: Bookmark being processed
             :returns: True/False if multiple entries allowed
         """
+        host_name = bm.hostname
+        friendly_host_name = bm.friendly_host_name
+        for allow in TheConfig.config['allow-multiple']:
+            host, path = TheConfig.config['allow-multiple'][allow].replace(' ', '').split(',')
+            if host == host_name or host == friendly_host_name:
+                if path == bm.path:
+                    return True
         return False
 
     @staticmethod
-    def is_local_host(bm: BookMark) -> bool:
-        """Return boolean True if bookmark belongs to a local host
+    def is_local_host(**kwargs) -> bool:
+        """Return boolean True if host/bookmark belongs to a local host
 
-            :param bm: Bookmark to process
+            :param kwargs: Union[Bookmark, str] to process
+            :returns: True/False if a local host name or BookMark
         """
-        return bm.hostname in TheConfig.local_hosts_by_name.values()
+        host = None
+        if 'host' in kwargs.keys():
+            host = kwargs['host']
+        elif 'bm' in kwargs.keys():
+            host = kwargs['bm'].hostname
+        return host in TheConfig.local_hosts_by_name.keys() or host in TheConfig.local_hosts_by_ip.keys()
 
 
 class ArgParser(argparse.ArgumentParser):
