@@ -49,6 +49,7 @@ class Logger(Borg):
         self.logger.setLevel(log_level)
         self.logger.addHandler(self.ch)
         self.logger.addHandler(self.fh)
+        self.logger.propagate = False       # don't propagate to higher level(s)
 
     def clean(self, text: str) -> str:
         """Cleans up text by cleaning up non-printable chars

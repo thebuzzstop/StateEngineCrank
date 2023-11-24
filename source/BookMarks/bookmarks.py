@@ -154,7 +154,7 @@ class UserCode(StateMachine):
         self.meta_attrs = None          #: attrs for meta tag
         self.list_level = None          #: current list level
 
-        my_logger.debug('UserCode: INIT done')
+        my_logger.info('UserCode: INIT done')
 
     def set_attrs(self, attrs):
         """ Function to set 'attrs' associated with most recent 'tag'
