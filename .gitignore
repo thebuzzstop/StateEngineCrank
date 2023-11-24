@@ -9,11 +9,6 @@
 # BookMark logfiles
 source/logs/*.log.*
 
-# CAN DBC related secondary files
-CanBus/data/*.bak
-CanBus/data/*.dat
-CanBus/data/*.dir
-
 # ignore any doxygen output files
 modules/doxygen
 
@@ -166,6 +161,9 @@ pip-selfcheck.json
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
+
+# SonarLint files
+.idea/sonarlint/*store/
 
 # Gradle
 .idea/**/gradle.xml

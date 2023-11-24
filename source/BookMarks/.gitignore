@@ -15,6 +15,9 @@
 .idea/modules.xml
 .idea/workspace.xml
 
+# SonarLint project files
+.idea/sonarlint/*store/
+
 # Doxygen output can be regenerated
 **/docs/html
 
