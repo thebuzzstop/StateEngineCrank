@@ -93,7 +93,7 @@ from urllib.parse import urlparse
 import logger
 
 
-class List(object):
+class List:
     """ A generic list with custom attributes
 
         :todo: Verify usage of this class
@@ -106,7 +106,7 @@ class List(object):
         self.list = []
 
 
-class BookMark(object):
+class BookMark:
     """ A bookmark """
 
     def __init__(self, label, heading, href, add_date, icon=None):
@@ -144,7 +144,7 @@ class BookMark(object):
             self.attrs['attrs'].append({attr: value})
 
 
-class Heading(object):
+class Heading:
     """ A bookmark heading """
 
     def __init__(self, level, label, heading_stack, add_date, last_modified):
@@ -168,7 +168,7 @@ class Heading(object):
         self.list = None
 
 
-class HeadingLabel(object):
+class HeadingLabel:
     """ Bookmark heading label """
 
     def __init__(self, label, level, stack):
@@ -195,7 +195,7 @@ class HeadingLabel(object):
             self.stack.append(stack)
 
 
-class HeadingLabels(object):
+class HeadingLabels:
     """ Bookmark heading label collection """
 
     def __init__(self):
@@ -213,7 +213,7 @@ class HeadingLabels(object):
             self.labels[heading.label].add_label(heading.level, heading.heading_stack_text)
 
 
-class BookMarks(object):
+class BookMarks:
     """ Class implementing a multi-level list """
 
     # =================================================================

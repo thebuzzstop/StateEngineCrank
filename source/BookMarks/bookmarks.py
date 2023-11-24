@@ -70,12 +70,11 @@ from enum import Enum
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
-from config import ArgParser
-from config import CfgParser
-from config import TheConfig
+from config import ArgParser, CfgParser, TheConfig
 from structures import BookMarks
 from analyze import Analyze
 from reformat import Reformat
+from exceptions import MyException
 
 import logger
 logger = logger.Logger(name=__name__, log_level=logger.INFO)
@@ -124,7 +123,7 @@ class Events(Enum):
     EvHeaderEndTag = 18
 
 
-class StateTables(object):
+class StateTables:
     state_transition_table = {}
     state_function_table = {}
 
@@ -186,7 +185,7 @@ class UserCode(StateMachine):
         This function is called when the *AddMeta* state is entered.
         """
         if self.meta_attrs:
-            raise Exception(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
+            raise MyException(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
         self.meta_attrs = self.html_attrs
         my_logger.debug('META: %s', self.meta_attrs)
         self.event(Events.EvTick)
@@ -213,7 +212,7 @@ class UserCode(StateMachine):
         There is only one (1) HTML *H1* tag in a BookMark file.
         """
         if self.header:
-            raise Exception(f'H1_DATA already defined: {self.header}/{self.html_data}')
+            raise MyException(f'H1_DATA already defined: {self.header}/{self.html_data}')
         self.header = self.html_data
         my_logger.debug('HEADER: %s', self.header)
         self.bookmarks.add_heading(self.header)
@@ -227,7 +226,7 @@ class UserCode(StateMachine):
         This function is called whenever the state transition *SetTitle* is taken.
         """
         if self.title:
-            raise Exception(f'TITLE already defined: {self.title}/{self.html_data}')
+            raise MyException(f'TITLE already defined: {self.title}/{self.html_data}')
         self.title = self.html_data
         my_logger.info('TITLE: %s', self.title)
 
@@ -459,7 +458,6 @@ class MyHTMLParser(HTMLParser, ABC):
         # environment initialization is complete so start the parser engine
         self.parser = UserCode()
         self.parser.event(Events.EvStart)
-        pass
 
     # =================================================
     # HTML Parser Base Class Methods
@@ -474,27 +472,24 @@ class MyHTMLParser(HTMLParser, ABC):
         if tag in self.open_tag_events:
             self.parser.event(self.open_tag_events[tag])
             self.parser.set_attrs(attrs)
-            pass
         else:
             msg = f'no handler for tag [{tag}]'
             my_logger.error(msg)
-            raise Exception(msg)
+            raise MyException(msg)
 
     def handle_endtag(self, tag):
         """ ABC: Handle end tags """
         my_logger.debug('end tag: %s', tag)
         if tag in self.close_tag_events:
             self.parser.event(self.close_tag_events[tag])
-            pass
         else:
             msg = f'no handler for tag [{tag}]'
             my_logger.error(msg)
-            raise Exception(msg)
+            raise MyException(msg)
 
     def handle_data(self, data):
         """ ABC: Handle data """
         self.parser.set_html_data(data)
-        pass
 
 
 if __name__ == '__main__':

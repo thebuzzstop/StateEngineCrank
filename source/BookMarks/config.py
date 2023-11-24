@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 
 # Project imports
 from structures import BookMark
+from exceptions import MyException
 
 
 class TheConfig:
@@ -186,7 +187,7 @@ class CfgParser(configparser.ConfigParser):
 
         # see if the configuration file exists before attempting to parse
         if not os.path.isfile(cfg_file):
-            raise Exception(f'Configuration file not found: {cfg_file}')
+            raise MyException(f'Configuration file not found: {cfg_file}')
 
         config = configparser.ConfigParser()
         config.read(cfg_file)
@@ -212,7 +213,7 @@ class CfgParser(configparser.ConfigParser):
 
         # verify input file exists
         if not os.path.isfile(TheConfig.input_file):
-            raise Exception('Input file not found: %s' % TheConfig.input_file)
+            raise MyException('Input file not found: %s' % TheConfig.input_file)
 
         # enumerate menubar heading sub-topics
         for heading in headings:

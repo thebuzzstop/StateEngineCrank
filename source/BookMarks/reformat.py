@@ -12,11 +12,12 @@ from typing import List, Union
 from analyze import Analyze
 from config import TheConfig
 from structures import BookMark
+from exceptions import MyException
 
 import logger
 
 
-class Reformat(object):
+class Reformat:
     """ Class to reformat bookmarks """
 
     def __init__(self, analysis: Analyze):
@@ -165,7 +166,7 @@ class Reformat(object):
                     )
                 )
             else:
-                raise Exception("Can't output BM with no LABEL and no ICON")
+                raise MyException("Can't output BM with no LABEL and no ICON")
         pass
 
     def write_heading(self, heading: str):

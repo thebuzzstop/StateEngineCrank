@@ -6,7 +6,6 @@ The various bookmark elements have already been determined during bookmark parsi
 Dictionaries are compiled for bookmark attributes, e.g. domains, host names, paths, etc.
 A dictionary of keywords is compiled.
 Duplicate bookmarks are detected and deleted.
-
 """
 
 # System imports
@@ -18,22 +17,22 @@ from structures import BookMark, BookMarks, List as StructuresList
 import logger
 
 
-class Keywords(object):
+class Keywords:
     """ Keywords from bookmarks """
 
     def __init__(self):
-        self.keywords = {}
+        self.keyword_dict: Dict = {}
 
     def add_word(self, word, bookmark):
         if word == b'':
             return
-        if word not in self.keywords:
-            self.keywords[word] = [bookmark]
+        if word not in self.keyword_dict.keys():
+            self.keyword_dict[word] = [bookmark]
         else:
-            self.keywords[word].append(bookmark)
+            self.keyword_dict[word].append(bookmark)
 
 
-class Analyze(object):
+class Analyze:
     """ Class to analyze and categorize bookmarks """
 
     #: hex representations to convert to chars
@@ -281,15 +280,38 @@ class Analyze(object):
         return f'{bookmark.heading.label}'
 
     # =========================================================================
-    def scan_bookmarks_site(self, site: Tuple[str, str, str], scan_list, head: bool = False):
+    def scan_bookmarks_site(self, site: Tuple[str, str, str], scan_list, head: bool = False, tail: bool = False):
         """Scan all bookmarks for site/section match
 
-            Used when parsing the "head" and "tail" sections.
+        Used when parsing the "head" and "tail" sections.
 
-            :param site: Tuple[BookMark site to scan for [hostname, path, label]
-            :param scan_list: Section/topic target scan list
-            :param head: Boolean indicating we are parsing the BookMark's "head"
+        :param site: Tuple[BookMark site to scan for [hostname, path, label]
+        :param scan_list: Section/topic target scan list
+        :param head: Boolean indicating we are parsing the BookMark's "head"
+        :param tail: Boolean indicating we are parsinh the BookMark's "tail"
         """
+        def parse_bm(_bm, _site_host) -> Tuple[str, str, str]:
+            """Parse a BM and massage the various pieces
+
+            :param _bm: BookMark being parsed
+            :param _site_host: Site host
+            :returns: Tuple[str:hostname, str:path, str:site_host]
+            """
+            # check for hostname match
+            _hostname = _bm.href_urlparts.hostname
+            if _hostname is not None:
+                _hostname = _hostname.lower()
+            _path = _bm.href_urlparts.path
+            if _path is not None:
+                _path = _path.lower()
+            # check if a match for a localhost
+            if TheConfig.is_local_host(bm=_bm):
+                # substitute the local hostname
+                _site_host = _hostname
+            if len(_path) > 1 and _path.endswith('/'):
+                _path = _path[:-1]
+            return _hostname, _path, _site_host
+
         # get site parts
         site_host = site[0].lower()
         site_path = site[1].lower()
@@ -301,26 +323,17 @@ class Analyze(object):
                 continue
             # scan all bookmarks for current value
             for bm in bm_value:
-                # check for hostname match
-                hostname = bm.href_urlparts.hostname
-                if hostname is not None:
-                    hostname = hostname.lower()
-                path = bm.href_urlparts.path
-                if path is not None:
-                    path = path.lower()
-                # check if a match for a localhost
-                if TheConfig.is_local_host(bm=bm):
-                    # substitute the local hostname
-                    site_host = hostname
-                if len(path) > 1 and path.endswith('/'):
-                    path = path[:-1]
-                if not bm.scanned:
-                    if hostname is not None and len(hostname):
-                        if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
-                            bm.label = site_label
-                            scan_list.append(bm)
-                            # always mark scanned when not parsing the "head" section
-                            bm.scanned = not head and not TheConfig.allow_multiple(bm)
+                hostname, path, site_host = parse_bm(bm, site_host)
+
+                # only process 'bm' if not already scanned and hostname is not empty
+                if bm.scanned or hostname is None or not len(hostname):
+                    continue
+                # process if site host is a match
+                if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
+                    bm.label = site_label
+                    scan_list.append(bm)
+                    # always mark scanned when not parsing the "head" section
+                    bm.scanned = not (head or tail) and not TheConfig.allow_multiple(bm)
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
@@ -409,9 +422,8 @@ class Analyze(object):
                         else:
                             self.domain_types[dom] += 1
                         # see if this is a site optimized for mobile
-                        if 'm' in parts:
-                            if bm not in self.mobile_bookmarks:
-                                self.mobile_bookmarks.append(bm)
+                        if 'm' in parts and bm not in self.mobile_bookmarks:
+                            self.mobile_bookmarks.append(bm)
 
                     # sub-domains (primary)
                     if len(parts) >= 2:
