@@ -495,7 +495,7 @@ class MyHTMLParser(HTMLParser, ABC):
 if __name__ == '__main__':
     """ Main application processing for BookMarks """
 
-    my_logger.debug('INIT')
+    my_logger.info(f'INIT ({__name__})')
 
     # initialization and setup
     arg_parser = ArgParser()

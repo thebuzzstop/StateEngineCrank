@@ -220,7 +220,7 @@ class BookMarks:
     def __init__(self):
         self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
         self.my_logger = self.logger.logger
-        self.my_logger.info('INIT')
+        self.my_logger.info(f'INIT ({__name__})')
 
         self.level = 0  #: Current level
         self.heading = None  #: Heading for current level

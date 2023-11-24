@@ -53,7 +53,7 @@ class Analyze:
 
         self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
         self.my_logger = self.logger.logger
-        self.my_logger.info('INIT')
+        self.my_logger.info(f'INIT ({__name__})')
 
         self._bookmarks: BookMarks = bookmarks
         self.bookmarks: Dict[str, List] = bookmarks.bookmarks
