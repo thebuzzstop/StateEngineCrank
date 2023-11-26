@@ -111,6 +111,7 @@ class Analyze:
         self.scan_bookmarks_speed_dials_config()
 
         # scan bookmarks - head/tail items
+        # :FixMe: Facebook is being scanned before we scan the head/tail sections
         for site in TheConfig.menubar['head']:
             self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
