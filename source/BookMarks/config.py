@@ -3,6 +3,7 @@
 # System imports
 import argparse
 import configparser
+import logging
 import os
 from typing import Dict, List, Tuple
 
@@ -11,6 +12,7 @@ from typing import Dict, List, Tuple
 # Project imports
 from structures import BookMark
 from exceptions import MyException
+from logger import Logger
 
 
 class TheConfig:
@@ -132,6 +134,13 @@ class TheConfig:
             host = kwargs['bm'].hostname
         return host in TheConfig.local_hosts_by_name.keys() or host in TheConfig.local_hosts_by_ip.keys()
 
+    @staticmethod
+    def logging_level() -> int:
+        """Return logging level"""
+        if TheConfig.debug:
+            return logging.DEBUG
+        return logging.INFO
+
 
 class ArgParser(argparse.ArgumentParser):
     """Command line argument parsing"""
@@ -151,6 +160,7 @@ class ArgParser(argparse.ArgumentParser):
         args = parser.parse_args()
         if args.debug:
             TheConfig.debug = True
+            Logger().set_level(logger_level=logging.DEBUG, console_level=logging.DEBUG, file_level=logging.DEBUG)
         if args.verbosity:
             TheConfig.verbosity = True
             TheConfig.verbosity_level = args.verbosity

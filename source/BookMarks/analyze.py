@@ -13,9 +13,9 @@ from typing import Dict, List, Tuple
 
 # Project imports
 from config import TheConfig
-from structures import BookMark, BookMarks, List as StructuresList
-import logger
-
+from structures import BookMark, BookMarks, StructuresList as StructuresList
+from logger import Logger
+logger = Logger(name=__name__).logger
 
 class Keywords:
     """ Keywords from bookmarks """
@@ -51,9 +51,7 @@ class Analyze:
     def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
 
-        self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
-        self.my_logger = self.logger.logger
-        self.my_logger.info(f'INIT ({__name__})')
+        logger.info(f'INIT ({__name__})')
 
         self._bookmarks: BookMarks = bookmarks
         self.bookmarks: Dict[str, List] = bookmarks.bookmarks
@@ -116,22 +114,22 @@ class Analyze:
         for site in TheConfig.menubar['head']:
             self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
-            self.scan_bookmarks_site(site, self.menubar_['tail'])
+            self.scan_bookmarks_site(site, self.menubar_['tail'], tail=True)
 
         # scan bookmarks in the order specified in the configuration file
         try:
             for section in TheConfig.scanning_order:
                 if section not in self.menubar_.keys():
-                    self.my_logger.info('Skipping empty section: %s', section)
+                    logger.info('Skipping empty section: %s', section)
                     continue
                 for topic in self.menubar_[section].keys():
-                    self.my_logger.debug('Scanning: %s/%s', section, topic)
+                    logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
                     scan_list = self.menubar_[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
                 pass
         except Exception as e:
-            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
+            logger.exception('UNHANDLED EXCEPTION', exc_info=e)
 
         # remove any mobile bookmarks if a desktop site exists
         mobile_bookmark_values = len(self.mobile_bookmarks)
@@ -186,15 +184,15 @@ class Analyze:
         try:
             for section in TheConfig.speed_dial_scan_order:
                 if section not in self.menubar_.keys():
-                    self.my_logger.info('Skipping empty section: %s', section)
+                    logger.info('Skipping empty section: %s', section)
                     continue
                 for topic in self.menubar_[section].keys():
-                    self.my_logger.debug('Scanning: %s/%s', section, topic)
+                    logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
                     scan_list = self.menubar_[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
         except Exception as e:
-            self.my_logger.exception('UNHANDLED EXCEPTION', exc_info=e)
+            logger.exception('UNHANDLED EXCEPTION', exc_info=e)
         pass
 
     # =========================================================================
@@ -208,9 +206,9 @@ class Analyze:
             for i in range(bm_values, 0, -1):
                 bm: BookMark = bm_value[i-1]
                 if TheConfig.OPERA_SPEED_DIAL in bm.heading.label.lower():
-                    if not isinstance(bm.heading.list, StructuresList):
+                    if not isinstance(bm.heading.structures_list, StructuresList):
                         continue
-                    self.speed_dial_list_current.extend(bm.heading.list.list)
+                    self.speed_dial_list_current.extend(bm.heading.structures_list.list)
                 pass
         pass
 
@@ -246,7 +244,7 @@ class Analyze:
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
-            # scan all book marks for current value
+            # scan all bookmarks for current value
             bm_values = len(bm_value)
             for i in range(bm_values, 0, -1):
                 bm = bm_value[i-1]
@@ -291,7 +289,7 @@ class Analyze:
         :param tail: Boolean indicating we are parsinh the BookMark's "tail"
         """
         def parse_bm(_bm, _site_host) -> Tuple[str, str, str]:
-            """Parse a BM and massage the various pieces
+            """Parse a BM and extract hostname, path and site_host
 
             :param _bm: BookMark being parsed
             :param _site_host: Site host
@@ -325,15 +323,23 @@ class Analyze:
             for bm in bm_value:
                 hostname, path, site_host = parse_bm(bm, site_host)
 
+                logger.debug(f'BM: hostname:{hostname}  path:{path}  site_host:{site_host}')
+
                 # only process 'bm' if not already scanned and hostname is not empty
                 if bm.scanned or hostname is None or not len(hostname):
                     continue
-                # process if site host is a match
-                if (hostname == site_host and path == site_path) or site_host in bm.label.lower():
-                    bm.label = site_label
-                    scan_list.append(bm)
-                    # always mark scanned when not parsing the "head" section
-                    bm.scanned = not (head or tail) and not TheConfig.allow_multiple(bm)
+                # if processing head/tail section then hostname must be a match
+                if (head or tail) and hostname != site_host:
+                    continue
+                # if processing head/tail section and path is specified then it must match
+                if (head or tail) and path is not None and path != site_path:
+                    continue
+
+                # okay to process this BM
+                bm.label = site_label
+                scan_list.append(bm)
+                # always mark scanned when not parsing the "head" or "tail" sections
+                bm.scanned = not (head or tail) and not TheConfig.allow_multiple(bm)
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
@@ -465,7 +471,7 @@ class Analyze:
     def delete_empty_bookmarks(self):
         """ delete any empty bookmarks """
         for bm_key in self.empty_bookmarks:
-            self.my_logger.info(f'Deleting {self.logger.clean(bm_key)}')
+            logger.info(f'Deleting {logger.clean(bm_key)}')
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]
@@ -540,4 +546,4 @@ class Analyze:
                         for host in TheConfig.sections[section][key]:
                             if host in hostname and hostname not in self.host_sites[section]:
                                 self.host_sites[section].append(hostname)
-                                self.my_logger.debug(f'{section}: {host}/{hostname}')
+                                logger.debug(f'{section}: {host}/{hostname}')

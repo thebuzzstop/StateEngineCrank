@@ -1,3 +1,4 @@
+# noinspection GrazieInspection
 """ BookMarks.bookmarks
 
 The BookMarks module processes bookmarks exported from Google Chrome.
@@ -65,6 +66,7 @@ Application processing:
 from abc import ABC
 from html.parser import HTMLParser
 from enum import Enum
+from typing import List
 
 # StateEngineCrank Imports
 from StateEngineCrank.modules.PyState import StateMachine
@@ -77,9 +79,8 @@ from reformat import Reformat
 from exceptions import MyException
 
 import logger
-logger = logger.Logger(name=__name__, log_level=logger.INFO)
-my_logger = logger.logger
-my_logger.info('INIT')
+logger = logger.Logger(name=__name__).logger
+logger.info('INIT')
 
 # ==============================================================================
 # ===== MAIN STATE CODE = STATE DEFINES & TABLES = START = DO NOT MODIFY =======
@@ -154,7 +155,7 @@ class UserCode(StateMachine):
         self.meta_attrs = None          #: attrs for meta tag
         self.list_level = None          #: current list level
 
-        my_logger.info('UserCode: INIT done')
+        logger.info('UserCode: INIT done')
 
     def set_attrs(self, attrs):
         """ Function to set 'attrs' associated with most recent 'tag'
@@ -163,7 +164,7 @@ class UserCode(StateMachine):
         """
         self.html_attrs = attrs
         if self.html_attrs:
-            my_logger.debug('attrs: %s', self.html_attrs)
+            logger.debug('attrs: %s', self.html_attrs)
             # self.event(Events.EvAttr)
 
     def set_html_data(self, data):
@@ -173,7 +174,7 @@ class UserCode(StateMachine):
         """
         self.html_data = data.strip()
         if self.html_data:
-            my_logger.debug('data: %s', self.html_data)
+            logger.debug('data: %s', self.html_data)
             self.event(Events.EvData)
 
     # ===========================================================================
@@ -187,7 +188,7 @@ class UserCode(StateMachine):
         if self.meta_attrs:
             raise MyException(f'META already set:\n\r\t{self.meta_attrs}\n\r\t{self.html_attrs}')
         self.meta_attrs = self.html_attrs
-        my_logger.debug('META: %s', self.meta_attrs)
+        logger.debug('META: %s', self.meta_attrs)
         self.event(Events.EvTick)
 
     # ===========================================================================
@@ -198,7 +199,7 @@ class UserCode(StateMachine):
         State machine enter function processing for the *Finish* state.
         This function is called when the *Finish* state is entered.
         """
-        my_logger.debug('BookMarksDone')
+        logger.debug('BookMarksDone')
 
     # =========================================================
     # noinspection PyPep8Naming
@@ -214,7 +215,7 @@ class UserCode(StateMachine):
         if self.header:
             raise MyException(f'H1_DATA already defined: {self.header}/{self.html_data}')
         self.header = self.html_data
-        my_logger.debug('HEADER: %s', self.header)
+        logger.debug('HEADER: %s', self.header)
         self.bookmarks.add_heading(self.header)
 
     # =========================================================
@@ -228,7 +229,7 @@ class UserCode(StateMachine):
         if self.title:
             raise MyException(f'TITLE already defined: {self.title}/{self.html_data}')
         self.title = self.html_data
-        my_logger.info('TITLE: %s', self.title)
+        logger.info('TITLE: %s', self.title)
 
     # =========================================================
     # noinspection PyPep8Naming
@@ -240,7 +241,7 @@ class UserCode(StateMachine):
 
         The HTML *H3* tag handler calls this function.
         """
-        my_logger.info('HEADING: %s',  self.html_data)
+        logger.info('HEADING: %s',  self.html_data)
         self.bookmarks.add_heading(self.html_data)
 
     # ===========================================================================
@@ -468,23 +469,23 @@ class MyHTMLParser(HTMLParser, ABC):
             :param tag: html tag being processed
             :param attrs: html attributes associated with tag
         """
-        my_logger.debug('start tag: %s', tag)
+        logger.debug('start tag: %s', tag)
         if tag in self.open_tag_events:
             self.parser.event(self.open_tag_events[tag])
             self.parser.set_attrs(attrs)
         else:
             msg = f'no handler for tag [{tag}]'
-            my_logger.error(msg)
+            logger.error(msg)
             raise MyException(msg)
 
     def handle_endtag(self, tag):
         """ ABC: Handle end tags """
-        my_logger.debug('end tag: %s', tag)
+        logger.debug('end tag: %s', tag)
         if tag in self.close_tag_events:
             self.parser.event(self.close_tag_events[tag])
         else:
             msg = f'no handler for tag [{tag}]'
-            my_logger.error(msg)
+            logger.error(msg)
             raise MyException(msg)
 
     def handle_data(self, data):
@@ -495,7 +496,7 @@ class MyHTMLParser(HTMLParser, ABC):
 if __name__ == '__main__':
     """ Main application processing for BookMarks """
 
-    my_logger.info(f'INIT ({__name__})')
+    logger.info(f'INIT ({__name__})')
 
     # initialization and setup
     arg_parser = ArgParser()
@@ -505,32 +506,32 @@ if __name__ == '__main__':
     # open bookmarks file and feed to the parser
     bookmarks = None
     try:
-        my_logger.info('Processing input file: %s', TheConfig.input_file)
+        logger.info(f'Processing input file: {TheConfig.input_file}')
         with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         html_parser.feed(bookmarks_html)
         bookmarks = html_parser.parser.bookmarks
     except Exception as e:
-        my_logger.exception('UNHANDLED EXCEPTION: Parse', exc_info=e)
+        logger.exception('UNHANDLED EXCEPTION: Parse', exc_info=e)
 
     # analyze bookmarks just parsed
     analysis = None
     try:
         analysis = Analyze(bookmarks=bookmarks)
     except Exception as e:
-        my_logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
+        logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
 
     # create bookmark output structure
     output = None
     try:
         output = Reformat(analysis).output
-        my_logger.info('Creating output file: %s', TheConfig.output_file)
+        logger.info('Creating output file: %s', TheConfig.output_file)
         with open(TheConfig.output_file, 'w') as file:
             for s in output:
-                if isinstance(s, list):
-                    for s_ in s:
-                        file.write(s_+'\n')
+                if isinstance(s, List):
+                    for _s in s:
+                        file.write(_s + '\n')
                 else:
                     file.write(s+'\n')
     except Exception as e:
-        my_logger.exception('UNHANDLED EXCEPTION: Reformat', exc_info=e)
+        logger.exception('UNHANDLED EXCEPTION: Reformat', exc_info=e)

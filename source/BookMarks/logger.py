@@ -5,6 +5,7 @@ import sys
 import os
 import logging.handlers
 
+# define logging levels per logging module
 DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARN = logging.WARN
@@ -30,19 +31,20 @@ class Logger(Borg):
 
     def __init__(self, name=__name__, log_level: int = INFO):
         Borg.__init__(self)
-        if not self._shared_state:
-            # only get stream handlers the first time
-            self.ch = logging.StreamHandler(stream=sys.stdout)
-            self.ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
-            self.ch.setLevel(log_level)
+        if self._shared_state:
+            return
 
-            self.fh = logging.handlers.RotatingFileHandler(filename = 'logs/bookmarks.log', maxBytes=2500000,
-                                                           backupCount=5, delay=True)
-            self.fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-            self.fh.setLevel(log_level)
-            if not os.path.exists('logs'):
-                os.makedirs('logs')
-            self.delchars = str.maketrans({c: '' for c in map(chr, range(256)) if not c.isprintable()})
+        # only get stream handlers the first time
+        self.ch = logging.StreamHandler(stream=sys.stdout)
+        self.ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+        self.ch.setLevel(log_level)
+
+        self.fh = logging.handlers.RotatingFileHandler(filename = 'logs/bookmarks.log', maxBytes=2500000,
+                                                       backupCount=5, delay=True)
+        self.fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.fh.setLevel(log_level)
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
 
         # get a logger for this instantiation, set level and add handlers
         self.logger = logging.getLogger(name)
@@ -51,10 +53,15 @@ class Logger(Borg):
         self.logger.addHandler(self.fh)
         self.logger.propagate = False       # don't propagate to higher level(s)
 
-    def clean(self, text: str) -> str:
-        """Cleans up text by cleaning up non-printable chars
 
-        :param text: Text string to be processed
-        :returns: Cleaned up text with no non-printable chars
-        """
-        return text.translate(self.delchars)
+#: Characters to delete when cleaning text
+delchars = str.maketrans({c: '' for c in map(chr, range(256)) if not c.isprintable()})
+
+
+def clean(text: str) -> str:
+   """Cleans up text by cleaning up non-printable chars
+
+   :param text: Text string to be processed
+   :returns: Cleaned up text with no non-printable chars
+   """
+   return text.translate(delchars)

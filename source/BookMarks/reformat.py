@@ -14,8 +14,8 @@ from config import TheConfig
 from structures import BookMark
 from exceptions import MyException
 
-import logger
-
+from logger import Logger
+logger = Logger(name=__name__).logger
 
 class Reformat:
     """ Class to reformat bookmarks """
@@ -25,9 +25,7 @@ class Reformat:
 
             :param analysis: Analyze object after processing
         """
-        self.logger = logger.Logger(name=__name__, log_level=logger.INFO)
-        self.my_logger = self.logger.logger
-        self.my_logger.info(f'INIT ({__name__})')
+        logger.info(f'INIT ({__name__})')
 
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
