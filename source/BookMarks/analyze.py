@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 # Project imports
 from config import TheConfig
 from structures import BookMark, BookMarks, StructuresList as StructuresList
-from logger import Logger
+from logger import Logger, clean as logger_clean
 logger = Logger(name=__name__).logger
 
 class Keywords:
@@ -111,7 +111,6 @@ class Analyze:
         self.scan_bookmarks_speed_dials_config()
 
         # scan bookmarks - head/tail items
-        # :FixMe: Facebook is being scanned before we scan the head/tail sections
         for site in TheConfig.menubar['head']:
             self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
         for site in TheConfig.menubar['tail']:
@@ -326,8 +325,11 @@ class Analyze:
 
                 logger.debug(f'BM: hostname:{hostname}  path:{path}  site_host:{site_host}')
 
-                # only process 'bm' if not already scanned and hostname is not empty
-                if bm.scanned or hostname is None or not len(hostname):
+                # only process 'bm' if hostname is not empty
+                if hostname is None or not len(hostname):
+                    continue
+                # skip processing if 'bm' if already scanned and multiple not allowed
+                if bm.scanned and not TheConfig.allow_multiple(bm):
                     continue
                 # if processing head/tail section then hostname must be a match
                 if (head or tail) and hostname != site_host:
@@ -472,7 +474,7 @@ class Analyze:
     def delete_empty_bookmarks(self):
         """ delete any empty bookmarks """
         for bm_key in self.empty_bookmarks:
-            logger.info(f'Deleting {logger.clean(bm_key)}')
+            logger.info(f'Deleting {logger_clean(bm_key)}')
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]
