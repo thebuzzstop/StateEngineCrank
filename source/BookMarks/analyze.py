@@ -321,21 +321,21 @@ class Analyze:
                 continue
             # scan all bookmarks for current value
             for bm in bm_value:
-                hostname, path, site_host = parse_bm(bm, site_host)
+                bm_hostname, bm_path, bm_site_host = parse_bm(bm, site_host)
 
-                logger.debug(f'BM: hostname:{hostname}  path:{path}  site_host:{site_host}')
+                logger.debug(f'BM: hostname:{bm_hostname}  path:{bm_path}  site_host:{bm_site_host}')
 
                 # only process 'bm' if hostname is not empty
-                if hostname is None or not len(hostname):
+                if bm_hostname is None or not len(bm_hostname):
                     continue
-                # skip processing if 'bm' if already scanned and multiple not allowed
+                # skip processing if 'bm' is already scanned and multiple not allowed
                 if bm.scanned and not TheConfig.allow_multiple(bm):
                     continue
                 # if processing head/tail section then hostname must be a match
-                if (head or tail) and hostname != site_host:
+                if (head or tail) and bm_hostname != site_host:
                     continue
                 # if processing head/tail section and path is specified then it must match
-                if (head or tail) and path is not None and path != site_path:
+                if (head or tail) and bm_path is not None and bm_path != site_path:
                     continue
 
                 # okay to process this BM
@@ -343,6 +343,7 @@ class Analyze:
                 scan_list.append(bm)
                 # always mark scanned when not parsing the "head" or "tail" sections
                 bm.scanned = not (head or tail) and not TheConfig.allow_multiple(bm)
+        pass
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):
