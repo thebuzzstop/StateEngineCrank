@@ -30,9 +30,9 @@ class Reformat:
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
         self.menubar_spec = TheConfig.menubar   #: user menubar configuration
-        self.menubar_data = analysis.menubar()  #: menubar scanned data
+        self.menubar_data = analysis.menubar    #: menubar scanned data
         self.indent = 0                         #: level to indent
-        self._output = [TheConfig.HEADER_HTML]  #: start with bookmarks file header
+        self._output: List[str] = [TheConfig.HEADER_HTML]  #: start with bookmarks file header
 
         #: date stamp for all html entities we create
         self.datestamp = int(datetime.datetime.now().timestamp())
@@ -46,10 +46,9 @@ class Reformat:
             self.write_section(section)
         self.write_section('tail')
         self.end_list()
-        pass
 
     @property
-    def output(self) -> List:
+    def output(self) -> List[str]:
         """HTML output"""
         return self._output
 

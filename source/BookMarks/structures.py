@@ -87,6 +87,7 @@ The BookMarks Structures module maintains bookmark structures.
 """
 
 # System imports
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 # Project imports
@@ -109,10 +110,12 @@ class BookMark:
     """ A bookmark """
 
     def __init__(self, label, heading, href, add_date, icon=None):
-        self.label = label
-        self.heading = heading
-        self.scanned = False
-        self.attrs = {
+        self.label: str = label         #: BM string label
+        self.heading: str = heading     #: BM heading this BM belongs under
+        self._scanned: bool = False     #: BM has been scanned True/False
+        self._tested: bool = False      #: BM has been tested True/False
+        #: BM URL attributes
+        self.attrs: Dict[str, Any] = {
             'href': href,
             'add_date': add_date,
             'icon': icon,
@@ -121,10 +124,47 @@ class BookMark:
         self.href_urlparts = None
 
         # populate the following for ease of parsing later during reformat
-        self.scheme = None
-        self.hostname = None
-        self.path = None
+        #: URL scheme (http, https, etc)
+        self.scheme: str = None
+        #: URL hostname
+        self.hostname: str = None
+        self.path: str = None
         self.friendly_host_name = None
+
+    # ==========================================
+    # Class Properties
+    # ==========================================
+
+    @property
+    def scanned(self) -> bool:
+        """Property returning bookmark 'scanned' status
+
+        A bookmark is marked as 'scanned' during Analysis processing.
+        """
+        return self._scanned
+
+    @scanned.setter
+    def scanned(self, value: bool):
+        """Property setter - scanned"""
+        self._scanned = value
+
+    @property
+    def tested(self) -> bool:
+        """Property returning bookmark 'teste' status
+
+        A bookmark is marked as 'tested' when the URL has been verified
+        as being accessible.
+        """
+        return self._tested
+
+    @tested.setter
+    def tested(self, value: bool):
+        """Property setter - tested"""
+        self._tested = value
+
+    # ==========================================
+    # Class support functions
+    # ==========================================
 
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark

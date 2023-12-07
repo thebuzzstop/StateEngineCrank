@@ -83,13 +83,15 @@ class Analyze:
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
         #: bookmark menubar, populated as we parse the various sections
-        self.menubar_ = {section: {
-            topic: [] for topic in TheConfig.sections[section].keys()
-        } for section in TheConfig.sections}
+        self._menubar: Dict = {
+            section: {
+                topic: [] for topic in TheConfig.sections[section].keys()
+            } for section in TheConfig.sections
+        }
         # bookmarks that appear at the head of the bookmark menubar
-        self.menubar_['head']: List[BookMark] = []
+        self._menubar['head']: List[BookMark] = []
         # bookmarks that appear at the tail (end) of the bookmark menubar
-        self.menubar_['tail']: List[BookMark] = []
+        self._menubar['tail']: List[BookMark] = []
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
@@ -112,20 +114,20 @@ class Analyze:
 
         # scan bookmarks - head/tail items
         for site in TheConfig.menubar['head']:
-            self.scan_bookmarks_site(site, self.menubar_['head'], head=True)
+            self.scan_bookmarks_site(site, self._menubar['head'], head=True)
         for site in TheConfig.menubar['tail']:
-            self.scan_bookmarks_site(site, self.menubar_['tail'], tail=True)
+            self.scan_bookmarks_site(site, self._menubar['tail'], tail=True)
 
         # scan bookmarks in the order specified in the configuration file
         try:
             for section in TheConfig.scanning_order:
-                if section not in self.menubar_.keys():
+                if section not in self._menubar.keys():
                     logger.info('Skipping empty section: %s', section)
                     continue
-                for topic in self.menubar_[section].keys():
+                for topic in self._menubar[section].keys():
                     logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
-                    scan_list = self.menubar_[section][topic]
+                    scan_list = self._menubar[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
                 pass
         except Exception as e:
@@ -159,22 +161,23 @@ class Analyze:
                             break
 
         # add any unscanned bookmarks to the miscellaneous section
-        self.menubar_['misc']['misc'] = []
+        self._menubar['misc']['misc'] = []
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
             for bm in bm_value:
                 if not bm.scanned:
-                    self.menubar_['misc']['misc'].append(bm)
+                    self._menubar['misc']['misc'].append(bm)
                     bm.scanned = True
 
         self.delete_scanned_bookmarks()
         pass
 
     # =========================================================================
-    def menubar(self):
-        """ returns menubar constructed during analysis """
-        return self.menubar_
+    @property
+    def menubar(self) -> Dict:
+        """returns menubar constructed during analysis"""
+        return self._menubar
 
     # =========================================================================
     def scan_bookmarks_speed_dials_config(self):
@@ -183,13 +186,13 @@ class Analyze:
         # scan speed-dials in the order specified in the configuration file
         try:
             for section in TheConfig.speed_dial_scan_order:
-                if section not in self.menubar_.keys():
+                if section not in self._menubar.keys():
                     logger.info('Skipping empty section: %s', section)
                     continue
-                for topic in self.menubar_[section].keys():
+                for topic in self._menubar[section].keys():
                     logger.debug('Scanning: %s/%s', section, topic)
                     config_list = TheConfig.sections[section][topic]
-                    scan_list = self.menubar_[section][topic]
+                    scan_list = self._menubar[section][topic]
                     self.scan_bookmarks_section(config_list, scan_list)
         except Exception as e:
             logger.exception('UNHANDLED EXCEPTION', exc_info=e)
@@ -341,9 +344,9 @@ class Analyze:
                 # okay to process this BM
                 bm.label = site_label
                 scan_list.append(bm)
-                # always mark scanned when not parsing the "head" or "tail" sections
-                bm.scanned = not (head or tail) and not TheConfig.allow_multiple(bm)
-        pass
+                # mark scanned if not head or tail and multiple not allowed
+                if not (head or tail) and not TheConfig.allow_multiple(bm):
+                    bm.scanned = True
 
     # =========================================================================
     def scan_bookmarks_section(self, config_list, scan_list):

@@ -494,19 +494,22 @@ class MyHTMLParser(HTMLParser, ABC):
 
 
 if __name__ == '__main__':
-    """ Main application processing for BookMarks """
+    """Main application processing for BookMarks"""
 
-    logger.info(f'INIT ({__name__})')
-
+    # ------------------------------------------
     # initialization and setup
+    # ------------------------------------------
+    logger.info('INIT (%s)', __name__)
     arg_parser = ArgParser()
     config = CfgParser()
     html_parser = MyHTMLParser()
 
+    # ------------------------------------------
     # open bookmarks file and feed to the parser
+    # ------------------------------------------
     bookmarks = None
     try:
-        logger.info(f'Processing input file: {TheConfig.input_file}')
+        logger.info('Processing input file: %s', TheConfig.input_file)
         with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         html_parser.feed(bookmarks_html)
@@ -514,14 +517,18 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: Parse', exc_info=e)
 
+    # ------------------------------------------
     # analyze bookmarks just parsed
+    # ------------------------------------------
     analysis = None
     try:
         analysis = Analyze(bookmarks=bookmarks)
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
 
+    # ------------------------------------------
     # create bookmark output structure
+    # ------------------------------------------
     output = None
     try:
         output = Reformat(analysis).output
