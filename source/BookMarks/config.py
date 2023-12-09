@@ -55,23 +55,25 @@ class TheConfig:
 
     # configuration items initialized by config parser
     # :todo: add type hints
-    config = None                   #: configuration items
-    headings = None                 #: headings declared in config_ford.ini
-    noheadings = None               #: section.subsection combinations not to have a heading
-    menubar = None                  #: menubar constructed by config parser
-    scanning_order = None           #: order in which scanning processing will occur
-    speed_dial_scan_order = None    #: order to scan speed-dials
-    speed_dial_output_order = None  #: order to output speed-dials
-    sections = None                 #: menutab sections (topic groups)
-    head = None                     #: menutab 'head' section
-    tail = None                     #: menutab 'tail' section
-    capitalized = None              #: menubar capitalized label words
-    config_file = None              #: configuration file to be read
-    input_file = None               #: bookmarks input file to be processed
-    output_file = None              #: bookmarks output file (after processing)
-    debug: bool = False             #: True/False - debug output enabled
-    verbosity: bool = False         #: True/False - verbose output enabled
-    verbosity_level: int = 0        #: verbosity level
+    config = None                       #: configuration items
+    headings = None                     #: headings declared in config_ford.ini
+    noheadings = None                   #: section.subsection combinations not to have a heading
+    menubar = None                      #: menubar constructed by config parser
+    scanning_order = None               #: order in which scanning processing will occur
+    speed_dial_scan_order = None        #: order to scan speed-dials
+    speed_dial_output_order = None      #: order to output speed-dials
+    sections = None                     #: menutab sections (topic groups)
+    head = None                         #: menutab 'head' section
+    tail = None                         #: menutab 'tail' section
+    capitalized = None                  #: menubar capitalized label words
+    config_file = None                  #: configuration file to be read
+    input_file = None                   #: bookmarks input file to be processed
+    output_file = None                  #: bookmarks output file (after processing)
+    debug: bool = False                 #: True/False - debug output enabled
+    verbosity: bool = False             #: True/False - verbose output enabled
+    verbosity_level: int = 0            #: verbosity level
+    verify_urls: bool = False           #: verify URL's are reachable as they are processed
+    request_get_timeout: float = 0.5    #: default timeout for verifying URL's
 
     #: specific local hosts (private network) - key == name
     local_hosts_by_name: Dict[str, str] = {}
@@ -155,6 +157,8 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("-c", "--config", type=str, help="configuration file")
         parser.add_argument("-i", "--input", type=str, help="bookmarks input html file")
         parser.add_argument("-o", "--output", type=str, help="bookmarks output html file")
+        parser.add_argument("-V", "--verify", help="verify URL's during processing", action="store_true")
+        parser.add_argument("--timeout", type=float, help="timeout in seconds (float) for verifying URL's")
 
         # parse command line arguments
         args = parser.parse_args()
@@ -170,6 +174,10 @@ class ArgParser(argparse.ArgumentParser):
             TheConfig.input_file = self.substitute_tilde(args.input)
         if args.output:
             TheConfig.output_file = self.substitute_tilde(args.output)
+        if args.verify:
+            TheConfig.verify_urls = True
+        if args.timeout:
+            TheConfig.request_get_timeout = args.timeout
 
     @staticmethod
     def substitute_tilde(path: str):

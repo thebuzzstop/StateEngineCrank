@@ -23,9 +23,9 @@ class Reformat:
     def __init__(self, analysis: Analyze):
         """ Analyze constructor
 
-            :param analysis: Analyze object after processing
+        :param analysis: Analyze object after processing
         """
-        logger.info(f'INIT ({__name__})')
+        logger.info('INIT (%s)', __name__)
 
         self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration

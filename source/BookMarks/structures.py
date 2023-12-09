@@ -257,7 +257,7 @@ class BookMarks:
 
     # =================================================================
     def __init__(self):
-        logger.info(f'INIT ({__name__})')
+        logger.info('INIT (%s)', __name__)
 
         self.level = 0  #: Current level
         self.heading = None  #: Heading for current level
@@ -395,4 +395,4 @@ class BookMarks:
         :param text: debug text to display
         """
         level_plus = '+' * self.level
-        logger.debug(f'{self.level:02d}{level_plus} {clean_text(text)}')
+        logger.debug('%02d%s %s', self.level, level_plus, clean_text(text))

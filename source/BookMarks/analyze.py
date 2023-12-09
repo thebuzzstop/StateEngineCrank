@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple
 # Project imports
 from config import TheConfig
 from structures import BookMark, BookMarks, StructuresList as StructuresList
+from verify_urls import VerifyUrls
 from logger import Logger, clean as logger_clean
 logger = Logger(name=__name__).logger
 
@@ -48,10 +49,13 @@ class Analyze:
     #: characters to strip from strings when parsing
     strip_chars = '~!@#$%^&*()_+-=`:;<>,.?/[]{}|"\"\\'
 
+    #: quell SonarLint
+    unhandled_exception: str = 'UNHANDLED EXCEPTION'
+
     def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
 
-        logger.info(f'INIT ({__name__})')
+        logger.info('INIT (%s)', __name__)
 
         self._bookmarks: BookMarks = bookmarks
         self.bookmarks: Dict[str, List] = bookmarks.bookmarks
@@ -82,6 +86,9 @@ class Analyze:
         self.the_config = TheConfig
         #: populated as we discover various sites
         self.host_sites = {section: [] for section in TheConfig.sections}
+        #: URL verification results (only record errors)
+        self._url_verify_errors: Dict[str, str] = {}
+
         #: bookmark menubar, populated as we parse the various sections
         self._menubar: Dict = {
             section: {
@@ -92,6 +99,8 @@ class Analyze:
         self._menubar['head']: List[BookMark] = []
         # bookmarks that appear at the tail (end) of the bookmark menubar
         self._menubar['tail']: List[BookMark] = []
+        #: bookmarks with bad URL's that cannot be reached
+        self._bad_bookmarks: List[BookMark] = []
 
         self.scan_bookmarks()
         self.delete_empty_bookmarks()
@@ -113,27 +122,40 @@ class Analyze:
         self.scan_bookmarks_speed_dials_config()
 
         # scan bookmarks - head/tail items
-        for site in TheConfig.menubar['head']:
-            self.scan_bookmarks_site(site, self._menubar['head'], head=True)
-        for site in TheConfig.menubar['tail']:
-            self.scan_bookmarks_site(site, self._menubar['tail'], tail=True)
+        self.scan_bookmarks_heads_tails()
 
-        # scan bookmarks in the order specified in the configuration file
-        try:
-            for section in TheConfig.scanning_order:
-                if section not in self._menubar.keys():
-                    logger.info('Skipping empty section: %s', section)
-                    continue
-                for topic in self._menubar[section].keys():
-                    logger.debug('Scanning: %s/%s', section, topic)
-                    config_list = TheConfig.sections[section][topic]
-                    scan_list = self._menubar[section][topic]
-                    self.scan_bookmarks_section(config_list, scan_list)
-                pass
-        except Exception as e:
-            logger.exception('UNHANDLED EXCEPTION', exc_info=e)
+        # scan bookmarks - according to config file
+        self.scan_bookmarks_per_config()
 
-        # remove any mobile bookmarks if a desktop site exists
+        self.remove_mobile_bookmark_if_desktop_exists()
+        self.add_unscanned_to_misc()
+        self.delete_scanned_bookmarks()
+
+        # ====================================================================
+        # Verify URL's if requested
+        # ====================================================================
+        if TheConfig.verify_urls:
+            self.verify_urls()
+
+    @property
+    def url_verify_errors(self) -> Dict[str, str]:
+        return self._url_verify_errors
+
+    def verify_urls(self):
+        v = VerifyUrls()
+        logger.info('Verify HostNames')
+        bad_urls = v.verify_url_list(self.hostnames)
+        pass
+        logger.info('Verify Mobile BookMarks')
+        # v.verify_url_list(self.mobile_bookmarks)
+        logger.info('Verify MenuBar BookMarks')
+        # v.verify_url_list(self.menubar_bookmarks)
+        logger.info('Verify localhost BookMarks')
+        # v.verify_url_list(self.localhost_bookmarks)
+
+    # =========================================================================
+    def remove_mobile_bookmark_if_desktop_exists(self):
+        """Scan bookmarks and remove mobile BM if desktop BM exists"""
         mobile_bookmark_values = len(self.mobile_bookmarks)
         for mobile_index in range(mobile_bookmark_values, 0, -1):
             bm_mobile = self.mobile_bookmarks[mobile_index - 1]
@@ -160,7 +182,26 @@ class Analyze:
                             del self.mobile_bookmarks[mobile_index - 1]
                             break
 
-        # add any unscanned bookmarks to the miscellaneous section
+    # =========================================================================
+    def scan_bookmarks_per_config(self):
+        """scan bookmarks in the order specified in the configuration file"""
+        try:
+            for section in TheConfig.scanning_order:
+                self.scan_bookmarks_section_config_order(section)
+        except Exception as e:
+            logger.exception(self.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    def scan_bookmarks_heads_tails(self):
+        """scan heads/tails bookmark sections"""
+        for site in TheConfig.menubar['head']:
+            self.scan_bookmarks_site(site, self._menubar['head'], head=True)
+        for site in TheConfig.menubar['tail']:
+            self.scan_bookmarks_site(site, self._menubar['tail'], tail=True)
+
+    # =========================================================================
+    def add_unscanned_to_misc(self):
+        """add any unscanned bookmarks to the miscellaneous section"""
         self._menubar['misc']['misc'] = []
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
@@ -169,9 +210,6 @@ class Analyze:
                 if not bm.scanned:
                     self._menubar['misc']['misc'].append(bm)
                     bm.scanned = True
-
-        self.delete_scanned_bookmarks()
-        pass
 
     # =========================================================================
     @property
@@ -182,21 +220,28 @@ class Analyze:
     # =========================================================================
     def scan_bookmarks_speed_dials_config(self):
         """scan bookmarks for config designated speed-dials"""
-
         # scan speed-dials in the order specified in the configuration file
         try:
             for section in TheConfig.speed_dial_scan_order:
-                if section not in self._menubar.keys():
-                    logger.info('Skipping empty section: %s', section)
-                    continue
-                for topic in self._menubar[section].keys():
-                    logger.debug('Scanning: %s/%s', section, topic)
-                    config_list = TheConfig.sections[section][topic]
-                    scan_list = self._menubar[section][topic]
-                    self.scan_bookmarks_section(config_list, scan_list)
+                self.scan_bookmarks_section_config_order(section)
         except Exception as e:
             logger.exception('UNHANDLED EXCEPTION', exc_info=e)
         pass
+
+    # =========================================================================
+    def scan_bookmarks_section_config_order(self, section):
+        """scan bookmark section in configuration file order
+
+        :param section: Config section to scan
+        """
+        if section not in self._menubar.keys():
+            logger.info('Skipping empty section: %s', section)
+            return
+        for topic in self._menubar[section].keys():
+            logger.debug('Scanning: %s/%s', section, topic)
+            config_list = TheConfig.sections[section][topic]
+            scan_list = self._menubar[section][topic]
+            self.scan_bookmarks_section(config_list, scan_list)
 
     # =========================================================================
     def scan_bookmarks_speed_dials_current(self):
@@ -326,7 +371,7 @@ class Analyze:
             for bm in bm_value:
                 bm_hostname, bm_path, bm_site_host = parse_bm(bm, site_host)
 
-                logger.debug(f'BM: hostname:{bm_hostname}  path:{bm_path}  site_host:{bm_site_host}')
+                logger.debug('BM: hostname:%s path:%s site_host:%s', bm_hostname, bm_path, bm_site_host)
 
                 # only process 'bm' if hostname is not empty
                 if bm_hostname is None or not len(bm_hostname):
@@ -478,7 +523,7 @@ class Analyze:
     def delete_empty_bookmarks(self):
         """ delete any empty bookmarks """
         for bm_key in self.empty_bookmarks:
-            logger.info(f'Deleting {logger_clean(bm_key)}')
+            logger.info('Deleting %s', logger_clean(bm_key))
             if bm_key not in self.deleted_bookmarks:
                 self.deleted_bookmarks.append(bm_key)
             del self.bookmarks[bm_key]
@@ -553,4 +598,4 @@ class Analyze:
                         for host in TheConfig.sections[section][key]:
                             if host in hostname and hostname not in self.host_sites[section]:
                                 self.host_sites[section].append(hostname)
-                                logger.debug(f'{section}: {host}/{hostname}')
+                                logger.debug('%s: %s/%s', section, host, hostname)
