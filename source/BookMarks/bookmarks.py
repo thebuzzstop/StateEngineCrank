@@ -531,7 +531,7 @@ if __name__ == '__main__':
     # ------------------------------------------
     output = None
     try:
-        output = Reformat(analysis).output
+        output = Reformat().output
         logger.info('Creating output file: %s', TheConfig.output_file)
         with open(TheConfig.output_file, 'w') as file:
             for s in output:
