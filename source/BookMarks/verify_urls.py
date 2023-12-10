@@ -1,11 +1,13 @@
 """BookMarks Verify URL's Module"""
 
 # System imports
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import requests, urllib3
 
 # Project imports
 from config import TheConfig
+from analyze import Analyze
+from structures import BookMark
 from logger import Logger
 logger = Logger(name=__name__).logger
 
@@ -18,6 +20,31 @@ class VerifyUrls:
     def __init__(self):
         """VerifyUrls constructor"""
         logger.info('INFO (%s)', __name__)
+
+        #: URL verification results (only record errors)
+        self._url_verify_errors: Dict[str, str] = {}
+    @property
+    def url_verify_errors(self) -> Dict[str, str]:
+        """Property returning dictionary of bad URL's"""
+        return self._url_verify_errors
+
+    def verify_urls(self):
+        """Function creating a dictionary of bad URL's"""
+        logger.info('Verify HostNames')
+        for bad_url, error in self.verify_url_list(Analyze.hostnames()):
+            self._url_verify_errors[bad_url] = error
+
+        logger.info('Verify Mobile BookMarks')
+        for bad_url, error in self.verify_bm_list(Analyze.mobile_bookmarks()):
+            self._url_verify_errors[bad_url] = error
+
+        logger.info('Verify MenuBar BookMarks')
+        for bad_url, error in self.verify_url_list(Analyze.menubar_bookmarks()):
+            self._url_verify_errors[bad_url] = error
+
+        logger.info('Verify localhost BookMarks')
+        for bad_url, error in self.verify_url_list(Analyze.localhost_bookmarks()):
+            self._url_verify_errors[bad_url] = error
 
     def verify_url_list(self, url_list: List[str]) -> List[Tuple[str, str]]:
         """Verify a list of URL's in string form
@@ -34,7 +61,16 @@ class VerifyUrls:
                 url_status.append((url, message))
         return url_status
 
-        # =========================================================================
+    def verify_bm_list(self, bm_list: List[BookMark]):
+        """Verify a list of URL's in BookMark form
+
+        Return a list of Tuples of failing URL's and associated error.
+
+        :param bm_list: List of URL's (BookMarks)
+        :returns: List[Tuple[str, str]]
+        """
+        url_status: List[Tuple[str, str]] = []
+        return url_status
 
     def verify_url(self, url: str) -> Tuple[bool, str]:
         """Verify that a URL is reachable
@@ -58,7 +94,7 @@ class VerifyUrls:
         # =============================
         # requests module exceptions
         except requests.exceptions.ConnectionError:
-            return False, 'Request.ConnectionError'
+            return False, 'requests.ConnectionError'
         except requests.exceptions.ReadTimeout:
             return False, 'requests.ReadTimeout'
         except requests.exceptions.TooManyRedirects:
