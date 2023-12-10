@@ -73,7 +73,7 @@ class TheConfig:
     verbosity: bool = False             #: True/False - verbose output enabled
     verbosity_level: int = 0            #: verbosity level
     verify_urls: bool = False           #: verify URL's are reachable as they are processed
-    request_get_timeout: float = 0.5    #: default timeout for verifying URL's
+    request_get_timeout: float = 0.25   #: default timeout for verifying URL's
 
     #: specific local hosts (private network) - key == name
     local_hosts_by_name: Dict[str, str] = {}
