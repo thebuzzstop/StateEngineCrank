@@ -20,17 +20,13 @@ logger = Logger(name=__name__).logger
 class Reformat:
     """ Class to reformat bookmarks """
 
-    def __init__(self, analysis: Analyze):
-        """ Analyze constructor
-
-        :param analysis: Analyze object after processing
-        """
+    def __init__(self):
+        """ Reformat constructor"""
         logger.info('INIT (%s)', __name__)
 
-        self.analysis = analysis
         self.headings = TheConfig.headings      #: users headings configuration
         self.menubar_spec = TheConfig.menubar   #: user menubar configuration
-        self.menubar_data = analysis.menubar    #: menubar scanned data
+        self.menubar_data = Analyze.menubar()   #: menubar scanned data
         self.indent = 0                         #: level to indent
         self._output: List[str] = [TheConfig.HEADER_HTML]  #: start with bookmarks file header
 
@@ -98,13 +94,13 @@ class Reformat:
         if section == 'www':
             if subsection == 'hosts':
                 # create a list of all hosts (domains)
-                sorted_list = sorted(self.analysis.domains)
+                sorted_list = sorted(Analyze.domains())
             elif subsection == 'types':
                 # create a list of all host sites
-                sorted_list = sorted(self.analysis.domain_types)
+                sorted_list = sorted(Analyze.domain_types())
             elif subsection == 'protocols':
                 # create a list of protocols
-                sorted_list = sorted(self.analysis.schemes)
+                sorted_list = sorted(Analyze.schemes())
             else:
                 raise ValueError('Unknown subsection: %s', subsection)
             # write out sorted list
