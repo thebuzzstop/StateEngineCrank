@@ -24,11 +24,11 @@ class Reformat:
         """ Reformat constructor"""
         logger.info('INIT (%s)', __name__)
 
-        self.headings = TheConfig.headings      #: users headings configuration
-        self.menubar_spec = TheConfig.menubar   #: user menubar configuration
-        self.menubar_data = Analyze.menubar()   #: menubar scanned data
-        self.indent = 0                         #: level to indent
-        self._output: List[str] = [TheConfig.HEADER_HTML]  #: start with bookmarks file header
+        self.headings = TheConfig.headings                  #: users headings configuration
+        self.menubar_spec = TheConfig.menubar               #: user menubar configuration
+        self.menubar_data = Analyze.menubar_bookmarks()     #: menubar scanned data
+        self.indent = 0                                     #: level to indent
+        self._output: List[str] = [TheConfig.HEADER_HTML]   #: start with bookmarks file header
 
         #: date stamp for all html entities we create
         self.datestamp = int(datetime.datetime.now().timestamp())

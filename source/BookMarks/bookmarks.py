@@ -75,6 +75,7 @@ from StateEngineCrank.modules.PyState import StateMachine
 from config import ArgParser, CfgParser, TheConfig
 from structures import BookMarks
 from analyze import Analyze
+from verify_urls import VerifyUrls
 from reformat import Reformat
 from exceptions import MyException
 
@@ -520,11 +521,18 @@ if __name__ == '__main__':
     # ------------------------------------------
     # analyze bookmarks just parsed
     # ------------------------------------------
-    analysis = None
     try:
-        analysis = Analyze(bookmarks=bookmarks)
+        Analyze(bookmarks=bookmarks)
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
+
+    # ------------------------------------------
+    # verify bookmarks just analyzed
+    # ------------------------------------------
+    try:
+        VerifyUrls().verify_urls()
+    except Exception as e:
+        logger.exception('UNHANDLED EXCEPTION: VerifyUrls', exc_info=e)
 
     # ------------------------------------------
     # create bookmark output structure

@@ -106,7 +106,7 @@ class Analyze:
         return cls._domain_types
 
     @classmethod
-    def menubar(cls) -> Dict[str, Union[Dict[str, List[BookMark]], List[BookMark]]]:
+    def menubar_bookmarks(cls) -> Dict[str, Union[Dict[str, List[BookMark]], List[BookMark]]]:
         """Function returning data structure of menubar bookmarks
 
         Top level dictionary indices are strings with elements consisting of
