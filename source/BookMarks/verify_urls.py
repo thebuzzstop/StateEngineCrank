@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 import requests, urllib3
 
 # Project imports
+from defines import UrlType
 from config import TheConfig
 from analyze import Analyze
 from structures import BookMark
@@ -19,6 +20,7 @@ class VerifyUrls:
     #: quell SonarLint
     bad_urls_fmt: str = "BAD URL's: %d"
 
+
     def __init__(self):
         """VerifyUrls constructor"""
         logger.info('INFO (%s)', __name__)
@@ -27,86 +29,124 @@ class VerifyUrls:
         self.bad_urls_counter: int = 0
 
         #: Bad URL's status - used by low-level functions
-        self.bad_urls_list: List[Tuple[str, str]] = []
+        self.bad_urls_dict: Dict[UrlType, List[Tuple[str, str, str]]] = {
+            UrlType.HOSTNAME: [],
+            UrlType.MOBILE: [],
+            UrlType.MENUBAR: [],
+            UrlType.LOCALHOST: [],
+        }
 
-        #: URL verification results (only record errors)
-        self._url_verify_errors: Dict[str, str] = {}
-
-    @property
-    def url_verify_errors(self) -> Dict[str, str]:
-        """Property returning dictionary of bad URL's"""
-        return self._url_verify_errors
-
+    # =========================================================================
     def verify_urls(self):
         """Function creating a dictionary of bad URL's"""
         logger.info('Verify HostNames')
-        self.verify_url_list(Analyze.hostnames())
+        self.verify_url_list(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
         logger.info('Verify Mobile BookMarks')
-        self.verify_bm_list(Analyze.mobile_bookmarks())
+        self.verify_bm_list(url_type=UrlType.MOBILE, bm_list=Analyze.mobile_bookmarks())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
         logger.info('Verify MenuBar BookMarks')
-        self.verify_url_dict(Analyze.menubar_bookmarks())
+        self.verify_url_dict(url_type=UrlType.MENUBAR, url_dict=Analyze.menubar_bookmarks())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
         logger.info('Verify localhost BookMarks')
-        self.verify_url_dict(Analyze.localhost_bookmarks())
+        self.verify_url_dict(url_type=UrlType.LOCALHOST, url_dict=Analyze.localhost_bookmarks())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
-    def verify_url_list(self, url_list: List[str]) -> None:
+        pass
+
+    # =========================================================================
+    def prune_bad_urls(self) -> None:
+        """Function to prune (delete) BookMark's with bad URL's"""
+        logger.info("Prune bad URL's")
+        self.prune_bad_hosts()
+        self.prune_bad_mobile()
+        self.prune_bad_localhost()
+        self.prune_bad_menubar()
+
+    def prune_bad_hosts(self) -> None:
+        """Function to remove bookmarks with bad hosts"""
+        logger.info("Prune bad hosts")
+
+    def prune_bad_menubar(self) -> None:
+        """Function to remove bookmarks from menubar"""
+        logger.info("Prune menubar bookmarks")
+
+    def prune_bad_mobile(self) -> None:
+        """Function to remove bad mobile bookmarks"""
+        logger.info("Prune mobile bookmarks")
+
+    def prune_bad_localhost(self) -> None:
+        """Function to remove bad localhost bookmarks"""
+        logger.info("Prune localhost bookmarks")
+
+    # =========================================================================
+    def verify_url_list(self, url_type: UrlType, url_list: List[str]) -> None:
         """Verify a list of URL's
 
+        :param url_type: Type of URL being verified
         :param url_list: List of URL's (strings) to verify
         """
         for url in url_list:
-            if not self.verify_url(url):
+            if not self.verify_url(url_type, url):
                 break
 
-    def verify_url_dict(self, url_dict: Dict) -> None:
+    # =========================================================================
+    def verify_url_dict(self, url_type: UrlType, url_dict: Dict) -> None:
         """Verify a dictionary of URL's
 
         NB: A dictionary of URL's has strings as indices and may have either
             a List or Dict as a value.
 
+        :param url_type: Type of URL being verified
         :param url_dict: Dictionary to verify
         """
         for index, value in url_dict.items():
             if isinstance(value, List):
-                self.verify_bm_list(value)
+                self.verify_bm_list(url_type, value)
             elif isinstance(value, Dict):
-                self.verify_url_dict(value)
+                self.verify_url_dict(url_type, value)
             else:
                 raise ValueError('UNHANDLED URL DICTIONARY TYPE: %s, %s', index, value)
-        pass
 
-    def verify_bm_list(self, bm_list: List[BookMark]) -> None:
+    # =========================================================================
+    def verify_bm_list(self, url_type: UrlType, bm_list: List[BookMark]) -> None:
         """Verify a list of URL's in BookMark form
 
+        :param url_type: Type of URL being verified
         :param bm_list: List of BookMarks
         """
         for bm in bm_list:
             bm_url = f'{bm.scheme}://{bm.hostname}{bm.path}'
-            if not self.verify_url(bm_url):
+            if not self.verify_url(url_type, url=bm_url, url_hostname=bm.hostname):
                 break
 
-    def verify_url(self, url: str) -> bool:
+    # =========================================================================
+    def verify_url(self, url_type: UrlType, url: str, url_hostname: str = None) -> bool:
         """Verify URL and return False if caller should abort looping
 
+        :param url_type: Type of URL being verified
         :param url: URL to verify
+        :param url_hostname: URL HostName for bookkeeping
         :return: abort_looping - boolean - True/False
         """
+        if not url_hostname:
+            url_hostname = url
         status, message = self._verify_url(url)
         if not status:
             self.bad_urls_counter += 1
-            self.bad_urls_list.append((url, message))
+            self.bad_urls_dict[url_type].append((url_hostname, url, message))
             # cut testing short if debugging is enabled
             if TheConfig.debug and self.bad_urls_counter > 5:
                 logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
                 return False
         return True
 
+    # =========================================================================
+    # Low-level URL verify function
+    # =========================================================================
     def _verify_url(self, url: str) -> Tuple[bool, str]:
         """Verify that a URL is reachable
 

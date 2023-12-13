@@ -530,7 +530,10 @@ if __name__ == '__main__':
     # verify bookmarks just analyzed
     # ------------------------------------------
     try:
-        VerifyUrls().verify_urls()
+        verify = VerifyUrls()
+        verify.verify_urls()
+        if TheConfig.verify_prune:
+            verify.prune_bad_urls()
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: VerifyUrls', exc_info=e)
 

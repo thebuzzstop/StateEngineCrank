@@ -73,6 +73,7 @@ class TheConfig:
     verbosity: bool = False             #: True/False - verbose output enabled
     verbosity_level: int = 0            #: verbosity level
     verify_urls: bool = False           #: verify URL's are reachable as they are processed
+    verify_prune: bool = False          #: prune bad URL's and bookmarks
     request_get_timeout: float = 0.25   #: default timeout for verifying URL's
 
     #: specific local hosts (private network) - key == name
@@ -158,6 +159,7 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("-i", "--input", type=str, help="bookmarks input html file")
         parser.add_argument("-o", "--output", type=str, help="bookmarks output html file")
         parser.add_argument("-V", "--verify", help="verify URL's during processing", action="store_true")
+        parser.add_argument("-P", "--prune", help="prune bad URL's during processing", action="store_true")
         parser.add_argument("--timeout", type=float, help="timeout in seconds (float) for verifying URL's")
 
         # parse command line arguments
@@ -176,6 +178,8 @@ class ArgParser(argparse.ArgumentParser):
             TheConfig.output_file = self.substitute_tilde(args.output)
         if args.verify:
             TheConfig.verify_urls = True
+        if args.prune:
+            TheConfig.verify_prune = True
         if args.timeout:
             TheConfig.request_get_timeout = args.timeout
 
