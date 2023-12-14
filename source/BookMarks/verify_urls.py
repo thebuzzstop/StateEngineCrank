@@ -36,6 +36,9 @@ class VerifyUrls:
             UrlType.LOCALHOST: [],
         }
 
+        #: Bad URL Hostnames - used to bypass testing BM's for bad HostNames
+        self.bad_hostnames: List[str] = []
+
     # =========================================================================
     def verify_urls(self):
         """Function creating a dictionary of bad URL's"""
@@ -55,24 +58,22 @@ class VerifyUrls:
         self.verify_url_dict(url_type=UrlType.LOCALHOST, url_dict=Analyze.localhost_bookmarks())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
-        pass
-
     # =========================================================================
     def prune_bad_urls(self) -> None:
         """Function to prune (delete) BookMark's with bad URL's"""
         logger.info("Prune bad URL's")
-        self.prune_bad_hosts()
-        self.prune_bad_mobile()
-        self.prune_bad_localhost()
         self.prune_bad_menubar()
-
-    def prune_bad_hosts(self) -> None:
-        """Function to remove bookmarks with bad hosts"""
-        logger.info("Prune bad hosts")
+        self.prune_bad_localhost()
+        self.prune_bad_mobile()
+        self.prune_bad_hosts()
 
     def prune_bad_menubar(self) -> None:
         """Function to remove bookmarks from menubar"""
         logger.info("Prune menubar bookmarks")
+
+    def prune_bad_hosts(self) -> None:
+        """Function to remove bookmarks with bad hosts"""
+        logger.info("Prune bad hosts")
 
     def prune_bad_mobile(self) -> None:
         """Function to remove bad mobile bookmarks"""
@@ -127,17 +128,32 @@ class VerifyUrls:
     def verify_url(self, url_type: UrlType, url: str, url_hostname: str = None) -> bool:
         """Verify URL and return False if caller should abort looping
 
+        NB: We will not attempt to verify a URL associated with a known bad
+        hostname.
+
         :param url_type: Type of URL being verified
         :param url: URL to verify
         :param url_hostname: URL HostName for bookkeeping
         :return: abort_looping - boolean - True/False
         """
+        # accommodate callers who do not specify a hostname
         if not url_hostname:
             url_hostname = url
-        status, message = self._verify_url(url)
+        # see if this is a known bad hostname
+        if url_hostname in self.bad_hostnames:
+            # don't bother checking if hostname is in the bad hostnames list
+            status, message = False, "BAD HOSTNAME"
+        else:
+            # all clear to verify status of this URL
+            status, message = self._verify_url(url)
         if not status:
+            # keep track of the number of bad URL's
             self.bad_urls_counter += 1
+            # enter URL info into bad URL's dictionary
             self.bad_urls_dict[url_type].append((url_hostname, url, message))
+            # record bad URL hostname separately
+            if url_type == UrlType.HOSTNAME:
+                self.bad_hostnames.append(url_hostname)
             # cut testing short if debugging is enabled
             if TheConfig.debug and self.bad_urls_counter > 5:
                 logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
@@ -154,11 +170,16 @@ class VerifyUrls:
         :return: Boolean True/False == Reachable/NotReachable
         """
         logger.debug('VerifyURL: %s', url)
+        # prefix URL with HTTPS protocol if no protocol specified
+        if url.startswith('http'):
+            url_test = url
+        else:
+            url_test = f'https://{url}'
 
         # ==========================
         # try opening the url
         try:
-            requests.get(url=f'https://{url}', timeout=TheConfig.request_get_timeout)
+            requests.get(url=f'{url_test}', timeout=TheConfig.request_get_timeout)
             return True, ''
 
         # =============================
@@ -189,5 +210,5 @@ class VerifyUrls:
         # =============================
         # unhandled/unknown exception
         except Exception as e:
-            logger.exception('%s: %s', self.unhandled_exception, url, exc_info=e)
+            logger.exception('%s: %s', self.unhandled_exception, url_test, exc_info=e)
             return False, self.unhandled_exception
