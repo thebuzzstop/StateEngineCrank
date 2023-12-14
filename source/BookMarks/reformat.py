@@ -104,6 +104,7 @@ class Reformat:
             else:
                 raise ValueError('Unknown subsection: %s', subsection)
             # write out sorted list
+            # :FixMe: Writing 'www' section is broken, subsections are empty
             for item in sorted_list:
                 text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
                 self._output.append('    ' * self.indent + text)
