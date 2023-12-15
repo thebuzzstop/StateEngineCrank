@@ -87,7 +87,7 @@ The BookMarks Structures module maintains bookmark structures.
 """
 
 # System imports
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 # Project imports
@@ -106,10 +106,23 @@ class StructuresList:
         self.list = []
 
 
+#: BookMark global variable - current BookMark ID
+_bm_id: int = 0
+
+def bm_id() -> int:
+    """BM ID generator function
+
+    Returns unique integer ID for each call.
+    """
+    global _bm_id
+    _bm_id += 1
+    return _bm_id
+
 class BookMark:
     """ A bookmark """
 
     def __init__(self, label, heading, href, add_date, icon=None):
+        self.id: int = bm_id()          #: BM unique ID
         self.label: str = label         #: BM string label
         self.heading: str = heading     #: BM heading this BM belongs under
         self._scanned: bool = False     #: BM has been scanned True/False
@@ -125,15 +138,16 @@ class BookMark:
 
         # populate the following for ease of parsing later during reformat
         #: URL scheme (http, https, etc)
-        self.scheme: str = None
+        self.scheme: Optional[str] = None
         #: URL hostname
-        self.hostname: str = None
-        self.path: str = None
-        self.friendly_host_name = None
+        self.hostname: Optional[str] = None
+        self.path: Optional[str] = None
+        self.friendly_host_name: Optional[str] = None
 
     # ==========================================
     # Class Properties
     # ==========================================
+
 
     @property
     def scanned(self) -> bool:
@@ -252,11 +266,24 @@ class HeadingLabels:
             self.labels[heading.label].add_label(heading.level, heading.heading_stack_text)
 
 
-class BookMarks:
+class Borg:
+    """There can only be one"""
+
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class BookMarks(Borg):
     """ Class implementing a multi-level list """
 
     # =================================================================
     def __init__(self):
+        Borg.__init__(self)
+        if self._shared_state:
+            return
+
         logger.info('INIT (%s)', __name__)
 
         self.level = 0  #: Current level
@@ -347,7 +374,7 @@ class BookMarks:
         if self.bookmark:
             raise MyException(f'Overwriting bookmark {self.bookmark}')
         self.bookmark = BookMark(label=None, heading=None, href=None, add_date=None, icon=None)
-        self.debug('BookMark: NEW')
+        self.debug(f'BookMark: {self.bookmark.id:04d} NEW')
 
     # =================================================================
     def add_bookmark(self, label, attrs):
@@ -356,7 +383,7 @@ class BookMarks:
         :param label: Bookmark label
         :param attrs: Bookmark attrs
         """
-        self.debug(f'BookMark: {label}:{attrs}')
+        self.debug(f'BookMark: {self.bookmark.id:04d} {label}:{attrs}')
         self.bookmark.label = label
         self.bookmark.heading = self.heading
         # process all attributes passed to us
@@ -396,3 +423,34 @@ class BookMarks:
         """
         level_plus = '+' * self.level
         logger.debug('%02d%s %s', self.level, level_plus, clean_text(text))
+
+    def get_bm_by_id(self, requested_bm_id: int) -> Optional[BookMark]:
+        """Retrieve a BookMark by its unique BM ID
+
+        :param requested_bm_id: BookMark ID to retrieve
+        :return: Requested BookMark (or None if not found)
+        """
+        # search through all headings
+        for heading in list(self.headings_dict.keys()):
+            structure_list: StructuresList = self.headings_dict[heading]
+            for bm in structure_list.list:
+                if bm.id == requested_bm_id:
+                    return bm
+        return None
+
+    def delete_bookmark_by_id(self, delete_bm_id: int):
+        """Function to delete a BookMark identified by BM ID
+
+        :param delete_bm_id: BookMark ID to delete
+        """
+        # search through all headings
+        for heading in list(self.headings_dict.keys()):
+            # search through all bookmarks under each heading
+            structure_list: StructuresList = self.headings_dict[heading]
+            for index in range(len(structure_list.list)):
+                bm: BookMark = structure_list.list[index]
+                if bm.id == delete_bm_id:
+                    logger.debug('DeleteBM: %04d %s', bm.id, bm.attrs['href'])
+                    del structure_list.list[index]
+                    return
+        raise MyException(text=f'BM_ID: {delete_bm_id} NOT FOUND')
