@@ -1,16 +1,24 @@
 """BookMarks Verify URL's Module"""
 
 # System imports
-from typing import Dict, List, Tuple
+from typing import Dict, List, NamedTuple, Tuple
 import requests, urllib3
 
 # Project imports
 from defines import UrlType
 from config import TheConfig
 from analyze import Analyze
-from structures import BookMark
+from structures import BookMark, BookMarks
 from logger import Logger
 logger = Logger(name=__name__).logger
+
+class BadUrlStatus(NamedTuple):
+    """NamedTuple declaration for URL bad status"""
+    hostname: str   #: URL hostname
+    url: str        #: URL with path (if any)
+    error: str      #: URL error status message
+    bm_id: int      #: URL BookMark ID (if available)
+
 
 class VerifyUrls:
     """Class to verify reachability of URL's"""
@@ -25,11 +33,14 @@ class VerifyUrls:
         """VerifyUrls constructor"""
         logger.info('INFO (%s)', __name__)
 
+        #: BookMarks access
+        self.bookmarks: BookMarks = BookMarks()
+
         #: Counter of bad URL's
         self.bad_urls_counter: int = 0
 
         #: Bad URL's status - used by low-level functions
-        self.bad_urls_dict: Dict[UrlType, List[Tuple[str, str, str]]] = {
+        self.bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
             UrlType.HOSTNAME: [],
             UrlType.MOBILE: [],
             UrlType.MENUBAR: [],
@@ -70,6 +81,10 @@ class VerifyUrls:
     def prune_bad_menubar(self) -> None:
         """Function to remove bookmarks from menubar"""
         logger.info("Prune menubar bookmarks")
+        # remove any BM's with a known bad hostname
+        for _bm in self.bad_urls_dict[UrlType.MENUBAR]:
+            if _bm.hostname in self.bad_hostnames:
+                self.bookmarks.delete_bookmark_by_id(_bm.bm_id)
 
     def prune_bad_hosts(self) -> None:
         """Function to remove bookmarks with bad hosts"""
@@ -121,11 +136,11 @@ class VerifyUrls:
         """
         for bm in bm_list:
             bm_url = f'{bm.scheme}://{bm.hostname}{bm.path}'
-            if not self.verify_url(url_type, url=bm_url, url_hostname=bm.hostname):
+            if not self.verify_url(url_type, url=bm_url, url_hostname=bm.hostname, url_bm_id=bm.id):
                 break
 
     # =========================================================================
-    def verify_url(self, url_type: UrlType, url: str, url_hostname: str = None) -> bool:
+    def verify_url(self, url_type: UrlType, url: str, url_hostname: str = None, url_bm_id: int = None) -> bool:
         """Verify URL and return False if caller should abort looping
 
         NB: We will not attempt to verify a URL associated with a known bad
@@ -134,6 +149,7 @@ class VerifyUrls:
         :param url_type: Type of URL being verified
         :param url: URL to verify
         :param url_hostname: URL HostName for bookkeeping
+        :param url_bm_id: URL BookMark ID
         :return: abort_looping - boolean - True/False
         """
         # accommodate callers who do not specify a hostname
@@ -150,7 +166,8 @@ class VerifyUrls:
             # keep track of the number of bad URL's
             self.bad_urls_counter += 1
             # enter URL info into bad URL's dictionary
-            self.bad_urls_dict[url_type].append((url_hostname, url, message))
+            self.bad_urls_dict[url_type].append(
+                BadUrlStatus(hostname=url_hostname, url=url, error=message, bm_id=url_bm_id))
             # record bad URL hostname separately
             if url_type == UrlType.HOSTNAME:
                 self.bad_hostnames.append(url_hostname)
