@@ -87,7 +87,7 @@ The BookMarks Structures module maintains bookmark structures.
 """
 
 # System imports
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 # Project imports
@@ -423,34 +423,3 @@ class BookMarks(Borg):
         """
         level_plus = '+' * self.level
         logger.debug('%02d%s %s', self.level, level_plus, clean_text(text))
-
-    def get_bm_by_id(self, requested_bm_id: int) -> Optional[BookMark]:
-        """Retrieve a BookMark by its unique BM ID
-
-        :param requested_bm_id: BookMark ID to retrieve
-        :return: Requested BookMark (or None if not found)
-        """
-        # search through all headings
-        for heading in list(self.headings_dict.keys()):
-            structure_list: StructuresList = self.headings_dict[heading]
-            for bm in structure_list.list:
-                if bm.id == requested_bm_id:
-                    return bm
-        return None
-
-    def delete_bookmark_by_id(self, delete_bm_id: int):
-        """Function to delete a BookMark identified by BM ID
-
-        :param delete_bm_id: BookMark ID to delete
-        """
-        # search through all headings
-        for heading in list(self.headings_dict.keys()):
-            # search through all bookmarks under each heading
-            structure_list: StructuresList = self.headings_dict[heading]
-            for index in range(len(structure_list.list)):
-                bm: BookMark = structure_list.list[index]
-                if bm.id == delete_bm_id:
-                    logger.debug('DeleteBM: %04d %s', bm.id, bm.attrs['href'])
-                    del structure_list.list[index]
-                    return
-        raise MyException(text=f'BM_ID: {delete_bm_id} NOT FOUND')

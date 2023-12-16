@@ -70,6 +70,7 @@ class TheConfig:
     input_file = None                   #: bookmarks input file to be processed
     output_file = None                  #: bookmarks output file (after processing)
     debug: bool = False                 #: True/False - debug output enabled
+    test_mode: bool = False             #: True/False - test mode enabled
     verbosity: bool = False             #: True/False - verbose output enabled
     verbosity_level: int = 0            #: verbosity level
     verify_urls: bool = False           #: verify URL's are reachable as they are processed
@@ -160,6 +161,7 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("-o", "--output", type=str, help="bookmarks output html file")
         parser.add_argument("-V", "--verify", help="verify URL's during processing", action="store_true")
         parser.add_argument("-P", "--prune", help="prune bad URL's during processing", action="store_true")
+        parser.add_argument("-T", "--test", help="enable 'test mode'", action="store_true")
         parser.add_argument("--timeout", type=float, help="timeout in seconds (float) for verifying URL's")
 
         # parse command line arguments
@@ -167,6 +169,8 @@ class ArgParser(argparse.ArgumentParser):
         if args.debug:
             TheConfig.debug = True
             Logger().set_level(logger_level=logging.DEBUG, console_level=logging.DEBUG, file_level=logging.DEBUG)
+        if args.test:
+            TheConfig.test_mode = True
         if args.verbosity:
             TheConfig.verbosity = True
             TheConfig.verbosity_level = args.verbosity
@@ -197,8 +201,6 @@ class CfgParser(configparser.ConfigParser):
 
     def __init__(self):
         super().__init__()
-
-        the_config = TheConfig
 
         # see if user provided a configuration file on command line
         if TheConfig.config_file is not None:

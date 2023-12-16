@@ -9,9 +9,10 @@ Duplicate bookmarks are detected and deleted.
 """
 
 # System imports
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 # Project imports
+from exceptions import MyException
 from config import TheConfig
 from structures import BookMark, BookMarks, StructuresList as StructuresList
 from logger import Logger, clean as logger_clean
@@ -70,7 +71,7 @@ class Analyze:
     #: bookmark menubar, sections populated as we parse the various sections
     #: 'head': list of bookmarks that appear at the head of the bookmark menubar
     #: 'tail': list of bookmarks that appear at the tail (end) of the bookmark menubar
-    _menubar: Dict = {'head': [], 'tail': []}
+    _menubar_bookmarks: Dict = {'head': [], 'tail': []}
 
     # ===================================================
     # global class properties - access functions
@@ -112,7 +113,67 @@ class Analyze:
         Top level dictionary indices are strings with elements consisting of
         lists of bookmarks as well as dictionaries of lists of bookmarks.
         """
-        return cls._menubar
+        return cls._menubar_bookmarks
+
+    @classmethod
+    def delete_bookmark_by_id(cls, delete_bm_id: int):
+        """Function to delete a BookMark identified by BM ID
+
+        :param delete_bm_id: BookMark ID to delete
+        :raises: MyException(BM_ID NOT_FOUND)
+        """
+        def parse_list(bookmark_list: List[BookMark]) -> bool:
+            """Parse a list of bookmarks for requested BM ID
+
+            :param bookmark_list: List of BookMarks to search
+            :return: Boolean True/False - Found/NotFound
+            """
+            _bookmark_found: bool = False
+            bookmark_list_len: int = len(bookmark_list)
+            # process list in reverse order
+            for index in range(bookmark_list_len - 1, -1, -1):
+                bm: BookMark = bookmark_list[index]
+                if bm.id == delete_bm_id:
+                    logger.debug('DeleteBM: %04d %s', bm.id, bm.attrs['href'])
+                    del bookmark_list[index]
+                    _bookmark_found = True
+            return _bookmark_found
+
+        def parse_dict(bookmark_dict: Dict) -> bool:
+            """Parse a dictionary of bookmarks for requested BM ID
+
+            :param bookmark_dict: Dictionary of BookMarks to search
+            :return: Boolean True/False - Found/NotFound
+            """
+            _bookmark_found: bool = False
+            bookmark_key_list = list(bookmark_dict.keys())
+            for bookmark_key in bookmark_key_list:
+                # verify that we have a list of bookmarks to process
+                if isinstance(bookmark_dict[bookmark_key], List):
+                    _bookmark_found |= parse_list(bookmark_dict[bookmark_key])
+                else:
+                    raise MyException('UNHANDLED CONFIGURATION')
+            return _bookmark_found
+
+        # flag that we found the requested bookmark ID
+        bookmark_found: bool = False
+        # search through all headings
+        menubar_bm_keys: List[str] = list(cls.menubar_bookmarks().keys())
+        for heading in menubar_bm_keys:
+            # search through all bookmarks under each heading
+            # NB: headings may denote lists or dictionaries
+            # NB: so we must process accordingly
+            bookmarks: Union[Dict, List] = cls.menubar_bookmarks()[heading]
+            if isinstance(bookmarks, List):
+                bookmark_found |= parse_list(bookmark_list=bookmarks)
+            elif isinstance(bookmarks, Dict):
+                bookmark_found |= parse_dict(bookmark_dict=bookmarks)
+            else:
+                raise MyException(text=f'UNKNOWN BM TYPE: {type(bookmarks)}')
+
+        # it is an error to not find the requested bookmark
+        if not bookmark_found:
+            raise MyException(text=f'BM_ID: {delete_bm_id} NOT FOUND')
 
     def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
@@ -144,12 +205,16 @@ class Analyze:
         self.host_sites = {section: [] for section in TheConfig.sections}
         # populate class variable menubar from TheConfig
         for section in TheConfig.sections:
-            self._menubar[section] = {}
+            self._menubar_bookmarks[section] = {}
             for topic in TheConfig.sections[section].keys():
-                self._menubar[section][topic] = []
+                self._menubar_bookmarks[section][topic] = []
 
         # perform full analysis now that data structures are created
         self.perform_analysis()
+
+        # debug delete bookmark by ID
+        # self.delete_bookmark_by_id(delete_bm_id=10)
+        # self.delete_bookmark_by_id(delete_bm_id=100)
 
     def perform_analysis(self):
         """Perform full analysis"""
@@ -224,20 +289,20 @@ class Analyze:
     def scan_bookmarks_heads_tails(self):
         """scan heads/tails bookmark sections"""
         for site in TheConfig.menubar['head']:
-            self.scan_bookmarks_site(site, self._menubar['head'], head=True)
+            self.scan_bookmarks_site(site, self._menubar_bookmarks['head'], head=True)
         for site in TheConfig.menubar['tail']:
-            self.scan_bookmarks_site(site, self._menubar['tail'], tail=True)
+            self.scan_bookmarks_site(site, self._menubar_bookmarks['tail'], tail=True)
 
     # =========================================================================
     def add_unscanned_to_misc(self):
         """add any unscanned bookmarks to the miscellaneous section"""
-        self._menubar['misc']['misc'] = []
+        self._menubar_bookmarks['misc']['misc'] = []
         for bm_key, bm_value in self.bookmarks.items():
             if not bm_value:
                 continue
             for bm in bm_value:
                 if not bm.scanned:
-                    self._menubar['misc']['misc'].append(bm)
+                    self._menubar_bookmarks['misc']['misc'].append(bm)
                     bm.scanned = True
 
     # =========================================================================
@@ -257,13 +322,13 @@ class Analyze:
 
         :param section: Config section to scan
         """
-        if section not in self._menubar.keys():
+        if section not in self._menubar_bookmarks.keys():
             logger.info('Skipping empty section: %s', section)
             return
-        for topic in self._menubar[section].keys():
+        for topic in self._menubar_bookmarks[section].keys():
             logger.debug('Scanning: %s/%s', section, topic)
             config_list = TheConfig.sections[section][topic]
-            scan_list = self._menubar[section][topic]
+            scan_list = self._menubar_bookmarks[section][topic]
             self.scan_bookmarks_section(config_list, scan_list)
 
     # =========================================================================

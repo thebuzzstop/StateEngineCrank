@@ -84,7 +84,7 @@ class VerifyUrls:
         # remove any BM's with a known bad hostname
         for _bm in self.bad_urls_dict[UrlType.MENUBAR]:
             if _bm.hostname in self.bad_hostnames:
-                self.bookmarks.delete_bookmark_by_id(_bm.bm_id)
+                Analyze.delete_bookmark_by_id(_bm.bm_id)
 
     def prune_bad_hosts(self) -> None:
         """Function to remove bookmarks with bad hosts"""
@@ -172,7 +172,7 @@ class VerifyUrls:
             if url_type == UrlType.HOSTNAME:
                 self.bad_hostnames.append(url_hostname)
             # cut testing short if debugging is enabled
-            if TheConfig.debug and self.bad_urls_counter > 5:
+            if TheConfig.test_mode and self.bad_urls_counter > 5:
                 logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
                 return False
         return True
