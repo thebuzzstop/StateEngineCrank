@@ -9,6 +9,7 @@ from defines import UrlType
 from config import TheConfig
 from analyze import Analyze
 from structures import BookMark, BookMarks
+from ping import host_up
 from logger import Logger
 logger = Logger(name=__name__).logger
 
@@ -19,8 +20,16 @@ class BadUrlStatus(NamedTuple):
     error: str      #: URL error status message
     bm_id: int      #: URL BookMark ID (if available)
 
+class Borg:
+    """There can only be one"""
 
-class VerifyUrls:
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class VerifyUrls(Borg):
     """Class to verify reachability of URL's"""
 
     #: quell SonarLint
@@ -28,9 +37,12 @@ class VerifyUrls:
     #: quell SonarLint
     bad_urls_fmt: str = "BAD URL's: %d"
 
-
     def __init__(self):
         """VerifyUrls constructor"""
+        Borg.__init__(self)
+        if self._shared_state:
+            return
+
         logger.info('INFO (%s)', __name__)
 
         #: BookMarks access
@@ -73,10 +85,10 @@ class VerifyUrls:
     def prune_bad_urls(self) -> None:
         """Function to prune (delete) BookMark's with bad URL's"""
         logger.info("Prune bad URL's")
-        self.prune_bad_menubar()
-        self.prune_bad_localhost()
-        self.prune_bad_mobile()
         self.prune_bad_hosts()
+        self.prune_bad_localhost()
+        self.prune_bad_menubar()
+        self.prune_bad_mobile()
 
     def prune_bad_menubar(self) -> None:
         """Function to remove bookmarks from menubar"""
@@ -89,6 +101,7 @@ class VerifyUrls:
     def prune_bad_hosts(self) -> None:
         """Function to remove bookmarks with bad hosts"""
         logger.info("Prune bad hosts")
+        #
 
     def prune_bad_mobile(self) -> None:
         """Function to remove bad mobile bookmarks"""
@@ -129,7 +142,7 @@ class VerifyUrls:
 
     # =========================================================================
     def verify_bm_list(self, url_type: UrlType, bm_list: List[BookMark]) -> None:
-        """Verify a list of URL's in BookMark form
+        """Verify URL's in a List[BookMark] form
 
         :param url_type: Type of URL being verified
         :param bm_list: List of BookMarks
@@ -144,7 +157,7 @@ class VerifyUrls:
         """Verify URL and return False if caller should abort looping
 
         NB: We will not attempt to verify a URL associated with a known bad
-        hostname.
+            hostname.
 
         :param url_type: Type of URL being verified
         :param url: URL to verify
@@ -152,7 +165,7 @@ class VerifyUrls:
         :param url_bm_id: URL BookMark ID
         :return: abort_looping - boolean - True/False
         """
-        # accommodate callers who do not specify a hostname
+        # accommodate callers who only pass a URL and do not specify a hostname
         if not url_hostname:
             url_hostname = url
         # see if this is a known bad hostname
@@ -161,20 +174,37 @@ class VerifyUrls:
             status, message = False, "BAD HOSTNAME"
         else:
             # all clear to verify status of this URL
-            status, message = self._verify_url(url)
-        if not status:
-            # keep track of the number of bad URL's
-            self.bad_urls_counter += 1
-            # enter URL info into bad URL's dictionary
-            self.bad_urls_dict[url_type].append(
-                BadUrlStatus(hostname=url_hostname, url=url, error=message, bm_id=url_bm_id))
-            # record bad URL hostname separately
             if url_type == UrlType.HOSTNAME:
-                self.bad_hostnames.append(url_hostname)
-            # cut testing short if debugging is enabled
-            if TheConfig.test_mode and self.bad_urls_counter > 5:
-                logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
-                return False
+                status, message = host_up(url)
+                logger.debug('PING: %s %s', url, message)
+            else:
+                status, message = self._verify_url(url)
+        if not status:
+            return self._track_bad_url(url_type, url, url_hostname, message, url_bm_id)
+        return True
+
+    # =========================================================================
+    def _track_bad_url(self, url_type, url, url_hostname, message, url_bm_id) -> bool:
+        """Function to do some bookkeeping for bad URL's
+
+        :param url_type: Type of URL being verified
+        :param url: URL to verify
+        :param url_hostname: URL HostName for bookkeeping
+        :param url_bm_id: URL BookMark ID
+        :param message: Failing status message
+        """
+        # keep track of the number of bad URL's
+        self.bad_urls_counter += 1
+        # enter URL info into bad URL's dictionary
+        self.bad_urls_dict[url_type].append(
+            BadUrlStatus(hostname=url_hostname, url=url, error=message, bm_id=url_bm_id))
+        # record bad URL hostname separately
+        if url_type == UrlType.HOSTNAME:
+            self.bad_hostnames.append(url_hostname)
+        # cut testing short if debugging is enabled
+        if TheConfig.test_mode and self.bad_urls_counter > 5:
+            logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
+            return False
         return True
 
     # =========================================================================
@@ -187,16 +217,14 @@ class VerifyUrls:
         :return: Boolean True/False == Reachable/NotReachable
         """
         logger.debug('VerifyURL: %s', url)
-        # prefix URL with HTTPS protocol if no protocol specified
-        if url.startswith('http'):
-            url_test = url
-        else:
-            url_test = f'https://{url}'
 
         # ==========================
         # try opening the url
         try:
-            requests.get(url=f'{url_test}', timeout=TheConfig.request_get_timeout)
+            # noinspection PyVulnerableApiCode
+            requests.get(url=f'{url}',
+                         timeout=TheConfig.request_get_timeout,
+                         allow_redirects=False)
             return True, ''
 
         # =============================
@@ -227,5 +255,5 @@ class VerifyUrls:
         # =============================
         # unhandled/unknown exception
         except Exception as e:
-            logger.exception('%s: %s', self.unhandled_exception, url_test, exc_info=e)
+            logger.exception('%s: %s', self.unhandled_exception, url, exc_info=e)
             return False, self.unhandled_exception
