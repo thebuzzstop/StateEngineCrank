@@ -134,20 +134,24 @@ class BookMark:
             'icon': icon,
             'attrs': []
         }
+        #: URL parts as parsed by URL parser lib
         self.href_urlparts = None
 
         # populate the following for ease of parsing later during reformat
         #: URL scheme (http, https, etc)
         self.scheme: Optional[str] = None
-        #: URL hostname
+        #: URL scheme override - used to convert HTTP to HTTPS when requested
+        self.scheme_override: Optional[str] = None
+        #: URL hostname (e.g. www.google.com)
         self.hostname: Optional[str] = None
+        #: URL path (e.g. /index.html
         self.path: Optional[str] = None
+        #: Friendly hostname per config.ini (optional)
         self.friendly_host_name: Optional[str] = None
 
     # ==========================================
     # Class Properties
     # ==========================================
-
 
     @property
     def scanned(self) -> bool:

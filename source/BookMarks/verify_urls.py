@@ -13,6 +13,7 @@ from ping import host_up
 from logger import Logger
 logger = Logger(name=__name__).logger
 
+
 class BadUrlStatus(NamedTuple):
     """NamedTuple declaration for URL bad status"""
     hostname: str   #: URL hostname
