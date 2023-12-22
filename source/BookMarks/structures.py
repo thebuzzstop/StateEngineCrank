@@ -175,6 +175,32 @@ class BookMark:
         """
         return self._tested
 
+    @property
+    def protocol(self) -> str:
+        """Property returning bookmark protocol (HTTP, HTTPS)"""
+        return self.scheme
+
+    @property
+    def is_http(self) -> bool:
+        """Property returning True if protocol is HTTP"""
+        return self.scheme == 'HTTP'
+
+    @property
+    def protocol_override(self) -> Optional[str]:
+        """Property returning status of Protocol override
+
+        :return: Current protocol override
+        """
+        return self.scheme_override
+
+    @protocol_override.setter
+    def protocol_override(self, value: str):
+        """Property setter for protocol override
+
+        :param value: New value to set
+        """
+        self.scheme_override = value
+
     @tested.setter
     def tested(self, value: bool):
         """Property setter - tested"""

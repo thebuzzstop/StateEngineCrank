@@ -38,6 +38,17 @@ class VerifyUrls(Borg):
     #: quell SonarLint
     bad_urls_fmt: str = "BAD URL's: %d"
 
+    #: Bad URL's status - used by low-level functions
+    _bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
+        UrlType.HOSTNAME: [],
+        UrlType.MOBILE: [],
+        UrlType.MENUBAR: [],
+        UrlType.LOCALHOST: [],
+    }
+
+    #: Bad URL Hostnames - used to bypass testing BM's for bad HostNames
+    _bad_hostnames: List[str] = []
+
     def __init__(self):
         """VerifyUrls constructor"""
         Borg.__init__(self)
@@ -52,16 +63,19 @@ class VerifyUrls(Borg):
         #: Counter of bad URL's
         self.bad_urls_counter: int = 0
 
-        #: Bad URL's status - used by low-level functions
-        self.bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
-            UrlType.HOSTNAME: [],
-            UrlType.MOBILE: [],
-            UrlType.MENUBAR: [],
-            UrlType.LOCALHOST: [],
-        }
+    # =========================================================================
+    # Class methods ("Properties")
+    # =========================================================================
+    # @property
+    @classmethod
+    def bad_urls_dict(cls) -> Dict[UrlType, List[BadUrlStatus]]:
+        """Function returning bad URL's dictionary"""
+        return cls._bad_urls_dict
 
-        #: Bad URL Hostnames - used to bypass testing BM's for bad HostNames
-        self.bad_hostnames: List[str] = []
+    @classmethod
+    def bad_hostnames(cls) -> List[str]:
+        """Function returning bad Hostnames"""
+        return cls._bad_hostnames
 
     # =========================================================================
     def verify_urls(self):
@@ -81,36 +95,6 @@ class VerifyUrls(Borg):
         logger.info('Verify localhost BookMarks')
         self.verify_url_dict(url_type=UrlType.LOCALHOST, url_dict=Analyze.localhost_bookmarks())
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
-
-    # =========================================================================
-    def prune_bad_urls(self) -> None:
-        """Function to prune (delete) BookMark's with bad URL's"""
-        logger.info("Prune bad URL's")
-        self.prune_bad_hosts()
-        self.prune_bad_localhost()
-        self.prune_bad_menubar()
-        self.prune_bad_mobile()
-
-    def prune_bad_menubar(self) -> None:
-        """Function to remove bookmarks from menubar"""
-        logger.info("Prune menubar bookmarks")
-        # remove any BM's with a known bad hostname
-        for _bm in self.bad_urls_dict[UrlType.MENUBAR]:
-            if _bm.hostname in self.bad_hostnames:
-                Analyze.delete_bookmark_by_id(_bm.bm_id)
-
-    def prune_bad_hosts(self) -> None:
-        """Function to remove bookmarks with bad hosts"""
-        logger.info("Prune bad hosts")
-        #
-
-    def prune_bad_mobile(self) -> None:
-        """Function to remove bad mobile bookmarks"""
-        logger.info("Prune mobile bookmarks")
-
-    def prune_bad_localhost(self) -> None:
-        """Function to remove bad localhost bookmarks"""
-        logger.info("Prune localhost bookmarks")
 
     # =========================================================================
     def verify_url_list(self, url_type: UrlType, url_list: List[str]) -> None:
@@ -170,7 +154,7 @@ class VerifyUrls(Borg):
         if not url_hostname:
             url_hostname = url
         # see if this is a known bad hostname
-        if url_hostname in self.bad_hostnames:
+        if url_hostname in self._bad_hostnames:
             # don't bother checking if hostname is in the bad hostnames list
             status, message = False, "BAD HOSTNAME"
         else:
@@ -197,11 +181,11 @@ class VerifyUrls(Borg):
         # keep track of the number of bad URL's
         self.bad_urls_counter += 1
         # enter URL info into bad URL's dictionary
-        self.bad_urls_dict[url_type].append(
+        self._bad_urls_dict[url_type].append(
             BadUrlStatus(hostname=url_hostname, url=url, error=message, bm_id=url_bm_id))
         # record bad URL hostname separately
         if url_type == UrlType.HOSTNAME:
-            self.bad_hostnames.append(url_hostname)
+            self._bad_hostnames.append(url_hostname)
         # cut testing short if debugging is enabled
         if TheConfig.test_mode and self.bad_urls_counter > 5:
             logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)

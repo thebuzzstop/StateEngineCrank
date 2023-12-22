@@ -76,6 +76,7 @@ from config import ArgParser, CfgParser, TheConfig
 from structures import BookMarks
 from analyze import Analyze
 from verify_urls import VerifyUrls
+from prune import prune_bad_urls
 from reformat import Reformat
 from exceptions import MyException
 
@@ -534,7 +535,7 @@ if __name__ == '__main__':
             verify = VerifyUrls()
             verify.verify_urls()
             if TheConfig.verify_prune:
-                verify.prune_bad_urls()
+                prune_bad_urls()
         except Exception as e:
             logger.exception('UNHANDLED EXCEPTION: VerifyUrls', exc_info=e)
 

@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+
+if (ping(hostname)) then (false)
+    :add hostname to bad list;
+    :return-status = BAD;
+else
+    if (TheConfig.http2https) then (true)
+        if (bookmark.protocol == HTTP) then (true)
+            :bookmark.protocol = HTTPS;
+        endif
+    endif
+    if () then (true)
+    endif
+endif
+stop
+
+@enduml
