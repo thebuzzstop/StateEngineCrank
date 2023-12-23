@@ -108,18 +108,31 @@ class StructuresList:
 
 #: BookMark global variable - current BookMark ID
 _bm_id: int = 0
+#: BookMark counter - bumped every init(), decremented for __del__()
+_bm_counter: int = 0
 
 def bm_id() -> int:
     """BM ID generator function
 
     Returns unique integer ID for each call.
     """
-    global _bm_id
+    global _bm_id, _bm_counter
     _bm_id += 1
+    _bm_counter += 1
     return _bm_id
+
+def bm_counter() -> int:
+    """Function returning BookMark counter"""
+    return _bm_counter
+
 
 class BookMark:
     """ A bookmark """
+
+    def __del__(self):
+        """Decrement the global counter"""
+        global _bm_counter
+        _bm_counter -= 1
 
     def __init__(self, label, heading, href, add_date, icon=None):
         self.id: int = bm_id()          #: BM unique ID
