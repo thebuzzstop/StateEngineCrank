@@ -9,12 +9,14 @@ if (ping(hostname)) then (false)
 else
     if (TheConfig.http2https) then (true)
         if (bookmark.protocol == HTTP) then (true)
-            :bookmark.protocol = HTTPS;
+            :return-status = bookmark.verify(HTTPS);
+            if (return-status == GOOD) then (true)
+                :bookmark.protocol = HTTPS;
+                stop
+            endif
         endif
     endif
-    if () then (true)
-    endif
+    :return-status = bookmark.verify(protocol);
 endif
 stop
-
 @enduml
