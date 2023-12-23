@@ -3,13 +3,17 @@
 # System imports
 from typing import Dict, List, NamedTuple, Tuple
 import requests, urllib3
+import json
+
+# 3rd party imports
+import classproperty
 
 # Project imports
 from defines import UrlType
 from config import TheConfig
 from analyze import Analyze
-from structures import BookMark, BookMarks
-from ping import host_up
+from structures import BookMark, BookMarks, bm_counter
+from ping import my_ping
 from logger import Logger
 logger = Logger(name=__name__).logger
 
@@ -30,14 +34,21 @@ class Borg:
         self.__dict__ = self._shared_state
 
 
-class VerifyUrls(Borg):
+class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
     """Class to verify reachability of URL's"""
 
     #: quell SonarLint
     unhandled_exception: str = 'UNHANDLED EXCEPTION'
     #: quell SonarLint
     bad_urls_fmt: str = "BAD URL's: %d"
+    #: quell SonarLint
+    bad_hosts_fmt: str = "BAD HOST's: %d"
+    #: Counter of bad Hosts
+    bad_hosts_counter: int = 0
 
+    # =========================================================================
+    # Class Properties
+    # =========================================================================
     #: Bad URL's status - used by low-level functions
     _bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
         UrlType.HOSTNAME: [],
@@ -46,43 +57,74 @@ class VerifyUrls(Borg):
         UrlType.LOCALHOST: [],
     }
 
+    @classproperty.classproperty
+    def bad_urls_dict(cls) -> Dict[UrlType, List[BadUrlStatus]]:
+        """Class property returning bad URL's dictionary"""
+        return cls._bad_urls_dict
+
     #: Bad URL Hostnames - used to bypass testing BM's for bad HostNames
     _bad_hostnames: List[str] = []
+
+    @classproperty.classproperty
+    def bad_hostnames(cls) -> List[str]:
+        """Class property returning bad Hostnames"""
+        return cls._bad_hostnames
 
     def __init__(self):
         """VerifyUrls constructor"""
         Borg.__init__(self)
         if self._shared_state:
             return
-
+        classproperty.ClassPropertiesMixin.__init__(self)
         logger.info('INFO (%s)', __name__)
-
         #: BookMarks access
         self.bookmarks: BookMarks = BookMarks()
-
         #: Counter of bad URL's
         self.bad_urls_counter: int = 0
+        #: URL's gas-gauge
+        self.urls_gas_gauge: int = 0
 
     # =========================================================================
-    # Class methods ("Properties")
-    # =========================================================================
-    # @property
     @classmethod
-    def bad_urls_dict(cls) -> Dict[UrlType, List[BadUrlStatus]]:
-        """Function returning bad URL's dictionary"""
-        return cls._bad_urls_dict
+    def read_bad_hosts_cache(cls) -> None:
+        """Function to initialize bad hosts from cache"""
+        try:
+            with open(TheConfig.bad_hosts_cache_file, 'r') as cache:
+                logger.info('Loading BadHosts cache (%s)', TheConfig.bad_hosts_cache_file)
+                cls._bad_hostnames = json.load(cache)
+                cls.bad_hosts_counter = len(cls._bad_hostnames)
+        except FileNotFoundError:
+            # warn user but ignore file not found
+            logger.warn('BadHosts cache not found (%s)', TheConfig.bad_hosts_cache_file)
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
 
+    # =========================================================================
     @classmethod
-    def bad_hostnames(cls) -> List[str]:
-        """Function returning bad Hostnames"""
-        return cls._bad_hostnames
+    def write_bad_hosts_cache(cls):
+        """Function to write bad hosts to cache"""
+        try:
+            with open(TheConfig.bad_hosts_cache_file, 'w') as cache:
+                logger.info('Writing BadHosts cache (%s)', TheConfig.bad_hosts_cache_file)
+                json.dump(cls._bad_hostnames, cache, indent=4)
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
 
     # =========================================================================
     def verify_urls(self):
         """Function creating a dictionary of bad URL's"""
         logger.info('Verify HostNames')
-        self.verify_url_list(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
+        # read bad host cache if requested
+        if TheConfig.use_bad_hosts_cache:
+            self.read_bad_hosts_cache()
+        self.verify_host_list(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
+        # write bad host cache if requested
+        if TheConfig.use_bad_hosts_cache:
+            self.write_bad_hosts_cache()
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+
+        # initialize the BookMarks gas-gauge for instrumentation
+        self.urls_gas_gauge = bm_counter()
 
         logger.info('Verify Mobile BookMarks')
         self.verify_bm_list(url_type=UrlType.MOBILE, bm_list=Analyze.mobile_bookmarks())
@@ -97,15 +139,23 @@ class VerifyUrls(Borg):
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
     # =========================================================================
-    def verify_url_list(self, url_type: UrlType, url_list: List[str]) -> None:
-        """Verify a list of URL's
+    def verify_host_list(self, url_type: UrlType, url_list: List[str]) -> None:
+        """Verify a list of hostnames
 
         :param url_type: Type of URL being verified
         :param url_list: List of URL's (strings) to verify
         """
         for url in url_list:
-            if not self.verify_url(url_type, url):
-                break
+            # skip a URL that is in the bad hosts list
+            if url in self._bad_hostnames:
+                continue
+            # ping the host
+            status, message = my_ping(url)
+            logger.debug('PING: %s %s', url, message)
+            # follow up on status
+            if not status:
+                if not self._track_bad_url(url_type, url, url_hostname=url, message=message, url_bm_id=None):
+                    return
 
     # =========================================================================
     def verify_url_dict(self, url_type: UrlType, url_dict: Dict) -> None:
@@ -158,12 +208,7 @@ class VerifyUrls(Borg):
             # don't bother checking if hostname is in the bad hostnames list
             status, message = False, "BAD HOSTNAME"
         else:
-            # all clear to verify status of this URL
-            if url_type == UrlType.HOSTNAME:
-                status, message = host_up(url)
-                logger.debug('PING: %s %s', url, message)
-            else:
-                status, message = self._verify_url(url)
+            status, message = self._verify_url(url)
         if not status:
             return self._track_bad_url(url_type, url, url_hostname, message, url_bm_id)
         return True
@@ -196,12 +241,13 @@ class VerifyUrls(Borg):
     # Low-level URL verify function
     # =========================================================================
     def _verify_url(self, url: str) -> Tuple[bool, str]:
-        """Verify that a URL is reachable
+        """Verify that a URL responds to HTTP request
 
         :param url: URL to verify
         :return: Boolean True/False == Reachable/NotReachable
         """
-        logger.debug('VerifyURL: %s', url)
+        logger.debug('VerifyURL[%04d]: %s', self.urls_gas_gauge, url)
+        self.urls_gas_gauge -= 1
 
         # ==========================
         # try opening the url

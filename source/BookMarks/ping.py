@@ -4,7 +4,7 @@ from typing import Tuple
 from ping3 import ping, EXCEPTIONS
 
 
-def host_up(dest_address: str, timeout: int = 4) -> Tuple[bool, str]:
+def my_ping(dest_address: str, timeout: int = 4) -> Tuple[bool, str]:
     """Function to return status of destination address ping
 
     NB: This implementation does not require root priv's to access ping

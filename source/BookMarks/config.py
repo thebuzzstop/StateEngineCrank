@@ -93,6 +93,11 @@ class TheConfig:
     #: host bookmarks for which multiple entries are allowed
     allow_multiple_bookmarks: List[Tuple[str, str]] = []
 
+    #: bad hosts cache file
+    bad_hosts_cache_file: str = 'bad_hosts.cache'
+    #: use bad hosts cache file - set True with command line switch
+    use_bad_hosts_cache: bool = False
+
     @classmethod
     def hostname_from_ip(cls, host_ip: str) -> str:
         """Returns host name from local-hosts
@@ -171,6 +176,7 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("-T", "--test", help="enable 'test mode'", action="store_true")
         parser.add_argument("--timeout", type=float, help="timeout in seconds (float) for verifying URL's")
         parser.add_argument("--http2https", help="convert HTTP URL's to HTTPS", action="store_true")
+        parser.add_argument("--use_cache", help="use bad hosts cache file", action="store_true")
 
         # parse command line arguments
         args = parser.parse_args()
@@ -196,6 +202,8 @@ class ArgParser(argparse.ArgumentParser):
             TheConfig.request_get_timeout = args.timeout
         if args.http2https:
             TheConfig.http2https = True
+        if args.use_cache:
+            TheConfig.use_bad_hosts_cache = True
 
     @staticmethod
     def substitute_tilde(path: str):
