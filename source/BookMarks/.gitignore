@@ -5,6 +5,9 @@
 # Ignore any files that are created by running StateEngineCrank
 ./bookmarks.py.*
 
+# Ignore bad-hosts cache - force a re-write when creating project
+./bad_hosts.cache
+
 # PyCharm .idea directories can appear in a couple of places depending
 # on where a developer tells PyCharm to look for the project.
 # The following PyCharm configuration files contain directory specific
