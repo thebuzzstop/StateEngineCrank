@@ -93,8 +93,10 @@ class TheConfig:
     #: host bookmarks for which multiple entries are allowed
     allow_multiple_bookmarks: List[Tuple[str, str]] = []
 
-    #: bad hosts cache file
-    bad_hosts_cache_file: str = 'bad_hosts.cache'
+    #: bad hosts ping cache file
+    bad_hosts_ping_cache_file: str = 'bad_hosts_ping.cache'
+    #: bad hosts dns-lookup cache file
+    bad_hosts_dns_cache_file: str = 'bad_hosts_dns.cache'
     #: use bad hosts cache file - set True with command line switch
     use_bad_hosts_cache: bool = False
 
