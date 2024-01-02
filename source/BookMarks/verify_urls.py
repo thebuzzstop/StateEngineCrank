@@ -5,15 +5,14 @@ from typing import Dict, List, NamedTuple, Tuple
 import requests, urllib3
 import json
 
-# 3rd party imports
-import classproperty
-
 # Project imports
-from defines import UrlType
+from defines import UrlType, BadHostType
+from exceptions import MyException
 from config import TheConfig
 from analyze import Analyze
 from structures import BookMark, BookMarks, bm_counter
-from ping import my_ping
+from mydns import dns_query
+from myping import my_ping
 from logger import Logger
 logger = Logger(name=__name__).logger
 
@@ -34,7 +33,7 @@ class Borg:
         self.__dict__ = self._shared_state
 
 
-class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
+class VerifyUrls(Borg):
     """Class to verify reachability of URL's"""
 
     #: quell SonarLint
@@ -42,40 +41,21 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
     #: quell SonarLint
     bad_urls_fmt: str = "BAD URL's: %d"
     #: quell SonarLint
-    bad_hosts_fmt: str = "BAD HOST's: %d"
+    bad_hostnames_fmt: str = "BAD HOST's: %d"
+    # quell SonarLint
+    entries_fmt: str = "Entries: %d"
     #: Counter of bad Hosts
-    bad_hosts_counter: int = 0
-
-    # =========================================================================
-    # Class Properties
-    # =========================================================================
-    #: Bad URL's status - used by low-level functions
-    _bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
-        UrlType.HOSTNAME: [],
-        UrlType.MOBILE: [],
-        UrlType.MENUBAR: [],
-        UrlType.LOCALHOST: [],
-    }
-
-    @classproperty.classproperty
-    def bad_urls_dict(cls) -> Dict[UrlType, List[BadUrlStatus]]:
-        """Class property returning bad URL's dictionary"""
-        return cls._bad_urls_dict
-
-    #: Bad URL Hostnames - used to bypass testing BM's for bad HostNames
-    _bad_hostnames: List[str] = []
-
-    @classproperty.classproperty
-    def bad_hostnames(cls) -> List[str]:
-        """Class property returning bad Hostnames"""
-        return cls._bad_hostnames
+    bad_hostnames_counter: int = 0
+    #: Counter for bad Hosts - ping
+    bad_hostnames_counter_ping: int = 0
+    #: Counter for bad Hosts - DNS lookup
+    bad_hostnames_counter_dns: int = 0
 
     def __init__(self):
         """VerifyUrls constructor"""
         Borg.__init__(self)
         if self._shared_state:
             return
-        classproperty.ClassPropertiesMixin.__init__(self)
         logger.info('INFO (%s)', __name__)
         #: BookMarks access
         self.bookmarks: BookMarks = BookMarks()
@@ -85,30 +65,116 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
         self.urls_gas_gauge: int = 0
 
     # =========================================================================
+    # Class Methods
+    # =========================================================================
+    #: Bad URL's status - used by low-level functions
+    _bad_urls_dict: Dict[UrlType, List[BadUrlStatus]] = {
+        UrlType.HOSTNAME: [],
+        UrlType.MOBILE: [],
+        UrlType.MENUBAR: [],
+        UrlType.LOCALHOST: [],
+    }
+
+    # =========================================================================
     @classmethod
-    def read_bad_hosts_cache(cls) -> None:
-        """Function to initialize bad hosts from cache"""
+    def bad_urls_dict(cls) -> Dict[UrlType, List[BadUrlStatus]]:
+        """Class method returning bad URL's dictionary"""
+        return cls._bad_urls_dict
+
+    # =========================================================================
+    #: Bad URL Hostnames (ping) - used to bypass testing BM's for bad HostNames
+    _bad_hostnames_ping: List[str] = []
+
+    @classmethod
+    def bad_hostnames(cls) -> List[str]:
+        """Class method returning bad Hostnames (ping+dns)"""
+        bad_hostnames = cls._bad_hostnames_dns
+        bad_hostnames.extend(cls._bad_hostnames_dns)
+        return bad_hostnames
+
+    @classmethod
+    def bad_hostnames_ping(cls) -> List[str]:
+        """Class method returning bad Hostnames (ping)"""
+        return cls._bad_hostnames_ping
+
+    # =========================================================================
+    #: Bad URL Hostnames (DNS) - used to bypass testing BM's for bad HostNames
+    _bad_hostnames_dns: List[str] = []
+
+    @classmethod
+    def bad_hostnames_dns(cls) -> List[str]:
+        """Class method returning bad Hostnames (DNS)"""
+        return cls._bad_hostnames_dns
+
+    # =========================================================================
+    @classmethod
+    def read_bad_hosts_ping_cache(cls) -> None:
+        """Function to initialize bad hosts ping from cache"""
         try:
-            with open(TheConfig.bad_hosts_cache_file, 'r') as cache:
-                logger.info('Loading BadHosts cache (%s)', TheConfig.bad_hosts_cache_file)
-                cls._bad_hostnames = json.load(cache)
-                cls.bad_hosts_counter = len(cls._bad_hostnames)
+            with open(TheConfig.bad_hosts_ping_cache_file, 'r') as cache:
+                logger.info('Loading BadHosts cache (%s)', TheConfig.bad_hosts_ping_cache_file)
+                cls._bad_hostnames_ping = json.load(cache)
+                cls.bad_hostnames_counter_ping = len(cls._bad_hostnames_ping)
+                logger.info(cls.entries_fmt, cls.bad_hostnames_counter_ping)
         except FileNotFoundError:
             # warn user but ignore file not found
-            logger.warn('BadHosts cache not found (%s)', TheConfig.bad_hosts_cache_file)
+            logger.warn('BadHosts ping cache not found (%s)', TheConfig.bad_hosts_ping_cache_file)
         except Exception as e:
             logger.exception(cls.unhandled_exception, exc_info=e)
 
     # =========================================================================
     @classmethod
-    def write_bad_hosts_cache(cls):
-        """Function to write bad hosts to cache"""
+    def read_bad_hosts_dns_cache(cls) -> None:
+        """Function to initialize bad hosts DNS lookup from cache"""
         try:
-            with open(TheConfig.bad_hosts_cache_file, 'w') as cache:
-                logger.info('Writing BadHosts cache (%s)', TheConfig.bad_hosts_cache_file)
-                json.dump(cls._bad_hostnames, cache, indent=4)
+            with open(TheConfig.bad_hosts_dns_cache_file, 'r') as cache:
+                logger.info('Loading BadHosts cache (%s)', TheConfig.bad_hosts_dns_cache_file)
+                cls._bad_hostnames_dns = json.load(cache)
+                cls.bad_hostnames_counter_dns = len(cls._bad_hostnames_dns)
+                logger.info(cls.entries_fmt, cls.bad_hostnames_counter_dns)
+        except FileNotFoundError:
+            # warn user but ignore file not found
+            logger.warn('BadHosts DNS cache not found (%s)', TheConfig.bad_hosts_dns_cache_file)
         except Exception as e:
             logger.exception(cls.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    @classmethod
+    def write_bad_hosts_ping_cache(cls):
+        """Function to write bad ping hosts to cache"""
+        try:
+            with open(TheConfig.bad_hosts_ping_cache_file, 'w') as cache:
+                logger.info('Writing BadHosts ping cache (%s)', TheConfig.bad_hosts_ping_cache_file)
+                json.dump(cls._bad_hostnames_ping, cache, indent=4)
+                logger.info(cls.entries_fmt, (len(cls._bad_hostnames_ping)))
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    @classmethod
+    def write_bad_hosts_dns_cache(cls):
+        """Function to write bad DNS hosts to cache"""
+        try:
+            with open(TheConfig.bad_hosts_dns_cache_file, 'w') as cache:
+                logger.info('Writing BadHosts DNS cache (%s)', TheConfig.bad_hosts_dns_cache_file)
+                json.dump(cls._bad_hostnames_dns, cache, indent=4)
+                logger.info(cls.entries_fmt, (len(cls._bad_hostnames_dns)))
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    @classmethod
+    def read_bad_hosts_cache(cls):
+        """Function to read bad hosts cache file(s)"""
+        cls.read_bad_hosts_ping_cache()
+        cls.read_bad_hosts_dns_cache()
+
+    # =========================================================================
+    @classmethod
+    def write_bad_hosts_cache(cls):
+        """Function to write bad hosts cache file(s)"""
+        cls.write_bad_hosts_ping_cache()
+        cls.write_bad_hosts_dns_cache()
 
     # =========================================================================
     def verify_urls(self):
@@ -139,23 +205,72 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
     # =========================================================================
+    def _verify_host_list_dns(self, url_type: UrlType, url_list: List[str]) -> None:
+        """Verify a list of hostnames - DNS lookup
+
+        :param url_type: Type of URL being verified
+        :param url_list: List of URL's (strings) to verify
+        """
+        dns_counter = len(url_list)
+        for url in url_list:
+            # skip a URL that is in the bad hosts DNS list
+            if url in self._bad_hostnames_dns:
+                dns_counter -= 1
+                continue
+            # perform DNS lookup
+            status, lookup = dns_query(url)
+            logger.debug('DNS[%04d]: %s %s', dns_counter, url, lookup)
+            dns_counter -= 1
+            # follow up on status
+            if not status:
+                if not self._track_bad_url(url_type, url,
+                                           url_hostname=url,
+                                           message="DNS-LOOKUP",
+                                           url_bm_id=None,
+                                           bad_host_type=BadHostType.DNS):
+                    # exit early if tracking exceeds limits
+                    return
+
+    def _verify_host_list_ping(self, url_type: UrlType, url_list: List[str]) -> None:
+        """Verify a list of hostnames - PING
+
+        NB: We do not verify (PING) hosts that are in the DNS bad hosts list
+
+        :param url_type: Type of URL being verified
+        :param url_list: List of URL's (strings) to verify
+        """
+        ping_counter = len(url_list)
+        for url in url_list:
+            # skip a URL that is in the bad hosts DNS list
+            if url in self._bad_hostnames_dns:
+                ping_counter -= 1
+                continue
+            # skip a URL that is in the bad hosts ping list
+            if url in self._bad_hostnames_ping:
+                ping_counter -= 1
+                continue
+            # ping the host
+            status, message = my_ping(url)
+            logger.debug('PING[%04d]: %s %s', ping_counter, url, message)
+            ping_counter -= 1
+            # follow up on status
+            if not status:
+                if not self._track_bad_url(url_type, url,
+                                           url_hostname=url,
+                                           message=message,
+                                           url_bm_id=None,
+                                           bad_host_type=BadHostType.PING):
+                    # exit early if tracking exceeds limits
+                    return
+
     def verify_host_list(self, url_type: UrlType, url_list: List[str]) -> None:
         """Verify a list of hostnames
 
         :param url_type: Type of URL being verified
         :param url_list: List of URL's (strings) to verify
         """
-        for url in url_list:
-            # skip a URL that is in the bad hosts list
-            if url in self._bad_hostnames:
-                continue
-            # ping the host
-            status, message = my_ping(url)
-            logger.debug('PING: %s %s', url, message)
-            # follow up on status
-            if not status:
-                if not self._track_bad_url(url_type, url, url_hostname=url, message=message, url_bm_id=None):
-                    return
+        self._verify_host_list_dns(url_type, url_list)
+        self._verify_host_list_ping(url_type, url_list)
 
     # =========================================================================
     def verify_url_dict(self, url_type: UrlType, url_dict: Dict) -> None:
@@ -183,44 +298,57 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
         :param bm_list: List of BookMarks
         """
         for bm in bm_list:
-            bm_url = f'{bm.scheme}://{bm.hostname}{bm.path}'
-            if not self.verify_url(url_type, url=bm_url, url_hostname=bm.hostname, url_bm_id=bm.id):
+            if not self.verify_bm_url(url_type, bm):
                 break
 
     # =========================================================================
-    def verify_url(self, url_type: UrlType, url: str, url_hostname: str = None, url_bm_id: int = None) -> bool:
-        """Verify URL and return False if caller should abort looping
+    def verify_bm_url(self, url_type: UrlType, bm: BookMark) -> bool:
+        """Verify BookMark URL and return False if caller should abort looping
 
         NB: We will not attempt to verify a URL associated with a known bad
             hostname.
 
         :param url_type: Type of URL being verified
-        :param url: URL to verify
-        :param url_hostname: URL HostName for bookkeeping
-        :param url_bm_id: URL BookMark ID
+        :param bm: BookMark
         :return: abort_looping - boolean - True/False
         """
-        # accommodate callers who only pass a URL and do not specify a hostname
-        if not url_hostname:
-            url_hostname = url
         # see if this is a known bad hostname
-        if url_hostname in self._bad_hostnames:
-            # don't bother checking if hostname is in the bad hostnames list
+        if bm.hostname in self._bad_hostnames_dns or bm.hostname in self._bad_hostnames_ping:
+            # don't bother checking the bookmark if the hostname is in the bad hostnames lists
             status, message = False, "BAD HOSTNAME"
         else:
-            status, message = self._verify_url(url)
+            # update HTTP to HTTPS if requested
+            if TheConfig.http2https and bm.is_http and not bm.is_localhost:
+                bm.protocol_override = 'https'
+                status, message = self._verify_bm_url(bm)
+                if status:
+                    # update protocol on success
+                    bm.protocol = bm.protocol_override
+                else:
+                    # remove override on failure
+                    bm.protocol_override = None
+            else:
+                status, message = self._verify_bm_url(bm)
+
+        # common exit - test status and track bad URL's
         if not status:
-            return self._track_bad_url(url_type, url, url_hostname, message, url_bm_id)
+            return self._track_bad_url(url_type,
+                                       url=f'{bm.protocol}//{bm.hostname}{bm.path}',
+                                       url_hostname=bm.hostname,
+                                       message=message,
+                                       url_bm_id=bm.id,
+                                       bad_host_type=BadHostType.URL)
         return True
 
     # =========================================================================
-    def _track_bad_url(self, url_type, url, url_hostname, message, url_bm_id) -> bool:
+    def _track_bad_url(self, url_type, url, url_hostname, message, url_bm_id, bad_host_type: BadHostType) -> bool:
         """Function to do some bookkeeping for bad URL's
 
         :param url_type: Type of URL being verified
         :param url: URL to verify
         :param url_hostname: URL HostName for bookkeeping
         :param url_bm_id: URL BookMark ID
+        :param bad_host_type: Bad host type (enum)
         :param message: Failing status message
         """
         # keep track of the number of bad URL's
@@ -230,7 +358,15 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
             BadUrlStatus(hostname=url_hostname, url=url, error=message, bm_id=url_bm_id))
         # record bad URL hostname separately
         if url_type == UrlType.HOSTNAME:
-            self._bad_hostnames.append(url_hostname)
+            if bad_host_type == BadHostType.DNS:
+                self._bad_hostnames_dns.append(url_hostname)
+                self.bad_hostnames_counter_dns += 1
+            elif bad_host_type == BadHostType.PING:
+                self._bad_hostnames_ping.append(url_hostname)
+                self.bad_hostnames_counter_ping += 1
+            elif bad_host_type != BadHostType.URL:
+                raise MyException(f'INVALID BAD HOST TYPE: {bad_host_type}')
+
         # cut testing short if debugging is enabled
         if TheConfig.test_mode and self.bad_urls_counter > 5:
             logger.debug("EARLY EXIT: %s bad URL's", self.bad_urls_counter)
@@ -240,51 +376,69 @@ class VerifyUrls(Borg, classproperty.ClassPropertiesMixin):
     # =========================================================================
     # Low-level URL verify function
     # =========================================================================
-    def _verify_url(self, url: str) -> Tuple[bool, str]:
-        """Verify that a URL responds to HTTP request
+    def _verify_bm_url(self, bm: BookMark) -> Tuple[bool, str]:
+        """Verify that a BookMark URL responds to HTTP request
 
-        :param url: URL to verify
-        :return: Boolean True/False == Reachable/NotReachable
+        :param bm: BookMark to verify
+        :return: Tuple[Boolean True/False == Reachable/NotReachable, str]
         """
-        logger.debug('VerifyURL[%04d]: %s', self.urls_gas_gauge, url)
-        self.urls_gas_gauge -= 1
+        def error_exit(msg: str) -> Tuple[bool, str]:
+            """Common error exit
+
+            Don't decrement URL's gas-gauge if this is an override.
+
+            :param msg: Message to return to caller
+            :return: Tuple[Boolean status, str]
+            """
+            if not bm.protocol_override:
+                self.urls_gas_gauge -= 1
+            return False, msg
+
+        # use protocol override if one is given
+        if bm.protocol_override:
+            bm_protocol = bm.protocol_override
+        else:
+            bm_protocol = bm.protocol
+
+        logger.debug('VerifyURL[%04d]: %s://%s%s', self.urls_gas_gauge, bm_protocol, bm.hostname, bm.path)
 
         # ==========================
         # try opening the url
         try:
             # noinspection PyVulnerableApiCode
-            requests.get(url=f'{url}',
+            requests.get(url=f'{bm.url}',
                          timeout=TheConfig.request_get_timeout,
                          allow_redirects=False)
+            self.urls_gas_gauge -= 1
             return True, ''
 
         # =============================
         # Python connection error
         except ConnectionError:
-            return False, 'ConnectionError'
+            return error_exit('ConnectionError')
 
         # =============================
         # requests module exceptions
         except requests.exceptions.ConnectionError:
-            return False, 'requests.ConnectionError'
+            return error_exit('requests.ConnectionError')
         except requests.exceptions.ReadTimeout:
-            return False, 'requests.ReadTimeout'
+            return error_exit('requests.ReadTimeout')
         except requests.exceptions.TooManyRedirects:
-            return False, 'requests.TooManyRedirects'
+            return error_exit('requests.TooManyRedirects')
         except requests.exceptions.ContentDecodingError:
-            return False, 'requests.ContentDecodingError'
+            return error_exit('requests.ContentDecodingError')
 
         # =============================
         # urllib3 exceptions
         except urllib3.exceptions.NameResolutionError:
-            return False, 'urllib3.NameResolutionError'
+            return error_exit('urllib3.NameResolutionError')
         except urllib3.exceptions.ReadTimeoutError:
-            return False, 'urllib3.ReadTimeoutError'
+            return error_exit('urllib3.ReadTimeoutError')
         except urllib3.exceptions.DecodeError:
-            return False, 'urllib3.DecodeError'
+            return error_exit('urllib3.DecodeError')
 
         # =============================
         # unhandled/unknown exception
         except Exception as e:
-            logger.exception('%s: %s', self.unhandled_exception, url, exc_info=e)
-            return False, self.unhandled_exception
+            logger.exception('%s: %s', self.unhandled_exception, bm.url, exc_info=e)
+            return error_exit(self.unhandled_exception)
