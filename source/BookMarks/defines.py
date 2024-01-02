@@ -10,3 +10,9 @@ class UrlType(Enum):
     MOBILE = auto()
     MENUBAR = auto()
     LOCALHOST = auto()
+
+class BadHostType(Enum):
+    """Types of bad hosts"""
+    PING = auto()
+    DNS = auto()
+    URL = auto()
