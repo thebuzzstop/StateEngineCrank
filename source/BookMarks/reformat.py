@@ -11,8 +11,10 @@ from typing import List, Union
 # Project imports
 from analyze import Analyze
 from config import TheConfig
+from defines import UrlType
 from structures import BookMark
 from exceptions import MyException
+from verify_urls import VerifyUrls, BadUrlStatus
 
 from logger import Logger
 logger = Logger(name=__name__).logger
@@ -101,6 +103,27 @@ class Reformat:
             elif subsection == 'protocols':
                 # create a list of protocols
                 sorted_list = sorted(Analyze.schemes())
+            elif subsection == 'bad_hosts':
+                # create a list of bad hosts
+                sorted_list = sorted(VerifyUrls.bad_hostnames())
+            elif subsection == 'bad_dns':
+                # create a list of bad hosts - DNS entries
+                sorted_list = sorted(VerifyUrls.bad_hostnames_dns())
+            elif subsection == 'bad_ping':
+                # create a list of bad hosts - PING entries
+                sorted_list = sorted(VerifyUrls.bad_hostnames_ping())
+            elif subsection == 'bad_urls':
+                # create a list of bad URL's
+                bad_url_list: List[str] = []
+                for bad_urls_key in list(VerifyUrls.bad_urls_dict().keys()):
+                    bad_url_status_list: List[BadUrlStatus] = VerifyUrls.bad_urls_dict()[bad_urls_key]
+                    if bad_urls_key == UrlType.HOSTNAME:
+                        bad_url_list.extend([bad_url.hostname for bad_url in bad_url_status_list])
+                    else:
+                        bad_url_list.extend([bad_url.url for bad_url in bad_url_status_list])
+                sorted_list = sorted(bad_url_list)
+                pass
+
             else:
                 raise ValueError('Unknown subsection: %s', subsection)
             # write out sorted list
@@ -109,7 +132,7 @@ class Reformat:
                 text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
                 self._output.append('    ' * self.indent + text)
         else:
-            # create sorted list of section/sub-section bookmarks
+            # create sorted list of section/subsection bookmarks
             sorted_bm = sorted(self.menubar_data[section][subsection],
                                key=lambda x: (getattr(x, 'label').lower(), getattr(x, 'hostname'), getattr(x, 'path')))
             # write sorted bookmarks
