@@ -167,6 +167,17 @@ class BookMark:
     # ==========================================
 
     @property
+    def url(self) -> str:
+        """Property returning BookMark URL string
+
+        NB: Return override scheme if present
+        """
+        if self.scheme_override:
+            return f'{self.scheme_override}://{self.hostname}{self.path}'
+        else:
+            return f'{self.scheme}://{self.hostname}{self.path}'
+
+    @property
     def scanned(self) -> bool:
         """Property returning bookmark 'scanned' status
 
@@ -193,10 +204,23 @@ class BookMark:
         """Property returning bookmark protocol (HTTP, HTTPS)"""
         return self.scheme
 
+    @protocol.setter
+    def protocol(self, value):
+        """Property setter for protocol
+
+        :param value: New value to set
+        """
+        self.scheme = value
+
     @property
     def is_http(self) -> bool:
         """Property returning True if protocol is HTTP"""
-        return self.scheme == 'HTTP'
+        return self.scheme == 'HTTP' or self.scheme == 'http'
+
+    @property
+    def is_localhost(self) -> bool:
+        """Property returning True if BookMark points to localhost"""
+        return self.hostname.startswith('192.168')
 
     @property
     def protocol_override(self) -> Optional[str]:
