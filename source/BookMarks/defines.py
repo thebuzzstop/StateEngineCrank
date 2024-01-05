@@ -4,15 +4,15 @@
 from enum import Enum, auto
 
 
-class UrlType(Enum):
+class UrlType(str):
     """URL Types"""
-    HOSTNAME = auto()
-    MOBILE = auto()
-    MENUBAR = auto()
-    LOCALHOST = auto()
+    HOSTNAME = "HostName"
+    MOBILE = "Mobile"
+    MENUBAR = "MenuBar"
+    LOCALHOST = "LocalHost"
 
-class BadHostType(Enum):
+class BadHostType(str):
     """Types of bad hosts"""
-    PING = auto()
-    DNS = auto()
-    URL = auto()
+    PING = "Ping"
+    DNS = "DNS"
+    URL = "URL"
