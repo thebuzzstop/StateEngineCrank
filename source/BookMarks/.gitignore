@@ -5,10 +5,8 @@
 # Ignore any files that are created by running StateEngineCrank
 ./bookmarks.py.*
 
-# Ignore bad-hosts cache - force a re-write when creating project
-**/bad_hosts.cache
-**/bad_hosts_dns.cache
-**/bad_hosts_ping.cache
+# Ignore all bad cache files - force a re-write when creating project
+**/bad*.cache
 
 # PyCharm .idea directories can appear in a couple of places depending
 # on where a developer tells PyCharm to look for the project.
@@ -225,4 +223,3 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
-
