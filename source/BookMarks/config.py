@@ -99,6 +99,10 @@ class TheConfig:
     bad_hosts_dns_cache_file: str = 'bad_hosts_dns.cache'
     #: use bad hosts cache file - set True with command line switch
     use_bad_hosts_cache: bool = False
+    #: bad URL's cache file
+    bad_urls_cache_file: str = 'bad_urls.cache'
+    #: use bad URL's cache file - set True with command line switch
+    use_bad_urls_cache: bool = False
 
     @classmethod
     def hostname_from_ip(cls, host_ip: str) -> str:
@@ -178,7 +182,8 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("-T", "--test", help="enable 'test mode'", action="store_true")
         parser.add_argument("--timeout", type=float, help="timeout in seconds (float) for verifying URL's")
         parser.add_argument("--http2https", help="convert HTTP URL's to HTTPS", action="store_true")
-        parser.add_argument("--use_cache", help="use bad hosts cache file", action="store_true")
+        parser.add_argument("--use_hosts_cache", help="use bad hosts cache files", action="store_true")
+        parser.add_argument("--use_urls_cache", help="use bad URL's cache file", action="store_true")
 
         # parse command line arguments
         args = parser.parse_args()
@@ -204,8 +209,10 @@ class ArgParser(argparse.ArgumentParser):
             TheConfig.request_get_timeout = args.timeout
         if args.http2https:
             TheConfig.http2https = True
-        if args.use_cache:
+        if args.use_hosts_cache:
             TheConfig.use_bad_hosts_cache = True
+        if args.use_urls_cache:
+            TheConfig.use_bad_urls_cache = True
 
     @staticmethod
     def substitute_tilde(path: str):

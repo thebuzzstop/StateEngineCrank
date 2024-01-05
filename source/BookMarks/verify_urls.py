@@ -50,6 +50,12 @@ class VerifyUrls(Borg):
     bad_hostnames_counter_ping: int = 0
     #: Counter for bad Hosts - DNS lookup
     bad_hostnames_counter_dns: int = 0
+    #: Ping cache has been read and is active
+    ping_cache_active: bool = False
+    #: DNS cache has been read and is active
+    dns_cache_active: bool = False
+    #: URL's cache has been read and is active
+    urls_cache_active: bool = False
 
     def __init__(self):
         """VerifyUrls constructor"""
@@ -74,6 +80,15 @@ class VerifyUrls(Borg):
         UrlType.MENUBAR: [],
         UrlType.LOCALHOST: [],
     }
+
+    # =========================================================================
+    @classmethod
+    def bad_urls_dict_entries(cls) -> int:
+        """Function returning number of entries in bad URL's dictionary"""
+        count = 0
+        for key in cls._bad_urls_dict.keys():
+            count += len(cls._bad_urls_dict[key])
+        return count
 
     # =========================================================================
     @classmethod
@@ -108,7 +123,7 @@ class VerifyUrls(Borg):
 
     # =========================================================================
     @classmethod
-    def read_bad_hosts_ping_cache(cls) -> None:
+    def read_bad_hosts_ping_cache(cls):
         """Function to initialize bad hosts ping from cache"""
         try:
             with open(TheConfig.bad_hosts_ping_cache_file, 'r') as cache:
@@ -116,6 +131,7 @@ class VerifyUrls(Borg):
                 cls._bad_hostnames_ping = json.load(cache)
                 cls.bad_hostnames_counter_ping = len(cls._bad_hostnames_ping)
                 logger.info(cls.entries_fmt, cls.bad_hostnames_counter_ping)
+                cls.ping_cache_active = True
         except FileNotFoundError:
             # warn user but ignore file not found
             logger.warn('BadHosts ping cache not found (%s)', TheConfig.bad_hosts_ping_cache_file)
@@ -124,7 +140,7 @@ class VerifyUrls(Borg):
 
     # =========================================================================
     @classmethod
-    def read_bad_hosts_dns_cache(cls) -> None:
+    def read_bad_hosts_dns_cache(cls):
         """Function to initialize bad hosts DNS lookup from cache"""
         try:
             with open(TheConfig.bad_hosts_dns_cache_file, 'r') as cache:
@@ -132,6 +148,7 @@ class VerifyUrls(Borg):
                 cls._bad_hostnames_dns = json.load(cache)
                 cls.bad_hostnames_counter_dns = len(cls._bad_hostnames_dns)
                 logger.info(cls.entries_fmt, cls.bad_hostnames_counter_dns)
+                cls.dns_cache_active = True
         except FileNotFoundError:
             # warn user but ignore file not found
             logger.warn('BadHosts DNS cache not found (%s)', TheConfig.bad_hosts_dns_cache_file)
@@ -146,7 +163,7 @@ class VerifyUrls(Borg):
             with open(TheConfig.bad_hosts_ping_cache_file, 'w') as cache:
                 logger.info('Writing BadHosts ping cache (%s)', TheConfig.bad_hosts_ping_cache_file)
                 json.dump(cls._bad_hostnames_ping, cache, indent=4)
-                logger.info(cls.entries_fmt, (len(cls._bad_hostnames_ping)))
+                logger.info(cls.entries_fmt, len(cls._bad_hostnames_ping))
         except Exception as e:
             logger.exception(cls.unhandled_exception, exc_info=e)
 
@@ -158,7 +175,35 @@ class VerifyUrls(Borg):
             with open(TheConfig.bad_hosts_dns_cache_file, 'w') as cache:
                 logger.info('Writing BadHosts DNS cache (%s)', TheConfig.bad_hosts_dns_cache_file)
                 json.dump(cls._bad_hostnames_dns, cache, indent=4)
-                logger.info(cls.entries_fmt, (len(cls._bad_hostnames_dns)))
+                logger.info(cls.entries_fmt, len(cls._bad_hostnames_dns))
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    @classmethod
+    def read_bad_urls_cache(cls):
+        """Function to read bad URL's from cache"""
+        try:
+            with open(TheConfig.bad_urls_cache_file, 'r') as cache:
+                logger.info("Reading bad URL's cache (%s)", TheConfig.bad_urls_cache_file)
+                cls._bad_urls_dict = json.load(cache)
+                logger.info(cls.entries_fmt, cls.bad_urls_dict_entries())
+                cls.urls_cache_active = True
+        except FileNotFoundError:
+            # warn user but ignore file not found
+            logger.warn("Bad URL's cache not found (%s)", TheConfig.bad_urls_cache_file)
+        except Exception as e:
+            logger.exception(cls.unhandled_exception, exc_info=e)
+
+    # =========================================================================
+    @classmethod
+    def write_bad_urls_cache(cls):
+        """Function to write bad URL's cache"""
+        try:
+            with open(TheConfig.bad_urls_cache_file, 'w') as cache:
+                logger.info("Writing bad URL's cache (%s)", TheConfig.bad_urls_cache_file)
+                json.dump(cls._bad_urls_dict, cache, indent=4)
+                logger.info(cls.entries_fmt, cls.bad_urls_dict_entries())
         except Exception as e:
             logger.exception(cls.unhandled_exception, exc_info=e)
 
@@ -180,11 +225,20 @@ class VerifyUrls(Borg):
     def verify_urls(self):
         """Function creating a dictionary of bad URL's"""
         logger.info('Verify HostNames')
+
         # read bad host cache if requested
         if TheConfig.use_bad_hosts_cache:
             self.read_bad_hosts_cache()
-        self.verify_host_list(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
-        # write bad host cache if requested
+
+        # verify hostnames DNS
+        if not self.dns_cache_active:
+            self._verify_host_list_dns(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
+
+        # verify hostnames ping
+        if not self.ping_cache_active:
+            self._verify_host_list_ping(url_type=UrlType.HOSTNAME, url_list=Analyze.hostnames())
+
+        # write bad host cache files if requested
         if TheConfig.use_bad_hosts_cache:
             self.write_bad_hosts_cache()
         logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
@@ -192,17 +246,28 @@ class VerifyUrls(Borg):
         # initialize the BookMarks gas-gauge for instrumentation
         self.urls_gas_gauge = bm_counter()
 
-        logger.info('Verify Mobile BookMarks')
-        self.verify_bm_list(url_type=UrlType.MOBILE, bm_list=Analyze.mobile_bookmarks())
-        logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+        # read bad url's cache if requested
+        if TheConfig.use_bad_urls_cache:
+            self.read_bad_urls_cache()
 
-        logger.info('Verify MenuBar BookMarks')
-        self.verify_url_dict(url_type=UrlType.MENUBAR, url_dict=Analyze.menubar_bookmarks())
-        logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+        # skip URL verification if cache was successfully read
+        # this would not normally be used but is useful for expediting debug
+        if not self.urls_cache_active:
+            logger.info('Verify Mobile BookMarks')
+            self.verify_bm_list(url_type=UrlType.MOBILE, bm_list=Analyze.mobile_bookmarks())
+            logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
 
-        logger.info('Verify localhost BookMarks')
-        self.verify_url_dict(url_type=UrlType.LOCALHOST, url_dict=Analyze.localhost_bookmarks())
-        logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+            logger.info('Verify MenuBar BookMarks')
+            self.verify_url_dict(url_type=UrlType.MENUBAR, url_dict=Analyze.menubar_bookmarks())
+            logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+
+            logger.info('Verify localhost BookMarks')
+            self.verify_url_dict(url_type=UrlType.LOCALHOST, url_dict=Analyze.localhost_bookmarks())
+            logger.debug(self.bad_urls_fmt, self.bad_urls_counter)
+
+            # write bad url's cache if requested
+            if TheConfig.use_bad_urls_cache:
+                self.write_bad_urls_cache()
 
     # =========================================================================
     def _verify_host_list_dns(self, url_type: UrlType, url_list: List[str]) -> None:
@@ -262,15 +327,6 @@ class VerifyUrls(Borg):
                                            bad_host_type=BadHostType.PING):
                     # exit early if tracking exceeds limits
                     return
-
-    def verify_host_list(self, url_type: UrlType, url_list: List[str]) -> None:
-        """Verify a list of hostnames
-
-        :param url_type: Type of URL being verified
-        :param url_list: List of URL's (strings) to verify
-        """
-        self._verify_host_list_dns(url_type, url_list)
-        self._verify_host_list_ping(url_type, url_list)
 
     # =========================================================================
     def verify_url_dict(self, url_type: UrlType, url_dict: Dict) -> None:
