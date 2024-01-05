@@ -24,9 +24,14 @@ def _prune_bad_menubar() -> None:
     logger.info("Prune menubar bookmarks")
     # remove any BM's with a known bad hostname
     menubar_urls: List[BadUrlStatus] = list(VerifyUrls.bad_urls_dict()[UrlType.MENUBAR])
+    bad_hostnames = VerifyUrls.bad_hostnames()
     for _bm in menubar_urls:
-        if _bm.hostname in VerifyUrls.bad_hostnames():
-            Analyze.delete_bookmark_by_id(_bm.bm_id)
+        bm_hostname = _bm[0]
+        bm_id = _bm[3]
+        logger.debug("CHECK: %d - %s", bm_id, bm_hostname)
+        if bm_hostname in bad_hostnames:
+            logger.debug("DELETING: %d", bm_id)
+            Analyze.delete_bookmark_by_id(bm_id)
 
 def _prune_bad_hosts() -> None:
     """Function to remove bookmarks with bad hosts"""

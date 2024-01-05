@@ -129,13 +129,12 @@ class Analyze:
             :return: Boolean True/False - Found/NotFound
             """
             _bookmark_found: bool = False
-            bookmark_list_len: int = len(bookmark_list)
+            # bookmark_list_len: int = len(bookmark_list)
             # process list in reverse order
-            for index in range(bookmark_list_len - 1, -1, -1):
-                bm: BookMark = bookmark_list[index]
+            for bm in bookmark_list:
                 if bm.id == delete_bm_id:
                     logger.debug('DeleteBM: %04d %s', bm.id, bm.attrs['href'])
-                    del bookmark_list[index]
+                    del bm
                     _bookmark_found = True
             return _bookmark_found
 
