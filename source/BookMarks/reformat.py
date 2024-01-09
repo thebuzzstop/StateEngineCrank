@@ -93,38 +93,38 @@ class Reformat:
         """
         # special case of 'www' section
         if section == 'www':
+            item_list = []
             if subsection == 'hosts':
                 # create a list of all hosts (domains)
-                sorted_list = sorted(Analyze.domains())
+                item_list = Analyze.domains()
             elif subsection == 'types':
                 # create a list of all host sites
-                sorted_list = sorted(Analyze.domain_types())
+                item_list = Analyze.domain_types()
             elif subsection == 'protocols':
                 # create a list of protocols
-                sorted_list = sorted(Analyze.schemes())
+                item_list = Analyze.schemes()
             elif subsection == 'bad_hosts':
                 # create a list of bad hosts
-                sorted_list = sorted(VerifyUrls.bad_hostnames())
+                item_list = VerifyUrls.bad_hostnames()
             elif subsection == 'bad_dns':
                 # create a list of bad hosts - DNS entries
-                sorted_list = sorted(VerifyUrls.bad_hostnames_dns())
+                item_list = VerifyUrls.bad_hostnames_dns()
             elif subsection == 'bad_ping':
                 # create a list of bad hosts - PING entries
-                sorted_list = sorted(VerifyUrls.bad_hostnames_ping())
+                item_list = VerifyUrls.bad_hostnames_ping()
             elif subsection == 'bad_urls':
                 # create a list of bad URL's
-                bad_url_list: List[str] = []
                 for bad_urls_key in list(VerifyUrls.bad_urls_dict().keys()):
                     bad_url_status_list: List[BadUrlStatus] = VerifyUrls.bad_urls_dict()[bad_urls_key]
                     if bad_urls_key == UrlType.HOSTNAME:
-                        bad_url_list.extend([bad_url.hostname for bad_url in bad_url_status_list])
+                        item_list.extend([bad_url.hostname for bad_url in bad_url_status_list])
                     else:
-                        bad_url_list.extend([bad_url.url for bad_url in bad_url_status_list])
-                sorted_list = sorted(bad_url_list)
-                pass
-
+                        for bad_url_status in bad_url_status_list:
+                            item_list.append(bad_url_status[1])
             else:
                 raise ValueError('Unknown subsection: %s', subsection)
+            # sort and remove any duplicates
+            sorted_list = sorted(list(set(item_list)))
             # write out sorted list
             # :FixMe: Writing 'www' section is broken, subsections are empty
             for item in sorted_list:

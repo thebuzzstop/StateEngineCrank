@@ -36,7 +36,7 @@ class TheConfig:
     BOOKMARK_HTML_ICON_FORMAT = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}">{3}</A>'
     BOOKMARK_HTML_ICON_FORMAT_NO_LABEL = '<DT><A HREF="{0}" ADD_DATE="{1}" ICON="{2}"></A>'
     BOOKMARK_HTML_TEXT_FORMAT = '<DT><A HREF="{0}">{1}</A>'
-    LIST_HTML_TEXT_FORMAT = '<DT><p>{0}</p>'
+    LIST_HTML_TEXT_FORMAT = '<DT>{0}'
     LIST_HTML_LINK_FORMAT = '<DT><A HREF="{0}">{0}</A>'
     NO_SECTION_HEADING = {
         'reference': 'reference',

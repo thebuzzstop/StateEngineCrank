@@ -389,7 +389,7 @@ class VerifyUrls(Borg):
         # common exit - test status and track bad URL's
         if not status:
             return self._track_bad_url(url_type,
-                                       url=f'{bm.protocol}//{bm.hostname}{bm.path}',
+                                       url=f'{bm.protocol}://{bm.hostname}{bm.path}',
                                        url_hostname=bm.hostname,
                                        message=message,
                                        url_bm_id=bm.id,
