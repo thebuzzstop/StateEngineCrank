@@ -93,7 +93,7 @@ class Reformat:
         """
         # special case of 'www' section
         if section == 'www':
-            item_list = []
+            item_list = []  # list of items to be output, created dynamically
             if subsection == 'hosts':
                 # create a list of all hosts (domains)
                 item_list = Analyze.domains()
@@ -126,10 +126,7 @@ class Reformat:
             # sort and remove any duplicates
             sorted_list = sorted(list(set(item_list)))
             # write out sorted list
-            # :FixMe: Writing 'www' section is broken, subsections are empty
-            for item in sorted_list:
-                text = TheConfig.LIST_HTML_TEXT_FORMAT.format(item)
-                self._output.append('    ' * self.indent + text)
+            self.write_www(www_list=sorted_list, subsection=subsection)
         else:
             # create sorted list of section/subsection bookmarks
             sorted_bm = sorted(self.menubar_data[section][subsection],
@@ -147,6 +144,28 @@ class Reformat:
         :return: True if section.subsection has a heading
         """
         return f'{section}.{subsection}' not in TheConfig.noheadings
+
+    def write_www(self, www_list: List[str], subsection) -> None:
+        """write a 'www' type sorted-list to output string
+
+        'www' type items may be bad_url's, bad_hosts, bad_pings, bad_dns, etc
+
+        'param www_list' list of www items to write
+        'param subsection' subsection being processed
+        """
+        for item in www_list:
+            if subsection == 'protocols':
+                self.write(
+                    TheConfig.LIST_HTML_LINK_FORMAT.format(f'{item}://')
+                )
+            elif item.startswith('http'):
+                self.write(
+                    TheConfig.LIST_HTML_LINK_FORMAT.format(item)
+                )
+            else:
+                self.write(
+                    TheConfig.LIST_HTML_LINK_FORMAT.format(f'https://{item}')
+                )
 
     def write_bm(self, bm: BookMark, has_label=True):
         """write a single bookmark to output string
