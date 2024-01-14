@@ -17,7 +17,7 @@ def prune_bad_urls() -> None:
     _prune_bad_dns()
     _prune_bad_hosts()
     _prune_bad_localhost()
-    _prune_bad_menubar()
+    # _prune_bad_menubar()
     _prune_bad_mobile()
 
 def _prune_bad_menubar() -> None:
@@ -35,8 +35,12 @@ def _prune_bad_menubar() -> None:
             Analyze.delete_bookmark_by_id(bm_id)
 
 def _prune_bad_dns() -> None:
-    """:ToDo: Function to remove bookmarks with bad DNS"""
+    """Function to remove bookmarks with bad DNS"""
     logger.info("Prune bad DNS")
+    # remove any BM's with a known bad DNS hostname
+    bookmarks_list = Analyze.bookmarks_list()
+    bad_dns = sorted(VerifyUrls.bad_hostnames_dns())
+    pass
 
 def _prune_bad_hosts() -> None:
     """:ToDo: Function to remove bookmarks with bad hosts"""

@@ -77,6 +77,7 @@ class TheConfig:
     verbosity_level: int = 0            #: verbosity level
     verify_urls: bool = False           #: verify URL's are reachable as they are processed
     verify_prune: bool = False          #: prune bad URL's and bookmarks
+    prune_bad_dns: bool = False         #: prune bookmarks with bad DNS entries
     request_get_timeout: float = 0.5    #: default timeout for verifying URL's
 
     #: should return local ip-address, e.g. '192.168.1.101'
@@ -184,6 +185,7 @@ class ArgParser(argparse.ArgumentParser):
         parser.add_argument("--http2https", help="convert HTTP URL's to HTTPS", action="store_true")
         parser.add_argument("--use_hosts_cache", help="use bad hosts cache files", action="store_true")
         parser.add_argument("--use_urls_cache", help="use bad URL's cache file", action="store_true")
+        parser.add_argument("--prune_bad_dns", help="prune bookmarks with bad DNS", action="store_true")
 
         # parse command line arguments
         args = parser.parse_args()
@@ -205,6 +207,8 @@ class ArgParser(argparse.ArgumentParser):
             TheConfig.verify_urls = True
         if args.prune:
             TheConfig.verify_prune = True
+        if args.prune_bad_dns:
+            TheConfig.prune_bad_dns = True
         if args.timeout:
             TheConfig.request_get_timeout = args.timeout
         if args.http2https:
@@ -272,7 +276,7 @@ class CfgParser(configparser.ConfigParser):
         # enumerate menubar heading sub-topics
         for heading in headings:
             for topic in config[heading]:
-                menubar[heading][topic] = {
+                menubar[heading][topic] = { # :FixMe:
                     topic: None for topic in self.get_list(config[heading][topic])
                 }
 

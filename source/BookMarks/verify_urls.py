@@ -282,6 +282,10 @@ class VerifyUrls(Borg):
             if url in self._bad_hostnames_dns:
                 dns_counter -= 1
                 continue
+            # skip a URL that is a localhost
+            if url.startswith('192.') or url.startswith('10.') or url.startswith('bookmarks'):
+                dns_counter -= 1
+                continue
             # perform DNS lookup
             status, lookup = dns_query(url)
             logger.debug('DNS[%04d]: %s %s', dns_counter, url, lookup)

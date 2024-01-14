@@ -359,11 +359,12 @@ class BookMarks(Borg):
         #: Heading labels, used in post-processing
         self.heading_labels = HeadingLabels()
 
-        self.headings_dict = {}  #: Headings: Dict
-        self.headings_stack = []  #: Headings: Stack (first-in, last-out)
-        self.headings_dups = []  #: Headings: Duplicates
-        self.bookmarks = {}  #: Dictionary of bookmarks
+        self.headings_dict = {}     #: Headings: Dict
+        self.headings_stack = []    #: Headings: Stack (first-in, last-out)
+        self.headings_dups = []     #: Headings: Duplicates
+        self.bookmarks = {}         #: Dictionary of bookmarks
 
+        #: bookmark currently being processed / created
         self.bookmark = None
 
     # =================================================================

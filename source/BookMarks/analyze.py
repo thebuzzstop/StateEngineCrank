@@ -72,6 +72,8 @@ class Analyze:
     #: 'head': list of bookmarks that appear at the head of the bookmark menubar
     #: 'tail': list of bookmarks that appear at the tail (end) of the bookmark menubar
     _menubar_bookmarks: Dict = {'head': [], 'tail': []}
+    #: list of all bookmarks - used by bookmarks_list()
+    _bookmarks_list: List[BookMark] = []
 
     # ===================================================
     # global class properties - access functions
@@ -114,6 +116,35 @@ class Analyze:
         lists of bookmarks as well as dictionaries of lists of bookmarks.
         """
         return cls._menubar_bookmarks
+
+    @classmethod
+    def _parse_bm_dict(cls, bm_dict: Dict) -> None:
+        """Function parsing a dictionary and creating a list of bookmarks
+
+        This function is recursive when encountering a dictionary within
+        the dictionary passed.
+
+        :param bm_dict: Dict
+        """
+        for bm_entry in list(bm_dict.values()):
+            if isinstance(bm_entry, List):
+                Analyze._bookmarks_list.extend(bm_entry)
+            elif isinstance(bm_entry, Dict):
+                Analyze._parse_bm_dict(bm_entry)
+
+    @classmethod
+    def bookmarks_list(cls) -> List[BookMark]:
+        """Function returning a list of all bookmarks"""
+        # start with mobile bookmarks
+        Analyze._bookmarks_list = Analyze.mobile_bookmarks()
+        # add localhost bookmarks
+        localhost_bm = Analyze.localhost_bookmarks()
+        Analyze._parse_bm_dict(localhost_bm)
+        # add menubar bookmarks
+        menubar_bm = Analyze.menubar_bookmarks()
+        Analyze._parse_bm_dict(menubar_bm)
+        # return what we found
+        return Analyze._bookmarks_list
 
     @classmethod
     def delete_bookmark_by_id(cls, delete_bm_id: int):
@@ -179,7 +210,7 @@ class Analyze:
 
         logger.info('INIT (%s)', __name__)
 
-        self._bookmarks: BookMarks = bookmarks
+        self._bookmarks_list: BookMarks = bookmarks
         self.bookmarks: Dict[str, List] = bookmarks.bookmarks
         self.headings: Dict[str] = bookmarks.headings_dict
         self.pathnames: Dict[str, List[str]] = {}
