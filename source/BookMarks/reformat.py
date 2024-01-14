@@ -93,36 +93,8 @@ class Reformat:
         """
         # special case of 'www' section
         if section == 'www':
-            item_list = []  # list of items to be output, created dynamically
-            if subsection == 'hosts':
-                # create a list of all hosts (domains)
-                item_list = Analyze.domains()
-            elif subsection == 'types':
-                # create a list of all host sites
-                item_list = Analyze.domain_types()
-            elif subsection == 'protocols':
-                # create a list of protocols
-                item_list = Analyze.schemes()
-            elif subsection == 'bad_hosts':
-                # create a list of bad hosts
-                item_list = VerifyUrls.bad_hostnames()
-            elif subsection == 'bad_dns':
-                # create a list of bad hosts - DNS entries
-                item_list = VerifyUrls.bad_hostnames_dns()
-            elif subsection == 'bad_ping':
-                # create a list of bad hosts - PING entries
-                item_list = VerifyUrls.bad_hostnames_ping()
-            elif subsection == 'bad_urls':
-                # create a list of bad URL's
-                for bad_urls_key in list(VerifyUrls.bad_urls_dict().keys()):
-                    bad_url_status_list: List[BadUrlStatus] = VerifyUrls.bad_urls_dict()[bad_urls_key]
-                    if bad_urls_key == UrlType.HOSTNAME:
-                        item_list.extend([bad_url.hostname for bad_url in bad_url_status_list])
-                    else:
-                        for bad_url_status in bad_url_status_list:
-                            item_list.append(bad_url_status[1])
-            else:
-                raise ValueError('Unknown subsection: %s', subsection)
+            item_list = self.prepare_www_output(subsection)
+            self.prepare_www_output(subsection)
             # sort and remove any duplicates
             sorted_list = sorted(list(set(item_list)))
             # write out sorted list
@@ -134,6 +106,55 @@ class Reformat:
             # write sorted bookmarks
             for bm in sorted_bm:
                 self.write_bm(bm)
+
+    def prepare_www_output(self, subsection) -> List:
+        """Function to prepare requested WWW output list
+
+        :param subsection: Subsection being processed
+        :return: List of subsection entries
+        """
+        if subsection == 'hosts':
+            # create a list of all hosts (domains)
+            item_list = Analyze.domains()
+            return list(item_list.keys())
+        elif subsection == 'types':
+            # create a list of all host sites
+            item_list = Analyze.domain_types()
+            return list(item_list.keys())
+        elif subsection == 'protocols':
+            # create a list of protocols
+            return Analyze.schemes()
+        elif subsection == 'bad_hosts':
+            # create a list of bad hosts
+            return VerifyUrls.bad_hostnames()
+        elif subsection == 'bad_dns':
+            # create a list of bad hosts - DNS entries
+            return VerifyUrls.bad_hostnames_dns()
+        elif subsection == 'bad_ping':
+            # create a list of bad hosts - PING entries
+            return VerifyUrls.bad_hostnames_ping()
+        elif subsection == 'bad_urls':
+            # create a list of bad URL's
+            return self.get_bad_urls()
+        else:
+            logger.error('Unknown WWW subsection: %s', subsection)
+            return []
+
+    @staticmethod
+    def get_bad_urls() -> List:
+        """Function to return a list of bad URL's
+
+        :return: List of bad URL's
+        """
+        item_list = []
+        for bad_urls_key in list(VerifyUrls.bad_urls_dict().keys()):
+            bad_url_status_list: List[BadUrlStatus] = VerifyUrls.bad_urls_dict()[bad_urls_key]
+            if bad_urls_key == UrlType.HOSTNAME:
+                item_list.extend([bad_url.hostname for bad_url in bad_url_status_list])
+            else:
+                for bad_url_status in bad_url_status_list:
+                    item_list.append(bad_url_status[1])
+        return item_list
 
     @staticmethod
     def has_heading(section, subsection):

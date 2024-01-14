@@ -14,6 +14,7 @@ logger = Logger(name=__name__).logger
 def prune_bad_urls() -> None:
     """Function to prune (delete) BookMark's with bad URL's"""
     logger.info("Prune bad URL's")
+    _prune_bad_dns()
     _prune_bad_hosts()
     _prune_bad_localhost()
     _prune_bad_menubar()
@@ -33,14 +34,18 @@ def _prune_bad_menubar() -> None:
             logger.debug("DELETING: %d", bm_id)
             Analyze.delete_bookmark_by_id(bm_id)
 
+def _prune_bad_dns() -> None:
+    """:ToDo: Function to remove bookmarks with bad DNS"""
+    logger.info("Prune bad DNS")
+
 def _prune_bad_hosts() -> None:
-    """Function to remove bookmarks with bad hosts"""
+    """:ToDo: Function to remove bookmarks with bad hosts"""
     logger.info("Prune bad hosts")
 
 def _prune_bad_mobile() -> None:
-    """Function to remove bad mobile bookmarks"""
+    """:ToDo: Function to remove bad mobile bookmarks"""
     logger.info("Prune mobile bookmarks")
 
 def _prune_bad_localhost() -> None:
-    """Function to remove bad localhost bookmarks"""
+    """:ToDo: Function to remove bad localhost bookmarks"""
     logger.info("Prune localhost bookmarks")
