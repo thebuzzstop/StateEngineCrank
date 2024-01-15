@@ -35,7 +35,7 @@ def _prune_bad_menubar() -> None:
             Analyze.delete_bookmark_by_id(bm_id)
 
 def _prune_bad_dns() -> None:
-    """Function to remove bookmarks with bad DNS"""
+    """:ToDo: Function to remove bookmarks with bad DNS"""
     logger.info("Prune bad DNS")
     # remove any BM's with a known bad DNS hostname
     bookmarks_list = Analyze.bookmarks_list()
