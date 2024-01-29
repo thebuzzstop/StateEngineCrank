@@ -1,0 +1,22 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+
+if (ping(hostname)) then (false)
+    :add hostname to bad list;
+    :return-status = BAD;
+else
+    if (TheConfig.http2https) then (true)
+        if (bookmark.protocol == HTTP) then (true)
+            :return-status = bookmark.verify(HTTPS);
+            if (return-status == GOOD) then (true)
+                :bookmark.protocol = HTTPS;
+                stop
+            endif
+        endif
+    endif
+    :return-status = bookmark.verify(protocol);
+endif
+stop
+@enduml

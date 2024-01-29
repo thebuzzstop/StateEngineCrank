@@ -87,6 +87,7 @@ The BookMarks Structures module maintains bookmark structures.
 """
 
 # System imports
+from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 # Project imports
@@ -105,26 +106,146 @@ class StructuresList:
         self.list = []
 
 
+#: BookMark global variable - current BookMark ID
+_bm_id: int = 0
+#: BookMark counter - bumped every init(), decremented for __del__()
+_bm_counter: int = 0
+
+def bm_id() -> int:
+    """BM ID generator function
+
+    Returns unique integer ID for each call.
+    """
+    global _bm_id, _bm_counter
+    _bm_id += 1
+    _bm_counter += 1
+    return _bm_id
+
+def bm_counter() -> int:
+    """Function returning BookMark counter"""
+    return _bm_counter
+
+
 class BookMark:
     """ A bookmark """
 
+    def __del__(self):
+        """Decrement the global counter"""
+        global _bm_counter
+        _bm_counter -= 1
+
     def __init__(self, label, heading, href, add_date, icon=None):
-        self.label = label
-        self.heading = heading
-        self.scanned = False
-        self.attrs = {
+        self.id: int = bm_id()          #: BM unique ID
+        self.label: str = label         #: BM string label
+        self.heading: str = heading     #: BM heading this BM belongs under
+        self._scanned: bool = False     #: BM has been scanned True/False
+        self._tested: bool = False      #: BM has been tested True/False
+        #: BM URL attributes
+        self.attrs: Dict[str, Any] = {
             'href': href,
             'add_date': add_date,
             'icon': icon,
             'attrs': []
         }
+        #: URL parts as parsed by URL parser lib
         self.href_urlparts = None
 
         # populate the following for ease of parsing later during reformat
-        self.scheme = None
-        self.hostname = None
-        self.path = None
-        self.friendly_host_name = None
+        #: URL scheme (http, https, etc)
+        self.scheme: Optional[str] = None
+        #: URL scheme override - used to convert HTTP to HTTPS when requested
+        self.scheme_override: Optional[str] = None
+        #: URL hostname (e.g. www.google.com)
+        self.hostname: Optional[str] = None
+        #: URL path (e.g. /index.html
+        self.path: Optional[str] = None
+        #: Friendly hostname per config.ini (optional)
+        self.friendly_host_name: Optional[str] = None
+
+    # ==========================================
+    # Class Properties
+    # ==========================================
+
+    @property
+    def url(self) -> str:
+        """Property returning BookMark URL string
+
+        NB: Return override scheme if present
+        """
+        if self.scheme_override:
+            return f'{self.scheme_override}://{self.hostname}{self.path}'
+        else:
+            return f'{self.scheme}://{self.hostname}{self.path}'
+
+    @property
+    def scanned(self) -> bool:
+        """Property returning bookmark 'scanned' status
+
+        A bookmark is marked as 'scanned' during Analysis processing.
+        """
+        return self._scanned
+
+    @scanned.setter
+    def scanned(self, value: bool):
+        """Property setter - scanned"""
+        self._scanned = value
+
+    @property
+    def tested(self) -> bool:
+        """Property returning bookmark 'teste' status
+
+        A bookmark is marked as 'tested' when the URL has been verified
+        as being accessible.
+        """
+        return self._tested
+
+    @property
+    def protocol(self) -> str:
+        """Property returning bookmark protocol (HTTP, HTTPS)"""
+        return self.scheme
+
+    @protocol.setter
+    def protocol(self, value):
+        """Property setter for protocol
+
+        :param value: New value to set
+        """
+        self.scheme = value
+
+    @property
+    def is_http(self) -> bool:
+        """Property returning True if protocol is HTTP"""
+        return self.scheme == 'HTTP' or self.scheme == 'http'
+
+    @property
+    def is_localhost(self) -> bool:
+        """Property returning True if BookMark points to localhost"""
+        return self.hostname.startswith('192.168')
+
+    @property
+    def protocol_override(self) -> Optional[str]:
+        """Property returning status of Protocol override
+
+        :return: Current protocol override
+        """
+        return self.scheme_override
+
+    @protocol_override.setter
+    def protocol_override(self, value: str):
+        """Property setter for protocol override
+
+        :param value: New value to set
+        """
+        self.scheme_override = value
+
+    @tested.setter
+    def tested(self, value: bool):
+        """Property setter - tested"""
+        self._tested = value
+
+    # ==========================================
+    # Class support functions
+    # ==========================================
 
     def add_attr(self, attr, value):
         """ add attribute 'attr' / 'value' to bookmark
@@ -212,12 +333,25 @@ class HeadingLabels:
             self.labels[heading.label].add_label(heading.level, heading.heading_stack_text)
 
 
-class BookMarks:
+class Borg:
+    """There can only be one"""
+
+    _shared_state = {}
+
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
+class BookMarks(Borg):
     """ Class implementing a multi-level list """
 
     # =================================================================
     def __init__(self):
-        logger.info(f'INIT ({__name__})')
+        Borg.__init__(self)
+        if self._shared_state:
+            return
+
+        logger.info('INIT (%s)', __name__)
 
         self.level = 0  #: Current level
         self.heading = None  #: Heading for current level
@@ -225,11 +359,12 @@ class BookMarks:
         #: Heading labels, used in post-processing
         self.heading_labels = HeadingLabels()
 
-        self.headings_dict = {}  #: Headings: Dict
-        self.headings_stack = []  #: Headings: Stack (first-in, last-out)
-        self.headings_dups = []  #: Headings: Duplicates
-        self.bookmarks = {}  #: Dictionary of bookmarks
+        self.headings_dict = {}     #: Headings: Dict
+        self.headings_stack = []    #: Headings: Stack (first-in, last-out)
+        self.headings_dups = []     #: Headings: Duplicates
+        self.bookmarks = {}         #: Dictionary of bookmarks
 
+        #: bookmark currently being processed / created
         self.bookmark = None
 
     # =================================================================
@@ -307,7 +442,7 @@ class BookMarks:
         if self.bookmark:
             raise MyException(f'Overwriting bookmark {self.bookmark}')
         self.bookmark = BookMark(label=None, heading=None, href=None, add_date=None, icon=None)
-        self.debug('BookMark: NEW')
+        self.debug(f'BookMark: {self.bookmark.id:04d} NEW')
 
     # =================================================================
     def add_bookmark(self, label, attrs):
@@ -316,7 +451,7 @@ class BookMarks:
         :param label: Bookmark label
         :param attrs: Bookmark attrs
         """
-        self.debug(f'BookMark: {label}:{attrs}')
+        self.debug(f'BookMark: {self.bookmark.id:04d} {label}:{attrs}')
         self.bookmark.label = label
         self.bookmark.heading = self.heading
         # process all attributes passed to us
@@ -355,4 +490,4 @@ class BookMarks:
         :param text: debug text to display
         """
         level_plus = '+' * self.level
-        logger.debug(f'{self.level:02d}{level_plus} {clean_text(text)}')
+        logger.debug('%02d%s %s', self.level, level_plus, clean_text(text))

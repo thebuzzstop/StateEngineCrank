@@ -75,6 +75,8 @@ from StateEngineCrank.modules.PyState import StateMachine
 from config import ArgParser, CfgParser, TheConfig
 from structures import BookMarks
 from analyze import Analyze
+from verify_urls import VerifyUrls
+from prune import prune_bad_urls
 from reformat import Reformat
 from exceptions import MyException
 
@@ -494,19 +496,22 @@ class MyHTMLParser(HTMLParser, ABC):
 
 
 if __name__ == '__main__':
-    """ Main application processing for BookMarks """
+    """Main application processing for BookMarks"""
 
-    logger.info(f'INIT ({__name__})')
-
+    # ------------------------------------------
     # initialization and setup
+    # ------------------------------------------
+    logger.info('INIT (%s)', __name__)
     arg_parser = ArgParser()
     config = CfgParser()
     html_parser = MyHTMLParser()
 
+    # ------------------------------------------
     # open bookmarks file and feed to the parser
+    # ------------------------------------------
     bookmarks = None
     try:
-        logger.info(f'Processing input file: {TheConfig.input_file}')
+        logger.info('Processing input file: %s', TheConfig.input_file)
         with open(TheConfig.input_file, mode='r', encoding='utf-8') as html:
             bookmarks_html = html.read()
         html_parser.feed(bookmarks_html)
@@ -514,17 +519,32 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: Parse', exc_info=e)
 
+    # ------------------------------------------
     # analyze bookmarks just parsed
-    analysis = None
+    # ------------------------------------------
     try:
-        analysis = Analyze(bookmarks=bookmarks)
+        Analyze(bookmarks=bookmarks)
     except Exception as e:
         logger.exception('UNHANDLED EXCEPTION: Analyze', exc_info=e)
 
+    # ------------------------------------------
+    # verify bookmarks just analyzed
+    # ------------------------------------------
+    if TheConfig.verify_urls:
+        try:
+            verify = VerifyUrls()
+            verify.verify_urls()
+            if TheConfig.verify_prune:
+                prune_bad_urls()
+        except Exception as e:
+            logger.exception('UNHANDLED EXCEPTION: VerifyUrls', exc_info=e)
+
+    # ------------------------------------------
     # create bookmark output structure
+    # ------------------------------------------
     output = None
     try:
-        output = Reformat(analysis).output
+        output = Reformat().output
         logger.info('Creating output file: %s', TheConfig.output_file)
         with open(TheConfig.output_file, 'w') as file:
             for s in output:
