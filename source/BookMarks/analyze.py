@@ -523,7 +523,11 @@ class Analyze:
                 continue
             # scan all bookmarks for current value
             for bm in bm_value:
+                # don't parse if bm is already scanned
                 if bm.scanned:
+                    continue
+                # don't parse if hostname is None
+                if bm.href_urlparts.hostname is None:
                     continue
                 # check for hostname match
                 hostname = bm.href_urlparts.hostname.lower()
