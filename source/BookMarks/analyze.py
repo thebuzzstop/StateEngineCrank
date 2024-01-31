@@ -208,6 +208,7 @@ class Analyze:
     def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
         logger.info('INIT (%s)', __name__)
+        logger.setLevel(TheConfig.logging_level())
 
         self._bookmarks_list: BookMarks = bookmarks
         self.bookmarks: Dict[str, List] = bookmarks.bookmarks
