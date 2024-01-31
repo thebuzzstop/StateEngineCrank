@@ -9,14 +9,14 @@ from typing import List, Union
 
 # Project imports
 from analyze import Analyze
-from config import TheConfig
+from the_config import TheConfig
 from defines import UrlType
 from structures import BookMark
 from exceptions import MyException
 from verify_urls import VerifyUrls, BadUrlStatus
 
 from logger import Logger
-logger = Logger(name=__name__).logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 
 class Reformat:
     """Class to reformat bookmarks"""

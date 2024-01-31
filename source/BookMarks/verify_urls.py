@@ -8,13 +8,13 @@ import json
 # Project imports
 from defines import UrlType, BadHostType
 from exceptions import MyException
-from config import TheConfig
+from the_config import TheConfig
 from analyze import Analyze
 from structures import BookMark, BookMarks, bm_counter
 from mydns import dns_query
 from myping import my_ping
 from logger import Logger
-logger = Logger(name=__name__).logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 
 
 class BadUrlStatus(NamedTuple):

@@ -4,17 +4,19 @@
 from typing import List
 
 # Project imports
+from the_config import TheConfig
 from defines import UrlType
 from verify_urls import VerifyUrls, BadUrlStatus
 from analyze import Analyze
+
 from logger import Logger
-logger = Logger(name=__name__).logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 
 # =========================================================================
 def prune_bad_urls() -> None:
     """Function to prune (delete) BookMark's with bad URL's"""
     logger.info("Prune bad URL's")
-    # _prune_bad_dns()
+    _prune_bad_dns()
     _prune_bad_hosts()
     _prune_bad_localhost()
     # _prune_bad_menubar()

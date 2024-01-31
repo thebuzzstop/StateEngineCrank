@@ -91,9 +91,10 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 # Project imports
+from the_config import TheConfig
 from exceptions import MyException
 from logger import Logger, clean as clean_text
-logger = Logger(name=__name__).logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 
 
 class StructuresList:
@@ -135,6 +136,7 @@ class BookMark:
         _bm_counter -= 1
 
     def __init__(self, label, heading, href, add_date, icon=None):
+        """BookMark class constructor"""
         self.id: int = bm_id()          #: BM unique ID
         self.label: str = label         #: BM string label
         self.heading: str = heading     #: BM heading this BM belongs under

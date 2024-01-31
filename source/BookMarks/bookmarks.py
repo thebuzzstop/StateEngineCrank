@@ -72,7 +72,8 @@ from typing import List
 from StateEngineCrank.modules.PyState import StateMachine
 
 # Project Imports
-from config import ArgParser, CfgParser, TheConfig
+from the_config import TheConfig
+from config import ArgParser, CfgParser
 from structures import BookMarks
 from analyze import Analyze
 from verify_urls import VerifyUrls
@@ -80,8 +81,8 @@ from prune import prune_bad_urls
 from reformat import Reformat
 from exceptions import MyException
 
-import logger
-logger = logger.Logger(name=__name__).logger
+from logger import Logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 logger.info('INIT')
 
 # ==============================================================================

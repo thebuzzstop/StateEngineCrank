@@ -4,6 +4,10 @@
 import sys
 import os
 import logging.handlers
+from typing import Dict
+
+# Project imports
+from the_config import TheConfig
 
 # define logging levels per logging module
 DEBUG = logging.DEBUG
@@ -37,18 +41,12 @@ class StreamHandlers(Borg):
         if not os.path.exists('logs'):
             os.makedirs('logs')
 
+#: Dictionary of all loggers created
+_loggers: Dict[str, logging.Logger] = {}
 
 class Logger:
 
-    def set_level(self, logger_level: int = None, console_level: int = None, file_level: int = None):
-        if logger_level is not None:
-            self._logger.setLevel(logger_level)
-        if console_level is not None:
-            self.stream_handlers.ch.setLevel(console_level)
-        if file_level is not None:
-            self.stream_handlers.fh.setLevel(file_level)
-
-    def __init__(self, name=__name__, log_level: int = INFO):
+    def __init__(self, name=__name__, log_level: int = TheConfig.logging_level()):
         """Constructor
 
         :param name: Logger name (typically the callers module)
@@ -64,10 +62,35 @@ class Logger:
         self._logger.addHandler(self.stream_handlers.fh)
         self._logger.propagate = False       # don't propagate to higher level(s)
 
+        #: update dictionary of all loggers
+        global _loggers
+        _loggers[name] = self._logger
+
     @property
     def logger(self) -> logging.Logger:
         """Property returning this logger object"""
         return self._logger
+
+
+class Loggers:
+
+    _stream_handlers = StreamHandlers(TheConfig.logging_level())
+
+    @classmethod
+    def set_logging_levels(cls, logging_level = None):
+        """Class method to set logging level for all loggers
+
+        :param logging_level: general logging level
+        :param console_level: console logging level
+        :param file_level: file logging level
+        """
+        # update each logger
+        for logger in list(_loggers.values()):
+            logger.setLevel(logging_level)
+
+        # update stream handlers
+        cls._stream_handlers.ch.setLevel(logging_level)
+        cls._stream_handlers.fh.setLevel(logging_level)
 
 
 #: Characters to delete when cleaning text

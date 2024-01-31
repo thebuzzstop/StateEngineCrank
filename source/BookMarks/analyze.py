@@ -13,10 +13,10 @@ from typing import Dict, List, Optional, Tuple, Union
 
 # Project imports
 from exceptions import MyException
-from config import TheConfig
+from the_config import TheConfig
 from structures import BookMark, BookMarks, StructuresList as StructuresList
 from logger import Logger, clean as logger_clean
-logger = Logger(name=__name__).logger
+logger = Logger(name=__name__, log_level=TheConfig.logging_level()).logger
 
 class Keywords:
     """ Keywords from bookmarks """
@@ -207,7 +207,6 @@ class Analyze:
 
     def __init__(self, bookmarks: BookMarks):
         """ Analyze constructor """
-
         logger.info('INIT (%s)', __name__)
 
         self._bookmarks_list: BookMarks = bookmarks
@@ -423,7 +422,7 @@ class Analyze:
                         for bm_ in self.file_bookmarks[bm_key]:
                             if self.href_path(bm_) != bm_path:
                                 self.file_bookmarks[bm_key].append(bm)
-                    bm.scanned = not TheConfig.allow_multiple(bm)
+                    bm.scanned = not self.allow_multiple(bm)
 
     @staticmethod
     def href_path(bookmark):
@@ -495,7 +494,7 @@ class Analyze:
                 if bm_hostname is None or not len(bm_hostname):
                     continue
                 # skip processing if 'bm' is already scanned and multiple not allowed
-                if bm.scanned and not TheConfig.allow_multiple(bm):
+                if bm.scanned and not self.allow_multiple(bm):
                     continue
                 # if processing head/tail section then hostname must be a match
                 if (head or tail) and bm_hostname != site_host:
@@ -508,7 +507,7 @@ class Analyze:
                 bm.label = site_label
                 scan_list.append(bm)
                 # mark scanned if not head or tail and multiple not allowed
-                if not (head or tail) and not TheConfig.allow_multiple(bm):
+                if not (head or tail) and not self.allow_multiple(bm):
                     bm.scanned = True
 
     # =========================================================================
@@ -542,7 +541,7 @@ class Analyze:
                                 bm.href_urlparts.path.lower().startswith(config_item_path) and \
                                 hostname not in scan_list:
                             scan_list.append(bm)
-                            bm.scanned = not TheConfig.allow_multiple(bm)
+                            bm.scanned = not self.allow_multiple(bm)
                             break
                 # check for label match
                 label = bm.label.lower()
@@ -550,7 +549,7 @@ class Analyze:
                     for item in config_list:
                         if item in label and label not in scan_list:
                             scan_list.append(bm)
-                            bm.scanned = not TheConfig.allow_multiple(bm)
+                            bm.scanned = not self.allow_multiple(bm)
                             break
 
     # =========================================================================
@@ -721,3 +720,19 @@ class Analyze:
                             if host in hostname and hostname not in self.host_sites[section]:
                                 self.host_sites[section].append(hostname)
                                 logger.debug('%s: %s/%s', section, host, hostname)
+
+    @staticmethod
+    def allow_multiple(bm: BookMark) -> bool:
+        """Return boolean True/False if multiple entries allowed
+
+        :param bm: Bookmark being processed
+        :returns: True/False if multiple entries allowed
+        """
+        host_name = bm.hostname
+        friendly_host_name = bm.friendly_host_name
+        for allow in TheConfig.config['allow-multiple']:
+            host, path = TheConfig.config['allow-multiple'][allow].replace(' ', '').split(',')
+            if host == host_name or host == friendly_host_name:
+                if path == bm.path:
+                    return True
+        return False
